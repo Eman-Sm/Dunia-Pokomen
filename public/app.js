@@ -28,6 +28,11 @@
         { id: 'c', u: 'bolu_100', text: 'Kolam Minum', likes: 1178, status: null },
         { id: 'd', u: 'tofu_149', text: 'Sarang Hangat', likes: 898, status: null },
       ],
+      trakteer: 'https://trakteer.id/',
+      dukungan: [
+        { nama: 'Rara', pesan: 'Semangat bikin episode 2, Admin!', unit: 'Cendol', jumlah: 3, t: new Date(Date.now() - 1.2e6).toISOString() },
+        { nama: 'Seseorang', pesan: '', unit: 'Cendol', jumlah: 1, t: new Date(Date.now() - 7.2e6).toISOString() },
+      ],
       log: [
         { t: new Date(Date.now() - 6e5).toISOString(), type: 'legenda', text: 'Momo milik @momo_121 kini menjadi Legenda!' },
         { t: new Date(Date.now() - 2.4e6).toISOString(), type: 'evolusi', text: 'Bolu milik @bolu_100 berevolusi menjadi Evolusi 2!' },
@@ -58,7 +63,7 @@
     $('chipHari').textContent = 'HARI KE-' + (data.hari || 1);
     $('chipWarga').textContent = fmt(data.jumlahWarga) + ' WARGA';
     $('chipDemo').hidden = !data.demo;
-    renderBook(); renderVotes(); renderNews(); renderLadder(); renderTierFilter();
+    renderBook(); renderVotes(); renderNews(); renderLadder(); renderTierFilter(); renderDukungan();
     draw();
   }
 
@@ -308,6 +313,15 @@
     const log = DATA.log || [];
     n.innerHTML = log.length ? log.slice(0, 10).map((l) => `<li><span class="dot ${esc(l.type)}"></span><span>${esc(l.text)}<time datetime="${esc(l.t)}">${ago(l.t)}</time></span></li>`).join('')
       : '<li class="empty">Desa masih sepi. Kabar pertama muncul begitu warga pertama lahir.</li>';
+  }
+  function renderDukungan() {
+    const url = DATA.trakteer;
+    const list = DATA.dukungan || [];
+    $('dukungan').hidden = !url && !list.length;
+    for (const id of ['traktirTop', 'traktirBtn']) { $(id).hidden = !url; if (url) $(id).href = url; }
+    $('dukList').innerHTML = list.length
+      ? list.map((x) => `<li><span class="dot dukung"></span><span><b>${esc(x.nama)}</b> mentraktir ${fmt(x.jumlah)} ${esc(x.unit)}${x.pesan ? `<br>“${esc(x.pesan)}”` : ''}<time datetime="${esc(x.t)}">${ago(x.t)}</time></span></li>`).join('')
+      : '<li class="empty">Belum ada traktiran. Jadilah pendukung pertama!</li>';
   }
   function renderLadder() {
     const ex = { u: 'contoh', nama: 'Bolu', hewan: ['Kucing', 'Naga'] };

@@ -6,8 +6,10 @@ process.env.POKOMEN_MEMORY_DB = process.env.POKOMEN_MEMORY_DB || '1';
 process.env.ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
 process.env.IG_ACCESS_TOKEN = process.env.IG_ACCESS_TOKEN || 'dev';
 process.env.IG_USERNAME = process.env.IG_USERNAME || 'duniapokomen';
+process.env.TRAKTEER_WEBHOOK_TOKEN = process.env.TRAKTEER_WEBHOOK_TOKEN || 'dev';
+process.env.TRAKTEER_URL = process.env.TRAKTEER_URL || 'https://trakteer.id/';
 const { processComment } = await import('./lib/rules.js');
-const routes = { '/api/dunia': await import('./api/dunia.js'), '/api/admin': await import('./api/admin.js'), '/api/webhook': await import('./api/webhook.js') };
+const routes = { '/api/dunia': await import('./api/dunia.js'), '/api/admin': await import('./api/admin.js'), '/api/webhook': await import('./api/webhook.js'), '/api/trakteer': await import('./api/trakteer.js') };
 const seed = [
   ['budi', 'Namaku Bolu, Kucing + Naga. Dia suka menghangatkan air mandi warga', 'p1'],
   ['ani', 'Nama: Piyo | Hewan: Ayam + Naga | Cerita: suka tidur di atap Balai Warga', 'p1'],

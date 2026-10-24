@@ -60,3 +60,21 @@ test('api publik & admin', async () => {
   assert.equal(d2.jumlahWarga, 3);
   assert.ok(d2.log.some((l) => l.type === 'legenda'));
 });
+
+test('trakteer: token, simpan, tanpa duplikat', async () => {
+  process.env.TRAKTEER_WEBHOOK_TOKEN = 'trk';
+  process.env.TRAKTEER_URL = 'https://trakteer.id/duniapokomen';
+  const tr = await import('../api/trakteer.js');
+  const body = JSON.stringify({ created_at: '2026-10-24 14:00:00', transaction_id: 'tx1', type: 'tip', supporter_name: 'Rara', supporter_message: 'Semangat!', unit: 'Cendol', quantity: 3, price: 15000 });
+  assert.equal((await tr.POST(new Request('https://x/api/trakteer?token=salah', { method: 'POST', body }))).status, 401);
+  const ok = await tr.POST(new Request('https://x/api/trakteer', { method: 'POST', body, headers: { 'x-webhook-token': 'trk' } }));
+  assert.equal(ok.status, 200);
+  const dup = await (await tr.POST(new Request('https://x/api/trakteer?token=trk', { method: 'POST', body }))).json();
+  assert.equal(dup.duplicate, true);
+  const d = await (await dunia.GET()).json();
+  assert.equal(d.dukungan.length, 1);
+  assert.equal(d.dukungan[0].nama, 'Rara');
+  assert.equal(d.trakteer, 'https://trakteer.id/duniapokomen');
+  // warga tidak berubah karena traktiran
+  assert.equal(d.warga.find((w) => w.u === 'budi').tier, 3);
+});

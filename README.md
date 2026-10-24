@@ -103,6 +103,18 @@ Komentar bebas seperti *"Namaku Bolu, kucing + naga, dia suka tidur di atap Bala
 
 Pengaturan di `CONFIG`: nama tingkat, tingkat maksimal otomatis, apakah cerita saat lahir langsung dihitung evolusi, panjang minimal cerita.
 
+## Dukungan Trakteer (opsional)
+Tombol **Traktir Admin** dan **Papan Terima Kasih** di website. Traktiran **tidak memberi keuntungan apa pun di dalam game**: tidak ada evolusi atau status khusus.
+
+1. Tambahkan Environment Variables di Vercel:
+   - `TRAKTEER_URL` = alamat halaman Trakteer-mu, misalnya `https://trakteer.id/duniapokomen`
+   - `TRAKTEER_WEBHOOK_TOKEN` = string acak panjang buatanmu
+   Lalu Redeploy.
+2. Di Trakteer: **Integrasi → Webhook**, isi URL:
+   `https://DOMAIN-KAMU.vercel.app/api/trakteer?token=ISI_TRAKTEER_WEBHOOK_TOKEN`
+   Klik **Send Webhook Test**, lalu nyalakan webhook.
+3. Cek **Ruang Admin → Dukungan Trakteer**. Data mentah dari tes muncul di sana. Pesan pendukung yang tidak pantas bisa disembunyikan dengan menghapus centang **Tampil**.
+
 ## Gambar hewan sendiri
 Setiap warga otomatis mendapat sprite pixel yang dibentuk dari nama hewannya. Untuk warga istimewa (misalnya Legenda), unggah PNG buatanmu ke mana saja (misalnya folder `public/sprites/` lalu redeploy) dan isi kolom **Sprite URL** di Ruang Admin.
 

@@ -11,9 +11,10 @@ const parseHewan = (h) => (Array.isArray(h) ? h : String(h || '').split(/\s*[+&,
 
 const actions = {
   async status() {
-    const [warga, pendingRaw, usulan, lastSync, refreshed, start, tokenSaved] = await Promise.all([
+    const [warga, pendingRaw, usulan, lastSync, refreshed, start, tokenSaved, dukRaw, trRaw] = await Promise.all([
       hgetallJSON('warga'), redis('LRANGE', 'pending', 0, 99), hgetallJSON('usulan'),
       redis('GET', 'last_sync'), redis('GET', 'ig_token_refreshed'), redis('GET', 'hari_pertama'), redis('GET', 'ig_token'),
+      redis('LRANGE', 'dukungan', 0, 49), redis('GET', 'trakteer_last_raw'),
     ]);
     let account = null, igError = null;
     try { account = await me(); } catch (e) { igError = e.message; }
@@ -24,6 +25,9 @@ const actions = {
       warga: warga.sort((a, b) => a.spot - b.spot),
       pending: (pendingRaw || []).map((s) => JSON.parse(s)),
       usulan: usulan.sort((a, b) => b.likes - a.likes),
+      dukungan: (dukRaw || []).map((s) => JSON.parse(s)),
+      trakteerLastRaw: trRaw || null,
+      trakteerReady: !!(process.env.TRAKTEER_URL && process.env.TRAKTEER_WEBHOOK_TOKEN),
     };
   },
   async sync({ posts = 5 }) { return syncLatest(Math.min(25, Number(posts) || 5)); },
@@ -94,6 +98,18 @@ const actions = {
     const id = 'manual-' + Date.now();
     const x = { id, username: key(username), text, mediaId: null, likes: Number(likes) || 0, status: null, episode: null, t: new Date().toISOString() };
     await setJSON('usulan', id, x);
+    return x;
+  },
+  async set_dukungan({ id, hidden }) {
+    const list = (await redis('LRANGE', 'dukungan', 0, 199)) || [];
+    const raw = list.find((s) => JSON.parse(s).id === id);
+    if (!raw) throw new Error('Dukungan tidak ditemukan');
+    const x = JSON.parse(raw); x.hidden = !!hidden;
+    // replace in place: remove then re-insert at the same position
+    const idx = list.indexOf(raw);
+    const rebuilt = list.map((s, i) => (i === idx ? JSON.stringify(x) : s));
+    await redis('DEL', 'dukungan');
+    for (let i = rebuilt.length - 1; i >= 0; i--) await redis('LPUSH', 'dukungan', rebuilt[i]);
     return x;
   },
   async post_log({ text }) {

@@ -41,7 +41,7 @@
     ];
     $('conn').innerHTML = conn.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
     if (S.hariPertama) $('hariPertama').value = S.hariPertama;
-    renderPending(); renderWarga(); renderUsulan();
+    renderPending(); renderWarga(); renderUsulan(); renderDukungan();
   }
 
   function renderPending() {
@@ -100,6 +100,14 @@
     });
   }
 
+  function renderDukungan() {
+    $('trInfo').textContent = S.trakteerReady ? 'Trakteer tersambung. Pendukung baru muncul otomatis di Papan Terima Kasih.' : 'Belum aktif: isi TRAKTEER_URL dan TRAKTEER_WEBHOOK_TOKEN di Vercel lalu redeploy.';
+    $('trRaw').textContent = S.trakteerLastRaw || 'Belum ada data masuk.';
+    $('dukT').innerHTML = S.dukungan.length ? S.dukungan.map((x) => `<tr data-id="${esc(x.id)}"><td>${esc(x.nama)}</td><td>${esc(x.jumlah)} ${esc(x.unit)}</td><td>${esc(x.pesan)}</td>
+      <td><input type="checkbox" data-show ${x.hidden ? '' : 'checked'} aria-label="Tampilkan di website"></td></tr>`).join('')
+      : '<tr><td colspan="4" class="muted">Belum ada dukungan.</td></tr>';
+    $('dukT').querySelectorAll('[data-show]').forEach((c) => c.onchange = () => run(null, 'set_dukungan', { id: c.closest('tr').dataset.id, hidden: !c.checked }, c.checked ? 'Ditampilkan' : 'Disembunyikan'));
+  }
   $('btnSync').onclick = (e) => run(e.target, 'sync', { posts: Number($('syncPosts').value) }, 'Sinkron selesai');
   $('btnSub').onclick = (e) => run(e.target, 'subscribe_webhook', {}, 'Webhook aktif');
   $('btnRefresh').onclick = (e) => run(e.target, 'refresh_token', {}, 'Token diperbarui');
