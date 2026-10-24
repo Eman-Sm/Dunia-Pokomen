@@ -42,7 +42,7 @@
     $('conn').innerHTML = conn.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
     if (S.hariPertama) $('hariPertama').value = S.hariPertama;
     renderPending(); renderWarga(); renderUsulan(); renderDukungan(); renderMenunggu();
-    loadPemilu(); loadUnfollow(); loadGemini();
+    loadPemilu(); loadUnfollow();
   }
 
   let PM = null;
@@ -105,7 +105,7 @@
         <input type="text" data-f="outfit" value="${esc(w.outfit || '')}" placeholder="Outfit" style="margin-top:4px">
         <input type="text" data-f="wujud" value="${esc(w.wujud || '')}" placeholder="Wujud Dewa" style="margin-top:4px"></td>
       <td class="artcell">${w.artVer ? `<img src="api/art?u=${encodeURIComponent(w.username)}&v=${w.artVer}" alt="" width="96" height="64">` : '<span class="muted">belum ada</span>'}
-        <div class="adm-row"><button class="btn green" type="button" data-gen>${w.artVer ? 'Buat ulang (Gemini)' : 'Buat dengan Gemini'}</button><button class="btn ghost" type="button" data-prompt>Salin prompt Gemini</button>
+        <div class="adm-row"><button class="btn ghost" type="button" data-prompt>Salin prompt Gemini</button>
         <label class="btn ghost">Unggah gambar<input type="file" accept="image/*" data-art hidden></label>
         ${w.artVer ? '<button class="btn red" type="button" data-noart>Hapus</button>' : ''}</div></td>
       <td><input type="checkbox" data-f="hidden" ${w.hidden ? 'checked' : ''} aria-label="Sembunyikan"></td>
@@ -127,7 +127,6 @@
       try { const dataUrl = await compress(f); await run(null, 'set_art', { username: inp.closest('tr').dataset.u, dataUrl }, 'Gambar anime tersimpan di kartu'); }
       catch (e) { toast('Gagal: ' + e.message); }
     });
-    $('wargaT').querySelectorAll('[data-gen]').forEach((b) => b.onclick = () => genArt(b.closest('tr').dataset.u, b));
     $('wargaT').querySelectorAll('[data-noart]').forEach((b) => b.onclick = () => run(b, 'remove_art', { username: b.closest('tr').dataset.u }, 'Gambar dihapus'));
     $('wargaT').querySelectorAll('[data-revive]').forEach((b) => b.onclick = () => run(b, 'hidupkan', { username: b.closest('tr').dataset.u }, 'Hewan hidup kembali'));
     $('wargaT').querySelectorAll('[data-kill]').forEach((b) => {
@@ -146,56 +145,6 @@
     });
   }
   $('wq').addEventListener('input', () => S && renderWarga());
-
-  // ---------- Gemini API (one click art)
-  let GEM = null;
-  async function loadGemini() {
-    try { GEM = await api('gemini_status'); } catch (e) { $('gemInfo').textContent = e.message; return; }
-    $('gemInfo').innerHTML = GEM.ready
-      ? `Gemini siap (${esc(GEM.model)}). Hari ini: ${GEM.used}/${GEM.limit} gambar.`
-      : 'Gemini API belum tersambung: isi <b>GEMINI_API_KEY</b> di Vercel lalu redeploy.';
-    $('gemAll').disabled = !GEM.ready;
-  }
-  function spriteRef(w) {
-    try {
-      const sp = window.Creature.make({ u: w.username, nama: w.nama, hewan: w.hewan, tier: w.tier, elemen: w.elemen, outfit: w.outfit, wujud: w.wujud });
-      const c = document.createElement('canvas'); c.width = sp.width * 8; c.height = sp.height * 8;
-      const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height);
-      g.drawImage(sp, 0, 0, c.width, c.height);
-      return c.toDataURL('image/png').split(',')[1];
-    } catch { return null; }
-  }
-  async function genOne(w) {
-    const d = await api('gemini_art', { username: w.username, prompt: geminiPrompt(w), ref: spriteRef(w) });
-    const blob = await (await fetch(d.dataUrl)).blob();
-    const dataUrl = await compress(blob);
-    await api('set_art', { username: w.username, dataUrl });
-    GEM = d.quota;
-    return d;
-  }
-  async function genArt(u, btn) {
-    const w = S.warga.find((x) => x.username === u); if (!w) return;
-    const label = btn.textContent; btn.disabled = true; btn.textContent = 'Menggambar… (±20 dtk)';
-    try { await genOne(w); toast('Gambar anime ' + w.nama + ' tersimpan di kartu'); await refresh(); }
-    catch (e) { toast('Gagal: ' + e.message); out(e.message); btn.disabled = false; btn.textContent = label; }
-  }
-  $('gemAll').onclick = async () => {
-    const list = S.warga.filter((w) => !w.artVer && !w.mati && !w.hidden);
-    if (!list.length) return toast('Semua warga sudah punya gambar');
-    const b = $('gemAll');
-    const n = Math.min(list.length, GEM ? GEM.limit - GEM.used : list.length);
-    if (n <= 0) return toast('Batas harian Gemini sudah tercapai');
-    if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = `Yakin buat ${n} gambar?`; setTimeout(() => { b.dataset.armed = ''; b.textContent = 'Buat gambar untuk semua yang belum punya'; }, 4000); return; }
-    b.dataset.armed = ''; b.disabled = true;
-    let ok = 0, gagal = 0;
-    for (const w of list.slice(0, n)) {
-      b.textContent = `Menggambar ${ok + gagal + 1}/${n}: ${w.nama}…`;
-      try { await genOne(w); ok++; } catch (e) { gagal++; out(w.username + ': ' + e.message); if (/Batas harian|GEMINI_API_KEY/.test(e.message)) break; }
-    }
-    b.disabled = false; b.textContent = 'Buat gambar untuk semua yang belum punya';
-    toast(`${ok} gambar selesai${gagal ? ', ' + gagal + ' gagal' : ''}`);
-    await refresh();
-  };
 
   // ---------- unfollow = dead
   async function loadUnfollow() {
