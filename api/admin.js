@@ -1,7 +1,7 @@
 // Admin API — every request needs  Authorization: Bearer <ADMIN_PASSWORD>
 // Body: { action: '...', ...params }
 import { redis, getJSON, setJSON, hgetallJSON } from '../lib/db.js';
-import { CONFIG, newWarga, log } from '../lib/rules.js';
+import { CONFIG, newWarga, log, birth, requireFollow } from '../lib/rules.js';
 import { syncLatest, ownUsername } from '../lib/sync.js';
 import { refreshToken, subscribeWebhooks, listMedia, me } from '../lib/ig.js';
 import { json, bearer, safeEqual, hariKe } from '../lib/http.js';
@@ -26,6 +26,8 @@ const actions = {
       pending: (pendingRaw || []).map((s) => JSON.parse(s)),
       usulan: usulan.sort((a, b) => b.likes - a.likes),
       dukungan: (dukRaw || []).map((s) => JSON.parse(s)),
+      requireFollow: requireFollow(),
+      menunggu: (await hgetallJSON('menunggu')).sort((a, b) => String(b.t).localeCompare(String(a.t))),
       trakteerLastRaw: trRaw || null,
       trakteerLastRejected: trRej ? JSON.parse(trRej) : null,
       trakteerReady: !!(process.env.TRAKTEER_URL && process.env.TRAKTEER_WEBHOOK_TOKEN),
@@ -92,6 +94,15 @@ const actions = {
     w.artVer = null;
     await setJSON('warga', u, w);
     return { removed: true };
+  },
+  async approve_menunggu({ username }) {
+    const x = await getJSON('menunggu', key(username));
+    if (!x) throw new Error('Tidak ada di daftar tunggu');
+    return birth({ ...x, source: 'manual-follow' });
+  },
+  async dismiss_menunggu({ username }) {
+    await redis('HDEL', 'menunggu', key(username));
+    return { dismissed: true };
   },
   async delete_warga({ username }) {
     await redis('DEL', 'art:' + key(username));

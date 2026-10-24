@@ -41,9 +41,22 @@
     ];
     $('conn').innerHTML = conn.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
     if (S.hariPertama) $('hariPertama').value = S.hariPertama;
-    renderPending(); renderWarga(); renderUsulan(); renderDukungan();
+    renderPending(); renderWarga(); renderUsulan(); renderDukungan(); renderMenunggu();
   }
 
+  function renderMenunggu() {
+    $('followInfo').textContent = S.requireFollow
+      ? 'Wajib follow AKTIF. Pendaftar menerima DM otomatis dan baru lahir setelah membalas DM dan terbukti sudah follow.'
+      : 'Wajib follow NONAKTIF. Komentar yang valid langsung lahir. Aktifkan dengan REQUIRE_FOLLOW=1 di Vercel (lihat README).';
+    const list = S.menunggu || [];
+    $('menungguT').innerHTML = list.length ? list.map((x) => `<tr data-u="${esc(x.username)}"><td>@${esc(x.username)}</td><td>${esc(x.nama)}</td><td>${esc((x.hewan || []).join(' + '))}</td>
+      <td>${x.dmSent ? 'terkirim' : `<span style="color:var(--berry)">gagal${x.dmError ? ': ' + esc(x.dmError) : ''}</span>`}</td>
+      <td>${x.following === false ? 'belum follow' : 'menunggu balasan DM'}</td>
+      <td class="adm-row"><button class="btn green" type="button" data-ok>Lahirkan</button><button class="btn ghost" type="button" data-no>Hapus</button></td></tr>`).join('')
+      : '<tr><td colspan="6" class="muted">Tidak ada yang menunggu.</td></tr>';
+    $('menungguT').querySelectorAll('[data-ok]').forEach((b) => b.onclick = () => run(b, 'approve_menunggu', { username: b.closest('tr').dataset.u }, 'Warga dilahirkan'));
+    $('menungguT').querySelectorAll('[data-no]').forEach((b) => b.onclick = () => run(b, 'dismiss_menunggu', { username: b.closest('tr').dataset.u }, 'Dihapus dari daftar tunggu'));
+  }
   function renderPending() {
     const tb = $('pending');
     if (!S.pending.length) { tb.innerHTML = '<tr><td colspan="6" class="muted">Antrean kosong.</td></tr>'; return; }

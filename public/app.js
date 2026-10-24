@@ -63,6 +63,7 @@
     $('chipHari').textContent = 'HARI KE-' + (data.hari || 1);
     $('chipWarga').textContent = fmt(data.jumlahWarga) + ' WARGA';
     $('chipDemo').hidden = !data.demo;
+    $('stepDM').hidden = !data.wajibFollow;
     renderBook(); renderVotes(); renderNews(); renderLadder(); renderTierFilter(); renderDukungan();
     const qk = new URLSearchParams(location.search).get('kartu');
     if (qk) { const w = DATA.warga.find((x) => x.u === qk.toLowerCase()); if (w) { select(w); openKartu(w); } }

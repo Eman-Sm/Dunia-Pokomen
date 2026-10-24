@@ -1,7 +1,7 @@
 // Instagram webhook: receives new comments in real time.
 // Callback URL to register in the Meta App Dashboard:  https://<domain>/api/webhook
 import crypto from 'node:crypto';
-import { processComment } from '../lib/rules.js';
+import { processComment, handleDM } from '../lib/rules.js';
 import { ownUsername } from '../lib/sync.js';
 import { safeEqual } from '../lib/http.js';
 
@@ -30,11 +30,17 @@ export async function POST(request) {
   const own = await ownUsername().catch(() => null);
   const results = [];
   for (const entry of body.entry || []) {
+    for (const m of entry.messaging || []) {
+      // DM from a viewer (ignore our own echoes)
+      if (!m.sender?.id || m.message?.is_echo || m.sender.id === entry.id) continue;
+      if (!m.message && !m.postback) continue;
+      try { results.push(await handleDM(m.sender.id)); } catch (e) { results.push('error:' + e.message); }
+    }
     for (const ch of entry.changes || []) {
       if (ch.field !== 'comments' && ch.field !== 'live_comments') continue;
       const v = ch.value || {};
       const c = {
-        id: v.id, text: v.text || '', username: v.from?.username, mediaId: v.media?.id || null,
+        id: v.id, text: v.text || '', username: v.from?.username, userId: v.from?.id || null, mediaId: v.media?.id || null,
         parentId: v.parent_id || null,
         timestamp: entry.time ? new Date(entry.time * (entry.time < 1e12 ? 1000 : 1)).toISOString() : new Date().toISOString(),
       };

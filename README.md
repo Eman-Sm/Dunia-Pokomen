@@ -117,6 +117,20 @@ Tombol **Traktir Admin** dan **Papan Terima Kasih** di website. Traktiran **tida
    (Opsional: kalau Trakteer menampilkan token webhook miliknya sendiri, simpan juga sebagai `TRAKTEER_HEADER_TOKEN`.)
 3. Cek **Ruang Admin → Dukungan Trakteer**. Data mentah dari tes muncul di sana. Pesan pendukung yang tidak pantas bisa disembunyikan dengan menghapus centang **Tampil**.
 
+## Wajib follow (opsional)
+Instagram API tidak bisa mengecek follow dari komentar. Status follow baru bisa dicek setelah orangnya mengirim DM.
+Alur saat aktif: komentar pendaftaran → server mengirim DM pribadi otomatis → penonton membalas (misal "LAHIR")
+→ server mengecek `is_user_follow_business` → lahir, atau diminta follow dulu.
+
+1. Instagram (aplikasi HP): **Pengaturan → Pesan dan balasan cerita → Kontrol pesan / Alat yang terhubung → Izinkan akses ke pesan** = AKTIF.
+2. Meta App → Kasus penggunaan Instagram → Izin: tambahkan `instagram_business_manage_messages`.
+3. Buat ulang access token (Generate token) agar izin baru ikut, lalu perbarui `IG_ACCESS_TOKEN` di Vercel (atau tempel di Ruang Admin → Token baru).
+4. Meta App → Webhook: langganan field **messages** (selain comments).
+5. Vercel: `REQUIRE_FOLLOW=1` (opsional `SITE_URL=dunia-pokomen.vercel.app`), lalu Redeploy.
+6. Ruang Admin → **Aktifkan webhook** (sekarang berlangganan comments + messages).
+Pendaftar yang belum membalas DM muncul di **Ruang Admin → Menunggu konfirmasi follow** dan bisa dilahirkan manual.
+Batas Instagram: DM otomatis hanya bisa dikirim sekali per komentar, maksimal 7 hari setelah komentar dibuat.
+
 ## Gambar anime Kartu Warga (Gemini)
 1. Ruang Admin → tabel **Warga** → **Salin prompt Gemini** (prompt otomatis dari nama, gabungan hewan, cerita, elemen, dan efek sesuai tingkat).
 2. Tempel di gemini.google.com, unduh gambar hasilnya.
