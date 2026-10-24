@@ -22,9 +22,17 @@ test('baris baru & tiga hewan', () => {
   assert.deepEqual(p.hewan, ['Ayam', 'Naga', 'Ikan']);
 });
 
-test('usulan fasilitas', () => {
+test('usulan fasilitas: hanya format resmi dan nama fasilitas singkat', () => {
   assert.equal(parseComment('Usul: kolam minum').usul, 'Kolam Minum');
-  assert.equal(parseComment('min tolong bangun lumbung makanan dong').usul, 'Lumbung Makanan');
+  assert.equal(parseComment('Usulan: Sarang Hangat').usul, 'Sarang Hangat');
+  assert.equal(parseComment('usul fasilitas: kubangan lumpur').usul, 'Kubangan Lumpur');
+  // free-form / chatty text is no longer a suggestion
+  assert.equal(parseComment('min tolong bangun lumbung makanan dong').usul, null);
+  assert.equal(parseComment('Usul: Fasilitas untuk hewanku').usul, null);
+  assert.equal(parseComment('Usul: buatkan sarang untuk Pega yang nyaman bersama hewan lain').usul, null);
+  assert.equal(parseComment('Usul: buat bisa keliling map min pasti seru').usul, null);
+  assert.equal(parseComment('Usul: Pega kesepian 🥲').usul, null);
+  assert.equal(parseComment('Usul: taman bermain?').usul, null);
 });
 
 test('cerita lanjutan saja', () => {
