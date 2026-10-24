@@ -1,8 +1,22 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "echo siap",
   "outputDirectory": "public",
-  "crons": [{ "path": "/api/cron", "schedule": "0 22 * * *" }],
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "0 22 * * *"
+    }
+  ],
   "headers": [
-    { "source": "/assets/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400" }] }
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    }
   ]
 }
