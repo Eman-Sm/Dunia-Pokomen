@@ -103,11 +103,19 @@
       const g = ctx.createRadialGradient(ax + aw / 2, ay + ah / 2, 20, ax + aw / 2, ay + ah / 2, aw / 1.4);
       g.addColorStop(0, '#5b3fb0'); g.addColorStop(1, '#120c2c'); ctx.fillStyle = g; ctx.fillRect(ax, ay, aw, ah);
       for (let i = 0; i < 60; i++) { ctx.fillStyle = i % 4 ? '#ffffff' : '#ffd23f'; ctx.fillRect(ax + (i * 97) % aw, ay + (i * 53) % ah, 3, 3); }
+    } else if (env && env.artImg) {
+      // anime artwork (cover-fit)
     } else if (env && env.worldImg && env.spot) {
       const scale = 3; const cw = aw / scale, ch = ah / scale;
       ctx.drawImage(env.worldImg, env.spot[0] - cw / 2, env.spot[1] - ch * 0.62, cw, ch, ax, ay, aw, ah);
       ctx.fillStyle = tier === 2 ? 'rgba(255,230,140,.18)' : 'rgba(255,255,255,.06)'; ctx.fillRect(ax, ay, aw, ah);
     } else { ctx.fillStyle = '#6ab04c'; ctx.fillRect(ax, ay, aw, ah); }
+    if (env && env.artImg) {
+      const im = env.artImg; const s = Math.max(aw / im.width, ah / im.height);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(im, ax + (aw - im.width * s) / 2, ay + (ah - im.height * s) / 2, im.width * s, im.height * s);
+      ctx.imageSmoothingEnabled = false;
+    } else {
     // creature, big
     const sp = env && env.sprite ? env.sprite : window.Creature.make(w);
     const k = Math.floor(Math.min(220 / sp.width, 220 / sp.height));
@@ -120,6 +128,7 @@
     }
     ctx.fillStyle = 'rgba(20,30,10,.35)'; ctx.beginPath(); ctx.ellipse(ax + aw / 2, sy + sh - 6, sw * .38, 12, 0, 0, Math.PI * 2); ctx.fill();
     ctx.drawImage(sp, Math.round(sx), Math.round(sy), sw, sh);
+    }
 
     // ---- info strip
     let y = ay + ah + 18;

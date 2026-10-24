@@ -55,8 +55,9 @@
 
     <section class="parchment">
       <h2>Warga</h2>
+      <p class="muted">Gambar anime: klik <b>Salin prompt Gemini</b>, tempel di gemini.google.com, unduh hasilnya, lalu klik <b>Unggah gambar</b>. Gambar otomatis dipotong 3:2 dan dikompres.</p>
       <div class="filters"><input type="search" id="wq" placeholder="Saring warga"></div>
-      <div class="tablewrap"><table><thead><tr><th>#</th><th>Akun</th><th>Nama</th><th>Hewan</th><th>Tingkat</th><th>Sprite URL</th><th>Sembunyi</th><th></th></tr></thead><tbody id="wargaT"></tbody></table></div>
+      <div class="tablewrap"><table><thead><tr><th>#</th><th>Akun</th><th>Nama</th><th>Hewan</th><th>Tingkat</th><th>Gambar anime (Gemini)</th><th>Sembunyi</th><th></th></tr></thead><tbody id="wargaT"></tbody></table></div>
       <h3 class="display" style="margin:18px 0 6px">Tambah warga manual (misalnya dari TikTok)</h3>
       <form class="formgrid" id="addForm">
         <label class="f">Akun<input type="text" id="aU" placeholder="@akun" required></label>
@@ -95,6 +96,8 @@
   </div>
 </main>
 <div class="toast" id="toast" hidden></div>
+<script src="creature.js"></script>
+<script src="card.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>

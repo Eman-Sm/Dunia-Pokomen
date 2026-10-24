@@ -248,7 +248,8 @@
       ${(w.cerita || []).length ? `<ul class="stories">${w.cerita.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>` : '<p class="muted">Belum ada cerita. Ceritakan kebiasaan uniknya di postingan berikutnya untuk berevolusi.</p>'}
       <p class="muted">Lahir ${esc(lahir)} · kavling #${w.spot + 1}</p>
       <button class="btn" type="button" id="openKartu" style="margin-top:10px">Lihat Kartu Warga</button>`;
-    card.querySelector('#cardSprite').replaceWith(spriteNode(w, 88));
+    if (w.art) { const im = new Image(); im.src = w.art; im.alt = w.nama; im.className = 'art'; card.querySelector('#cardSprite').replaceWith(im); }
+    else card.querySelector('#cardSprite').replaceWith(spriteNode(w, 88));
     card.querySelector('.close').onclick = closeCard;
     card.querySelector('#openKartu').onclick = () => openKartu(w);
     card.hidden = false;
@@ -350,7 +351,9 @@
     k.className = 'kartu t' + Math.max(0, Math.min(3, w.tier || 0));
     $('kartuModal').hidden = false;
     const sp = spriteFor(w);
-    await window.KartuWarga.draw($('kartuCanvas'), w, { worldImg: IMG, spot: spotOf(w), sprite: sp instanceof HTMLImageElement ? null : sp });
+    let artImg = null;
+    if (w.art) artImg = await new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = w.art; });
+    await window.KartuWarga.draw($('kartuCanvas'), w, { worldImg: IMG, spot: spotOf(w), sprite: sp instanceof HTMLImageElement ? null : sp, artImg });
     $('kartuClose').focus();
   }
   function closeKartu() { $('kartuModal').hidden = true; kartuW = null; }

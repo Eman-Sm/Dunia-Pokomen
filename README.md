@@ -117,6 +117,12 @@ Tombol **Traktir Admin** dan **Papan Terima Kasih** di website. Traktiran **tida
    (Opsional: kalau Trakteer menampilkan token webhook miliknya sendiri, simpan juga sebagai `TRAKTEER_HEADER_TOKEN`.)
 3. Cek **Ruang Admin → Dukungan Trakteer**. Data mentah dari tes muncul di sana. Pesan pendukung yang tidak pantas bisa disembunyikan dengan menghapus centang **Tampil**.
 
+## Gambar anime Kartu Warga (Gemini)
+1. Ruang Admin → tabel **Warga** → **Salin prompt Gemini** (prompt otomatis dari nama, gabungan hewan, cerita, elemen, dan efek sesuai tingkat).
+2. Tempel di gemini.google.com, unduh gambar hasilnya.
+3. Klik **Unggah gambar** di baris warga yang sama. Gambar dipotong 3:2, dikompres, disimpan di database, dan langsung dipakai di Kartu Warga.
+Kalau warga naik tingkat, salin prompt lagi agar efek visualnya ikut naik, lalu unggah ulang.
+
 ## Gambar hewan sendiri
 Setiap warga otomatis mendapat sprite pixel yang dibentuk dari nama hewannya. Untuk warga istimewa (misalnya Legenda), unggah PNG buatanmu ke mana saja (misalnya folder `public/sprites/` lalu redeploy) dan isi kolom **Sprite URL** di Ruang Admin.
 

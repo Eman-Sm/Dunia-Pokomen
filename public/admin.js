@@ -65,7 +65,10 @@
       <td><input type="text" data-f="nama" value="${esc(w.nama)}"></td>
       <td><input type="text" data-f="hewan" value="${esc((w.hewan || []).join(' + '))}"></td>
       <td><select data-f="tier">${S.tiers.map((t, i) => `<option value="${i}" ${i === w.tier ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></td>
-      <td><input type="text" data-f="spriteUrl" value="${esc(w.spriteUrl || '')}" placeholder="https://…png"></td>
+      <td class="artcell">${w.artVer ? `<img src="api/art?u=${encodeURIComponent(w.username)}&v=${w.artVer}" alt="" width="96" height="64">` : '<span class="muted">belum ada</span>'}
+        <div class="adm-row"><button class="btn ghost" type="button" data-prompt>Salin prompt Gemini</button>
+        <label class="btn ghost">Unggah gambar<input type="file" accept="image/*" data-art hidden></label>
+        ${w.artVer ? '<button class="btn red" type="button" data-noart>Hapus</button>' : ''}</div></td>
       <td><input type="checkbox" data-f="hidden" ${w.hidden ? 'checked' : ''} aria-label="Sembunyikan"></td>
       <td class="adm-row"><button class="btn ghost" data-save type="button">Simpan</button><button class="btn red" data-del type="button">Hapus</button></td></tr>`).join('')
       : '<tr><td colspan="8" class="muted">Belum ada warga.</td></tr>';
@@ -75,6 +78,17 @@
       patch.tier = Number(patch.tier);
       run(b, 'update_warga', { username: tr.dataset.u, patch }, 'Warga disimpan');
     });
+    $('wargaT').querySelectorAll('[data-prompt]').forEach((b) => b.onclick = () => {
+      const w = S.warga.find((x) => x.username === b.closest('tr').dataset.u);
+      const p = geminiPrompt(w);
+      navigator.clipboard.writeText(p).then(() => toast('Prompt disalin. Tempel di Gemini.'), () => { out(p); toast('Prompt ada di kotak Hasil aksi terakhir. Salin manual.'); });
+    });
+    $('wargaT').querySelectorAll('[data-art]').forEach((inp) => inp.onchange = async () => {
+      const f = inp.files[0]; if (!f) return;
+      try { const dataUrl = await compress(f); await run(null, 'set_art', { username: inp.closest('tr').dataset.u, dataUrl }, 'Gambar anime tersimpan di kartu'); }
+      catch (e) { toast('Gagal: ' + e.message); }
+    });
+    $('wargaT').querySelectorAll('[data-noart]').forEach((b) => b.onclick = () => run(b, 'remove_art', { username: b.closest('tr').dataset.u }, 'Gambar dihapus'));
     $('wargaT').querySelectorAll('[data-del]').forEach((b) => {
       let armed = false;
       b.onclick = () => {
@@ -84,6 +98,50 @@
     });
   }
   $('wq').addEventListener('input', () => S && renderWarga());
+
+  // ---------- Gemini prompt + image compression
+  const TIER_FX = [
+    'soft gentle lighting, calm pastel colors, a few floating leaves',
+    'light sparkles around the body, soft glowing aura, shiny highlights in the eyes',
+    'radiant golden aura, swirling magical particles, energy ribbons, lens flare, glowing outline, dramatic rim light',
+    'LEGENDARY form wearing a small golden crown, cosmic galaxy sky, intense rainbow aura, glowing ancient runes floating around, light rays bursting from behind, epic heroic lighting, sparkling stardust everywhere',
+  ];
+  const ELEM_BG = { Api: 'a warm volcanic valley at sunset with floating embers', Air: 'a sparkling lake with water splashes and bubbles', Angin: 'a bright sky with fluffy clouds and wind streaks', Daun: 'a lush forest meadow with flowers and falling leaves', Bintang: 'a magical starry night with shooting stars', Batu: 'rocky hills with glowing crystals' };
+  const EN = { kucing: 'cat', naga: 'dragon', ayam: 'chicken', rubah: 'fox', ikan: 'fish', kelinci: 'rabbit', rusa: 'deer', panda: 'panda', lebah: 'bee', babi: 'pig', burung: 'bird', katak: 'frog', kodok: 'frog', unicorn: 'unicorn', paus: 'whale', harimau: 'tiger', macan: 'tiger', kupu: 'butterfly', 'kupu-kupu': 'butterfly', serigala: 'wolf', elang: 'eagle', kura: 'turtle', 'kura-kura': 'turtle', penyu: 'sea turtle', gajah: 'elephant', domba: 'sheep', kelelawar: 'bat', monyet: 'monkey', hiu: 'shark', bebek: 'duck', siput: 'snail', phoenix: 'phoenix', gurita: 'octopus', singa: 'lion', merak: 'peacock', hamster: 'hamster', pinguin: 'penguin', anjing: 'dog', sapi: 'cow', kambing: 'goat', kuda: 'horse', tupai: 'squirrel', beruang: 'bear', ular: 'snake', buaya: 'crocodile', komodo: 'komodo dragon', jerapah: 'giraffe', lumba: 'dolphin', 'lumba-lumba': 'dolphin', gagak: 'crow', angsa: 'swan', semut: 'ant', laba: 'spider', 'laba-laba': 'spider', tikus: 'mouse', badak: 'rhinoceros', zebra: 'zebra', koala: 'koala' };
+  const toEN = (h) => { const k = String(h).toLowerCase().trim(); return EN[k] ? `${EN[k]} (${h})` : h; };
+  function geminiPrompt(w) {
+    const pub = { u: w.username, nama: w.nama, hewan: w.hewan, tier: w.tier };
+    const el = window.KartuWarga.elementOf(pub).name;
+    const story = (w.cerita || []).slice(-1)[0]?.text || '';
+    return [
+      `Create an anime-style illustration (Japanese anime, cel-shaded, clean line art, vibrant colors, high detail) of an original cute fantasy creature named "${w.nama}".`,
+      `It is a hybrid of ${(w.hewan || []).map(toEN).join(' and ')}, clearly showing recognizable features of each animal blended into one creature.`,
+      story ? `Personality and habit (written in Indonesian): "${story}". Show this habit in the pose or a small detail.` : 'Give it a cheerful, curious personality.',
+      `Full body, centered, dynamic pose, big expressive eyes, friendly and family-friendly.`,
+      `Visual effects: ${TIER_FX[Math.max(0, Math.min(3, w.tier || 0))]}.`,
+      `Background: ${ELEM_BG[el] || ELEM_BG.Batu} (element: ${el}).`,
+      `Landscape orientation, 3:2 aspect ratio. No text, no letters, no logo, no watermark, no card frame.`,
+    ].join(' ');
+  }
+  function compress(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const TW = 900, TH = 600; // 3:2
+        const c = document.createElement('canvas'); c.width = TW; c.height = TH;
+        const g = c.getContext('2d');
+        const s = Math.max(TW / img.width, TH / img.height);
+        const w = img.width * s, h = img.height * s;
+        g.drawImage(img, (TW - w) / 2, (TH - h) / 2, w, h);
+        let q = 0.86, url = c.toDataURL('image/webp', q);
+        if (!url.startsWith('data:image/webp')) url = c.toDataURL('image/jpeg', q);
+        while (url.length > 850000 && q > 0.4) { q -= 0.1; url = c.toDataURL(url.startsWith('data:image/webp') ? 'image/webp' : 'image/jpeg', q); }
+        URL.revokeObjectURL(img.src); resolve(url);
+      };
+      img.onerror = () => reject(new Error('File bukan gambar'));
+      img.src = URL.createObjectURL(file);
+    });
+  }
 
   function renderUsulan() {
     $('usulanT').innerHTML = S.usulan.length ? S.usulan.map((x) => `<tr data-id="${esc(x.id)}">

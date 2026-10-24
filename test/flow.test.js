@@ -81,3 +81,17 @@ test('trakteer: token, simpan, tanpa duplikat', async () => {
   // warga tidak berubah karena traktiran
   assert.equal(d.warga.find((w) => w.u === 'budi').tier, 3);
 });
+
+test('gambar anime: simpan, sajikan, tampil di data publik', async () => {
+  const call = (body) => admin.POST(new Request('https://x/api/admin', { method: 'POST', body: JSON.stringify(body), headers: { authorization: 'Bearer admin123' } }));
+  const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+  const r = await (await call({ action: 'set_art', username: 'budi', dataUrl: png })).json();
+  assert.ok(r.data.artVer);
+  const art = await import('../api/art.js');
+  const res = await art.GET(new Request('https://x/api/art?u=budi'));
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get('content-type'), 'image/png');
+  const d = await (await dunia.GET()).json();
+  assert.match(d.warga.find((w) => w.u === 'budi').art, /^api\/art\?u=budi&v=\d+$/);
+  assert.equal((await (await call({ action: 'set_art', username: 'budi', dataUrl: 'data:text/html;base64,AAA' })).json()).error, 'Format gambar tidak dikenal');
+});

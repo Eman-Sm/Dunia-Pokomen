@@ -72,7 +72,29 @@ const actions = {
     if (w.tier > before) await log(w.tier === CONFIG.tiers.length - 1 ? 'legenda' : 'evolusi', `${w.nama} milik @${u} kini menjadi ${CONFIG.tiers[w.tier]}!`, { u });
     return w;
   },
+  async set_art({ username, dataUrl }) {
+    const u = key(username);
+    const w = await getJSON('warga', u);
+    if (!w) throw new Error('Warga tidak ditemukan');
+    if (!/^data:image\/(webp|jpeg|png);base64,/.test(dataUrl || '')) throw new Error('Format gambar tidak dikenal');
+    if (dataUrl.length > 900000) throw new Error('Gambar terlalu besar setelah dikompres (maks ±650 KB)');
+    await redis('SET', 'art:' + u, dataUrl);
+    w.artVer = Date.now();
+    await setJSON('warga', u, w);
+    await log('info', `Kartu Warga ${w.nama} milik @${u} kini punya gambar anime!`, { u });
+    return { username: u, artVer: w.artVer };
+  },
+  async remove_art({ username }) {
+    const u = key(username);
+    const w = await getJSON('warga', u);
+    if (!w) throw new Error('Warga tidak ditemukan');
+    await redis('DEL', 'art:' + u);
+    w.artVer = null;
+    await setJSON('warga', u, w);
+    return { removed: true };
+  },
   async delete_warga({ username }) {
+    await redis('DEL', 'art:' + key(username));
     await redis('HDEL', 'warga', key(username));
     return { deleted: true };
   },
