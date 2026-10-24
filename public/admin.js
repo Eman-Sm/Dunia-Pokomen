@@ -102,7 +102,8 @@
 
   function renderDukungan() {
     $('trInfo').textContent = S.trakteerReady ? 'Trakteer tersambung. Pendukung baru muncul otomatis di Papan Terima Kasih.' : 'Belum aktif: isi TRAKTEER_URL dan TRAKTEER_WEBHOOK_TOKEN di Vercel lalu redeploy.';
-    $('trRaw').textContent = S.trakteerLastRaw || 'Belum ada data masuk.';
+    const rej = S.trakteerLastRejected;
+    $('trRaw').textContent = (S.trakteerLastRaw || 'Belum ada data masuk.') + (rej ? `\n\nPermintaan terakhir yang DITOLAK: ${rej.t}\nAlasan: ${rej.alasan}\nToken di URL: ${rej.adaTokenDiURL ? 'ada' : 'TIDAK ada'} · Token di header: ${rej.adaTokenDiHeader ? 'ada' : 'tidak ada'}` : '');
     $('dukT').innerHTML = S.dukungan.length ? S.dukungan.map((x) => `<tr data-id="${esc(x.id)}"><td>${esc(x.nama)}</td><td>${esc(x.jumlah)} ${esc(x.unit)}</td><td>${esc(x.pesan)}</td>
       <td><input type="checkbox" data-show ${x.hidden ? '' : 'checked'} aria-label="Tampilkan di website"></td></tr>`).join('')
       : '<tr><td colspan="4" class="muted">Belum ada dukungan.</td></tr>';

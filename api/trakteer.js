@@ -9,10 +9,19 @@ import { json, safeEqual } from '../lib/http.js';
 const pick = (o, ...keys) => { for (const k of keys) if (o && o[k] !== undefined && o[k] !== null && o[k] !== '') return o[k]; return null; };
 
 export async function POST(request) {
-  const expected = process.env.TRAKTEER_WEBHOOK_TOKEN;
   const url = new URL(request.url);
-  const given = request.headers.get('x-webhook-token') || url.searchParams.get('token');
-  if (!expected || !safeEqual(given, expected)) return json({ error: 'token salah' }, 401);
+  const headerTok = request.headers.get('x-webhook-token');
+  const queryTok = url.searchParams.get('token');
+  // accept our own token (in the URL) or the token Trakteer shows on its webhook page (sent as header)
+  const accepted = [process.env.TRAKTEER_WEBHOOK_TOKEN, process.env.TRAKTEER_HEADER_TOKEN].filter(Boolean);
+  const ok = accepted.some((t) => safeEqual(queryTok, t) || safeEqual(headerTok, t));
+  if (!ok) {
+    await redis('SET', 'trakteer_last_rejected', JSON.stringify({
+      t: new Date().toISOString(), adaTokenDiURL: !!queryTok, adaTokenDiHeader: !!headerTok,
+      alasan: !accepted.length ? 'TRAKTEER_WEBHOOK_TOKEN belum diatur' : 'token tidak cocok',
+    })).catch(() => {});
+    return json({ error: 'token salah' }, 401);
+  }
 
   const raw = await request.text();
   let body;

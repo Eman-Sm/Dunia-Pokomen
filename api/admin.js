@@ -11,10 +11,10 @@ const parseHewan = (h) => (Array.isArray(h) ? h : String(h || '').split(/\s*[+&,
 
 const actions = {
   async status() {
-    const [warga, pendingRaw, usulan, lastSync, refreshed, start, tokenSaved, dukRaw, trRaw] = await Promise.all([
+    const [warga, pendingRaw, usulan, lastSync, refreshed, start, tokenSaved, dukRaw, trRaw, trRej] = await Promise.all([
       hgetallJSON('warga'), redis('LRANGE', 'pending', 0, 99), hgetallJSON('usulan'),
       redis('GET', 'last_sync'), redis('GET', 'ig_token_refreshed'), redis('GET', 'hari_pertama'), redis('GET', 'ig_token'),
-      redis('LRANGE', 'dukungan', 0, 49), redis('GET', 'trakteer_last_raw'),
+      redis('LRANGE', 'dukungan', 0, 49), redis('GET', 'trakteer_last_raw'), redis('GET', 'trakteer_last_rejected'),
     ]);
     let account = null, igError = null;
     try { account = await me(); } catch (e) { igError = e.message; }
@@ -27,6 +27,7 @@ const actions = {
       usulan: usulan.sort((a, b) => b.likes - a.likes),
       dukungan: (dukRaw || []).map((s) => JSON.parse(s)),
       trakteerLastRaw: trRaw || null,
+      trakteerLastRejected: trRej ? JSON.parse(trRej) : null,
       trakteerReady: !!(process.env.TRAKTEER_URL && process.env.TRAKTEER_WEBHOOK_TOKEN),
     };
   },

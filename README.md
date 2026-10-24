@@ -113,6 +113,7 @@ Tombol **Traktir Admin** dan **Papan Terima Kasih** di website. Traktiran **tida
 2. Di Trakteer: **Integrasi → Webhook**, isi URL:
    `https://DOMAIN-KAMU.vercel.app/api/trakteer?token=ISI_TRAKTEER_WEBHOOK_TOKEN`
    Klik **Send Webhook Test**, lalu nyalakan webhook.
+   (Opsional: kalau Trakteer menampilkan token webhook miliknya sendiri, simpan juga sebagai `TRAKTEER_HEADER_TOKEN`.)
 3. Cek **Ruang Admin → Dukungan Trakteer**. Data mentah dari tes muncul di sana. Pesan pendukung yang tidak pantas bisa disembunyikan dengan menghapus centang **Tampil**.
 
 ## Gambar hewan sendiri

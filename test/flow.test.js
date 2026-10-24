@@ -69,11 +69,14 @@ test('trakteer: token, simpan, tanpa duplikat', async () => {
   assert.equal((await tr.POST(new Request('https://x/api/trakteer?token=salah', { method: 'POST', body }))).status, 401);
   const ok = await tr.POST(new Request('https://x/api/trakteer', { method: 'POST', body, headers: { 'x-webhook-token': 'trk' } }));
   assert.equal(ok.status, 200);
+  // Trakteer's own header token + our token in the URL must be accepted
+  const both = await tr.POST(new Request('https://x/api/trakteer?token=trk', { method: 'POST', body: JSON.stringify({ transaction_id: 'tx2', supporter_name: 'Budi', unit: 'Cendol', quantity: 1 }), headers: { 'x-webhook-token': 'token-milik-trakteer' } }));
+  assert.equal(both.status, 200);
   const dup = await (await tr.POST(new Request('https://x/api/trakteer?token=trk', { method: 'POST', body }))).json();
   assert.equal(dup.duplicate, true);
   const d = await (await dunia.GET()).json();
-  assert.equal(d.dukungan.length, 1);
-  assert.equal(d.dukungan[0].nama, 'Rara');
+  assert.equal(d.dukungan.length, 2);
+  assert.ok(d.dukungan.some((x) => x.nama === 'Rara'));
   assert.equal(d.trakteer, 'https://trakteer.id/duniapokomen');
   // warga tidak berubah karena traktiran
   assert.equal(d.warga.find((w) => w.u === 'budi').tier, 3);
