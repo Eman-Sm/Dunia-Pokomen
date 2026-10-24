@@ -374,7 +374,7 @@
   function renderPemilu() {
     const P = DATA.pemilu;
     const ketua = DATA.warga.find((w) => w.gelar === 'Ketua Koloni');
-    $('pemilu').hidden = !P || (!P.kandidat.length && !P.tutup && !ketua);
+    $('pemilu').hidden = !P || (!P.kandidat.length && !P.tutup && !ketua && !P.menunggu);
     if ($('pemilu').hidden) return;
     const clock = $('pemiluClock');
     const tick = () => {
@@ -387,7 +387,9 @@
     };
     tick(); clearInterval(renderPemilu.t); renderPemilu.t = setInterval(tick, 1000);
     const list = $('klasemen'); list.innerHTML = '';
-    if (!P.kandidat.length) list.innerHTML = '<li class="empty" style="display:block;cursor:default">Belum ada calon. Komen di postingan Hari ke-1 dan Hari ke-2 supaya masuk daftar calon!</li>';
+    if (!P.kandidat.length) list.innerHTML = P.menunggu
+      ? `<li class="empty" style="display:block;cursor:default">Pemilihan dimulai setelah postingan <b>Hari ke-2</b> tayang. Sudah komen di Hari ke-1? Komen lagi di Hari ke-2 supaya masuk daftar calon!</li>`
+      : '<li class="empty" style="display:block;cursor:default">Belum ada calon. Komen di postingan Hari ke-1 dan Hari ke-2 supaya masuk daftar calon!</li>';
     P.kandidat.forEach((k, i) => {
       const w = DATA.warga.find((x) => x.u === k.u);
       const li = document.createElement('li'); if (i === 0) li.className = 'top';

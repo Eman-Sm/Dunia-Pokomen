@@ -52,3 +52,11 @@ test('pemilu: seri dimenangkan yang komentar lebih awal, lalu tetapkan ketua', a
   assert.equal(frozen.kandidat[0].u, 'pega');
   assert.equal((await getJSON('warga', 'pega')).gelar, 'Ketua Koloni');
 });
+
+test('pemilu: menunggu bila baru satu postingan', async () => {
+  await setConfig({ posts: ['d1'], tutup: null });
+  const h = await hitung({ force: true });
+  assert.equal(h.menunggu, true);
+  assert.equal(h.kandidat.length, 0);
+  await setConfig({ posts: [] });
+});
