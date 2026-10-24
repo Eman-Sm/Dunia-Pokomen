@@ -64,6 +64,8 @@
     $('chipWarga').textContent = fmt(data.jumlahWarga) + ' WARGA';
     $('chipDemo').hidden = !data.demo;
     renderBook(); renderVotes(); renderNews(); renderLadder(); renderTierFilter(); renderDukungan();
+    const qk = new URLSearchParams(location.search).get('kartu');
+    if (qk) { const w = DATA.warga.find((x) => x.u === qk.toLowerCase()); if (w) { select(w); openKartu(w); } }
     draw();
   }
 
@@ -244,9 +246,11 @@
           <span class="tier t${w.tier}">${esc(w.tierNama || TIERS[w.tier])}</span></div></div>
       <ul class="hewan">${(w.hewan || []).map((h) => `<li>${esc(h)}</li>`).join('')}</ul>
       ${(w.cerita || []).length ? `<ul class="stories">${w.cerita.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>` : '<p class="muted">Belum ada cerita. Ceritakan kebiasaan uniknya di postingan berikutnya untuk berevolusi.</p>'}
-      <p class="muted">Lahir ${esc(lahir)} · kavling #${w.spot + 1}</p>`;
+      <p class="muted">Lahir ${esc(lahir)} · kavling #${w.spot + 1}</p>
+      <button class="btn" type="button" id="openKartu" style="margin-top:10px">Lihat Kartu Warga</button>`;
     card.querySelector('#cardSprite').replaceWith(spriteNode(w, 88));
     card.querySelector('.close').onclick = closeCard;
+    card.querySelector('#openKartu').onclick = () => openKartu(w);
     card.hidden = false;
     if (fly) { const [x, y] = spotOf(w); flyTo(x, y - 10, Math.max(cam.z, 4)); } else draw();
   }
@@ -337,6 +341,42 @@
       $('ladder').appendChild(d);
     });
   }
+
+  // ---------------------------------------------------------------- kartu warga
+  let kartuW = null;
+  async function openKartu(w) {
+    kartuW = w;
+    const k = $('kartu');
+    k.className = 'kartu t' + Math.max(0, Math.min(3, w.tier || 0));
+    $('kartuModal').hidden = false;
+    const sp = spriteFor(w);
+    await window.KartuWarga.draw($('kartuCanvas'), w, { worldImg: IMG, spot: spotOf(w), sprite: sp instanceof HTMLImageElement ? null : sp });
+    $('kartuClose').focus();
+  }
+  function closeKartu() { $('kartuModal').hidden = true; kartuW = null; }
+  $('kartuClose').onclick = closeKartu;
+  $('kartuModal').addEventListener('click', (e) => { if (e.target === $('kartuModal')) closeKartu(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('kartuModal').hidden) closeKartu(); });
+  $('kartuSave').onclick = () => {
+    $('kartuCanvas').toBlob((b) => {
+      const a = document.createElement('a'); a.href = URL.createObjectURL(b);
+      a.download = `kartu-pokomen-${kartuW ? kartuW.u : 'warga'}.png`; document.body.appendChild(a); a.click(); a.remove();
+      toast('Kartu disimpan. Bagikan ke Story dan tag @' + IG_HANDLE + '!');
+    }, 'image/png');
+  };
+  $('kartuLink').onclick = () => {
+    const link = location.origin + location.pathname + '?kartu=' + encodeURIComponent(kartuW.u);
+    navigator.clipboard.writeText(link).then(() => toast('Link kartu disalin.'), () => toast(link));
+  };
+  // tilt + foil follow pointer
+  const kEl = $('kartu');
+  kEl.addEventListener('pointermove', (e) => {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const r = kEl.getBoundingClientRect(); const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+    kEl.style.setProperty('--mx', (px * 100).toFixed(1) + '%'); kEl.style.setProperty('--my', (py * 100).toFixed(1) + '%');
+    kEl.style.setProperty('--ry', ((px - .5) * 18).toFixed(1) + 'deg'); kEl.style.setProperty('--rx', ((.5 - py) * 18).toFixed(1) + 'deg');
+  });
+  kEl.addEventListener('pointerleave', () => { kEl.style.setProperty('--rx', '0deg'); kEl.style.setProperty('--ry', '0deg'); });
 
   // copy buttons
   document.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', () => {

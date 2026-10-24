@@ -226,3 +226,29 @@ label.f { display: grid; gap: 3px; font-size: .82rem; font-weight: 800; }
 .log-out { background: #2b2420; color: #f6e7c8; padding: 10px; font-family: monospace; font-size: 12px; white-space: pre-wrap; max-height: 220px; overflow: auto; border: 2px solid var(--outline); }
 
 [hidden] { display: none !important; }
+
+/* ---------- Kartu Warga ---------- */
+.kartu-modal { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: rgba(20, 12, 8, .82);
+  padding: calc(16px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); overflow: auto; }
+.kartu-stage { display: grid; gap: 16px; justify-items: center; perspective: 1100px; }
+.kartu { --mx: 50%; --my: 50%; --rx: 0deg; --ry: 0deg; position: relative; width: min(380px, 84vw, calc((100vh - 140px) * 600 / 840)); aspect-ratio: 600 / 840;
+  border-radius: 18px; overflow: hidden; transform: rotateX(var(--rx)) rotateY(var(--ry)); transition: transform .12s ease-out; box-shadow: 0 18px 40px rgba(0,0,0,.5); }
+.kartu canvas { display: block; width: 100%; height: 100%; }
+.kartu .foil, .kartu .glare { position: absolute; inset: 0; pointer-events: none; }
+.kartu.t0 .foil, .kartu.t0 .glare { display: none; }
+.kartu .glare { background: radial-gradient(circle at var(--mx) var(--my), rgba(255,255,255,.55), rgba(255,255,255,0) 45%); mix-blend-mode: soft-light; }
+.kartu.t1 .foil { background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.65) 48%, rgba(220,235,255,.4) 52%, transparent 65%);
+  background-size: 260% 100%; animation: sweep 3.2s ease-in-out infinite; mix-blend-mode: screen; }
+.kartu.t2 .foil { background: repeating-linear-gradient(115deg, rgba(255,95,109,.5) 0 6%, rgba(255,195,113,.5) 6% 12%, rgba(255,243,107,.5) 12% 18%, rgba(107,255,149,.5) 18% 24%, rgba(94,200,255,.5) 24% 30%, rgba(167,123,255,.5) 30% 36%);
+  background-size: 300% 300%; background-position: var(--mx) var(--my); mix-blend-mode: color-dodge; opacity: .45; }
+.kartu.t2 { box-shadow: 0 0 0 3px #ffd23f, 0 18px 40px rgba(0,0,0,.5), 0 0 30px rgba(255,210,63,.45); }
+.kartu.t3 .foil { background:
+    radial-gradient(circle, rgba(255,255,255,.9) 0 1px, transparent 2px) 0 0 / 18px 18px,
+    repeating-linear-gradient(125deg, rgba(255,95,109,.55) 0 5%, rgba(255,243,107,.55) 5% 10%, rgba(107,255,149,.55) 10% 15%, rgba(94,200,255,.55) 15% 20%, rgba(255,107,214,.55) 20% 25%);
+  background-position: var(--mx) var(--my), var(--mx) var(--my); background-size: 18px 18px, 320% 320%; mix-blend-mode: color-dodge; opacity: .45; }
+.kartu.t3 { animation: legend-glow 3s linear infinite; }
+@keyframes sweep { 0% { background-position: 120% 0; } 60%, 100% { background-position: -40% 0; } }
+@keyframes legend-glow { 0% { box-shadow: 0 0 0 3px #ff5f6d, 0 0 38px #ff5f6d; } 33% { box-shadow: 0 0 0 3px #5ec8ff, 0 0 38px #5ec8ff; } 66% { box-shadow: 0 0 0 3px #ffd23f, 0 0 38px #ffd23f; } 100% { box-shadow: 0 0 0 3px #ff5f6d, 0 0 38px #ff5f6d; } }
+.kartu-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+@media (prefers-reduced-motion: reduce) { .kartu, .kartu .foil { animation: none !important; transition: none; } }
+

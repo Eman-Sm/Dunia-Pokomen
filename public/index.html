@@ -129,9 +129,20 @@
     <span>Data diperbarui otomatis dari komentar Instagram. <a href="admin.html">Masuk Admin</a></span>
   </div>
 </footer>
+<div class="kartu-modal" id="kartuModal" hidden role="dialog" aria-modal="true" aria-label="Kartu Warga">
+  <div class="kartu-stage">
+    <div class="kartu" id="kartu"><canvas id="kartuCanvas" width="600" height="840"></canvas><i class="foil"></i><i class="glare"></i></div>
+    <div class="kartu-actions">
+      <button class="btn" type="button" id="kartuSave">Simpan gambar</button>
+      <button class="btn ghost" type="button" id="kartuLink">Salin link kartu</button>
+      <button class="btn ghost" type="button" id="kartuClose">Tutup</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast" hidden></div>
 
 <script src="creature.js"></script>
+<script src="card.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
