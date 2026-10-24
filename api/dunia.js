@@ -1,10 +1,11 @@
 // Public data for the website: citizens, facility suggestions, news log.
 import { redis, hgetallJSON } from '../lib/db.js';
-import { publicWarga, CONFIG } from '../lib/rules.js';
+import { publicWarga, CONFIG, ensureTierSchema } from '../lib/rules.js';
 import { json, hariKe } from '../lib/http.js';
 
 export async function GET() {
   try {
+    await ensureTierSchema();
     const [warga, usulan, logRaw, start, dukRaw] = await Promise.all([
       hgetallJSON('warga'), hgetallJSON('usulan'), redis('LRANGE', 'log', 0, 29), redis('GET', 'hari_pertama'), redis('LRANGE', 'dukungan', 0, 39),
     ]);
@@ -19,6 +20,7 @@ export async function GET() {
     return json({
       hari: hariKe(start),
       tiers: CONFIG.tiers,
+      benefits: CONFIG.benefits,
       jumlahWarga: visible.length,
       warga: visible.map(publicWarga),
       usulan: us,

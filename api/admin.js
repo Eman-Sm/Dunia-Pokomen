@@ -1,7 +1,7 @@
 // Admin API — every request needs  Authorization: Bearer <ADMIN_PASSWORD>
 // Body: { action: '...', ...params }
 import { redis, getJSON, setJSON, hgetallJSON } from '../lib/db.js';
-import { CONFIG, newWarga, log, birth, requireFollow } from '../lib/rules.js';
+import { CONFIG, newWarga, log, birth, requireFollow, askIfMissing, ensureTierSchema } from '../lib/rules.js';
 import { syncLatest, ownUsername } from '../lib/sync.js';
 import { refreshToken, subscribeWebhooks, listMedia, me } from '../lib/ig.js';
 import { json, bearer, safeEqual, hariKe } from '../lib/http.js';
@@ -11,6 +11,7 @@ const parseHewan = (h) => (Array.isArray(h) ? h : String(h || '').split(/\s*[+&,
 
 const actions = {
   async status() {
+    await ensureTierSchema();
     const [warga, pendingRaw, usulan, lastSync, refreshed, start, tokenSaved, dukRaw, trRaw, trRej] = await Promise.all([
       hgetallJSON('warga'), redis('LRANGE', 'pending', 0, 99), hgetallJSON('usulan'),
       redis('GET', 'last_sync'), redis('GET', 'ig_token_refreshed'), redis('GET', 'hari_pertama'), redis('GET', 'ig_token'),
@@ -69,10 +70,15 @@ const actions = {
     if (patch.hidden !== undefined) w.hidden = !!patch.hidden;
     if (patch.spriteUrl !== undefined) w.spriteUrl = patch.spriteUrl || null;
     if (patch.cerita) w.cerita.push({ text: String(patch.cerita).slice(0, 280), mediaId: null, t: new Date().toISOString() });
+    for (const f of ['elemen', 'outfit', 'wujud']) if (patch[f] !== undefined) w[f] = String(patch[f] || '').trim().slice(0, 120) || null;
     if (patch.tier !== undefined) w.tier = Math.max(0, Math.min(CONFIG.tiers.length - 1, Number(patch.tier)));
+    let tanya = null;
+    if (w.tier > before) {
+      await log(w.tier === CONFIG.tiers.length - 1 ? 'legenda' : 'evolusi', `${w.nama} milik @${u} kini menjadi ${CONFIG.tiers[w.tier]}!`, { u });
+      tanya = await askIfMissing(w, w.lastCommentId || w.commentId);
+    }
     await setJSON('warga', u, w);
-    if (w.tier > before) await log(w.tier === CONFIG.tiers.length - 1 ? 'legenda' : 'evolusi', `${w.nama} milik @${u} kini menjadi ${CONFIG.tiers[w.tier]}!`, { u });
-    return w;
+    return { ...w, tanya };
   },
   async set_art({ username, dataUrl }) {
     const u = key(username);

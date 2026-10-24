@@ -95,13 +95,21 @@ Komentar bebas seperti *"Namaku Bolu, kucing + naga, dia suka tidur di atap Bala
 
 ## Aturan evolusi (bisa diubah di `lib/rules.js`)
 
-- Komentar pendaftaran (nama + hewan) → lahir sebagai **Hewan Reguler**.
-- Cerita baru di **postingan lain** → naik satu tingkat, sampai **Evolusi 2**.
-  Satu postingan hanya memberi satu evolusi per warga (anti spam).
-- **Legenda** hanya bisa diberikan Admin lewat Ruang Admin.
-- Usulan fasilitas diurutkan dari like terbanyak. Tandai **Dibangun** + nomor episode di Ruang Admin.
+| Tier | Nama | Benefit | Cara naik |
+|---|---|---|---|
+| 1 | Regular | - | lahir |
+| 2 | Pseudo-evo | tumbuh besar | cerita di postingan baru |
+| 3 | Mega Evolution | elemen bangkit (aura, warna elemen) | cerita di postingan baru |
+| 4 | Mythical Evolution | armor dasar | cerita di postingan baru |
+| 5 | Legendary Evolution | outfit custom | Admin |
+| 6 | God Mode | ganti wujud dasar (Mecha, Mecha Beast, Cyborg, Kristal, Roh Cahaya, Kaiju) | Admin |
 
-Pengaturan di `CONFIG`: nama tingkat, tingkat maksimal otomatis, apakah cerita saat lahir langsung dihitung evolusi, panjang minimal cerita.
+- Satu postingan hanya memberi satu kenaikan tier per warga (anti spam).
+- Saat mencapai Mega/Legendary/God Mode tanpa data elemen/outfit/wujud, server **membalas komentar pemiliknya**
+  untuk bertanya. Pemilik menjawab dengan `Elemen: ...`, `Outfit: ...`, atau `Wujud Dewa: ...` (boleh ditulis lebih awal).
+- Elemen, outfit, dan wujud bisa juga diisi/diubah Admin di tabel Warga.
+- Usulan fasilitas diurutkan dari like terbanyak. Tandai **Dibangun** + nomor episode di Ruang Admin.
+- Data lama (skema 4 tingkat) otomatis dipindahkan: Legenda lama menjadi Legendary Evolution.
 
 ## Dukungan Trakteer (opsional)
 Tombol **Traktir Admin** dan **Papan Terima Kasih** di website. Traktiran **tidak memberi keuntungan apa pun di dalam game**: tidak ada evolusi atau status khusus.

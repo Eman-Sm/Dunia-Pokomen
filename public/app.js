@@ -4,7 +4,8 @@
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fmt = (n) => Number(n || 0).toLocaleString('id-ID');
-  let TIERS = ['Hewan Reguler', 'Evolusi 1', 'Evolusi 2', 'Legenda'];
+  let TIERS = ['Regular', 'Pseudo-evo', 'Mega Evolution', 'Mythical Evolution', 'Legendary Evolution', 'God Mode'];
+  let BENEFITS = ['-', 'Tumbuh besar', 'Elemen bangkit', 'Armor dasar', 'Outfit custom', 'Ganti wujud dasar'];
 
   $('igLink').href = `https://www.instagram.com/${IG_HANDLE}/`;
   $('igLink').textContent = '@' + IG_HANDLE;
@@ -14,9 +15,11 @@
     const names = ['Bolu', 'Piyo', 'Kiko', 'Momo', 'Cimol', 'Gembul', 'Nori', 'Tofu', 'Kopi', 'Mochi', 'Bakso', 'Onde', 'Seblak', 'Kerupuk', 'Dodol', 'Lumpia', 'Bubu', 'Cireng', 'Wafer', 'Serabi', 'Klepon', 'Jahe', 'Pandan', 'Kenari', 'Lada', 'Gula', 'Tempe', 'Mangga', 'Jambu', 'Salak', 'Durian', 'Kelapa', 'Biskuit', 'Nastar', 'Martabak', 'Pukis', 'Getuk', 'Lemper', 'Bakpia', 'Pempek'];
     const combos = [['Kucing', 'Naga'], ['Ayam', 'Naga'], ['Rubah', 'Ikan'], ['Kelinci', 'Rusa'], ['Panda', 'Lebah'], ['Babi', 'Burung'], ['Katak', 'Unicorn'], ['Paus', 'Kucing'], ['Harimau', 'Kupu'], ['Serigala', 'Elang'], ['Kura', 'Naga'], ['Gajah', 'Ikan'], ['Domba', 'Kelelawar'], ['Monyet', 'Hiu'], ['Bebek', 'Rubah'], ['Siput', 'Phoenix'], ['Gurita', 'Kelinci'], ['Singa', 'Merak'], ['Hamster', 'Naga'], ['Pinguin', 'Rusa']];
     const stories = ['suka tidur di atap Balai Warga', 'menghangatkan air mandi warga pakai napas api', 'selalu bangun paling pagi dan membangunkan semua warga', 'mengoleksi batu bercahaya dari sungai', 'menari setiap kali hujan turun', 'menjaga kavling tetangga waktu malam', 'belajar berenang di danau barat', 'suka menyanyi di jembatan kayu'];
-    const tierOf = (i) => (i === 3 ? 3 : i % 7 === 0 ? 2 : i % 3 === 0 ? 1 : 0);
+    const tierOf = (i) => [5, 0, 4, 3, 0, 1, 2, 0, 1, 0][i % 10];
+    const ELS = ['Api', 'Air', 'Petir', 'Daun', 'Es', 'Cahaya'], OUTS = ['jubah ninja merah', 'zirah samurai biru', 'mantel penyihir ungu'], WJ = ['Mecha', 'Mecha Beast', 'Kristal', 'Roh Cahaya'];
     const warga = names.map((n, i) => ({
       u: n.toLowerCase() + '_' + (100 + i * 7), nama: n, hewan: combos[i % combos.length], tier: tierOf(i), tierNama: TIERS[tierOf(i)],
+      elemen: tierOf(i) >= 2 ? ELS[i % ELS.length] : null, outfit: tierOf(i) >= 4 ? OUTS[i % OUTS.length] : null, wujud: tierOf(i) >= 5 ? WJ[(i / 10 | 0) % WJ.length] : null,
       spot: i, cerita: [stories[i % stories.length], ...(tierOf(i) ? [stories[(i + 3) % stories.length]] : [])].map((s) => `${n} ${s}.`),
       lahir: new Date(Date.now() - i * 3.6e6).toISOString(), sprite: null,
     }));
@@ -34,7 +37,7 @@
         { nama: 'Seseorang', pesan: '', unit: 'Kopi Admin', jumlah: 1, t: new Date(Date.now() - 7.2e6).toISOString() },
       ],
       log: [
-        { t: new Date(Date.now() - 6e5).toISOString(), type: 'legenda', text: 'Momo milik @momo_121 kini menjadi Legenda!' },
+        { t: new Date(Date.now() - 6e5).toISOString(), type: 'legenda', text: 'Bolu milik @bolu_100 kini menjadi God Mode!' },
         { t: new Date(Date.now() - 2.4e6).toISOString(), type: 'evolusi', text: 'Bolu milik @bolu_100 berevolusi menjadi Evolusi 2!' },
         { t: new Date(Date.now() - 5e6).toISOString(), type: 'lahir', text: '@kiko_114 lahir sebagai Kiko (Rubah + Ikan)' },
         { t: new Date(Date.now() - 9e6).toISOString(), type: 'bangun', text: 'Balai Warga selesai dibangun oleh Admin' },
@@ -60,6 +63,7 @@
     if (!data) data = demoData();
     DATA = data;
     if (data.tiers) TIERS = data.tiers;
+    if (data.benefits) BENEFITS = data.benefits;
     $('chipHari').textContent = 'HARI KE-' + (data.hari || 1);
     $('chipWarga').textContent = fmt(data.jumlahWarga) + ' WARGA';
     $('chipDemo').hidden = !data.demo;
@@ -119,13 +123,15 @@
       const [x, y] = toScreen(p[0], p[1]);
       if (x < -40 || y < -40 || x > Wc + 40 || y > Hc + 60) continue;
       const sp = spriteFor(w);
-      const s = cam.z * (sp.width > 40 ? 26 / sp.width : 1);
+      const custom = sp instanceof HTMLImageElement;
+      const s = cam.z * (custom ? 26 / sp.width : (sp.grow || 1));
       const bob = ((tick + w.spot) % 4 < 2 ? 0 : 1) * cam.z;
       const dw = sp.width * s, dh = sp.height * s;
       ctx.fillStyle = 'rgba(20,30,10,.28)';
       ctx.beginPath(); ctx.ellipse(x, y, 7 * cam.z, 2.2 * cam.z, 0, 0, Math.PI * 2); ctx.fill();
       if (w.tier >= 3) { ctx.fillStyle = 'rgba(255,210,63,.35)'; ctx.beginPath(); ctx.ellipse(x, y - 10 * cam.z, 15 * cam.z, 14 * cam.z, 0, 0, Math.PI * 2); ctx.fill(); }
-      ctx.drawImage(sp, Math.round(x - dw / 2), Math.round(y - dh + 2 * cam.z - bob), Math.round(dw), Math.round(dh));
+      const footY = custom ? dh - 2 * cam.z : 31 * s; // feet sit at row 31 of the 36px sprite
+      ctx.drawImage(sp, Math.round(x - dw / 2), Math.round(y - footY - bob), Math.round(dw), Math.round(dh));
       if (w === selected || w === hover) labels.push({ w, x, y: y - dh - 2, big: true });
       else if (showNames) labels.push({ w, x, y: y + 3 * cam.z, big: false });
     }
@@ -336,10 +342,12 @@
   function renderLadder() {
     const ex = { u: 'contoh', nama: 'Bolu', hewan: ['Kucing', 'Naga'] };
     $('ladder').innerHTML = '';
+    const demoExtra = [{}, {}, { elemen: 'Api' }, { elemen: 'Api' }, { elemen: 'Api', outfit: 'jubah merah' }, { elemen: 'Api', outfit: 'jubah merah', wujud: 'Mecha' }];
     TIERS.forEach((t, i) => {
       const d = document.createElement('div');
-      d.appendChild(spriteNode({ ...ex, tier: i }, 56));
-      d.appendChild(document.createTextNode(t));
+      d.appendChild(spriteNode({ ...ex, ...demoExtra[i], tier: i }, 56));
+      const b = document.createElement('b'); b.textContent = `Tier ${i + 1}: ${t}`; d.appendChild(b);
+      const sm = document.createElement('small'); sm.textContent = BENEFITS[i] === '-' ? 'Tanpa benefit' : BENEFITS[i]; d.appendChild(sm);
       $('ladder').appendChild(d);
     });
   }
@@ -349,7 +357,8 @@
   async function openKartu(w) {
     kartuW = w;
     const k = $('kartu');
-    k.className = 'kartu t' + Math.max(0, Math.min(3, w.tier || 0));
+    k.className = 'kartu t' + Math.max(0, Math.min(5, w.tier || 0));
+    k.style.setProperty('--el', w.elemen ? window.Creature.elementColor(w.elemen) : '#ff9a5a');
     $('kartuModal').hidden = false;
     const sp = spriteFor(w);
     let artImg = null;

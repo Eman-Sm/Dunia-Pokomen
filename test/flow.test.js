@@ -7,7 +7,8 @@ process.env.IG_USERNAME = 'duniapokomen';
 process.env.IG_WEBHOOK_VERIFY_TOKEN = 'verif';
 process.env.ADMIN_PASSWORD = 'admin123';
 const { processComment } = await import('../lib/rules.js');
-const { getJSON } = await import('../lib/db.js');
+const { getJSON, redis: _r } = await import('../lib/db.js');
+await _r('SET', 'tier_schema', '6');
 const webhook = await import('../api/webhook.js');
 const dunia = await import('../api/dunia.js');
 const admin = await import('../api/admin.js');
@@ -23,9 +24,16 @@ test('lahir, evolusi, anti-spam, legenda', async () => {
   // second story on the same post -> no extra evolution
   assert.equal(await processComment(c('4', 'budi', 'Cerita: Bolu menangkap ikan pakai ekornya', 'post2')), 'cerita');
   assert.equal(await processComment(c('5', 'budi', 'Cerita: Bolu menolong anak ayam yang tersesat', 'post3')), 'evolusi');
-  // max auto tier reached (2)
-  assert.equal(await processComment(c('6', 'budi', 'Cerita: Bolu menjaga gerbang desa sepanjang malam', 'post4')), 'cerita');
+  // Mega Evolution (index 2) reached without element -> server tried to ask (no IG token in tests, so it records an error)
   assert.equal((await getJSON('warga', 'budi')).tier, 2);
+  assert.equal(await processComment(c('5b', 'budi', 'Elemen: Api', 'post3')), 'elemen');
+  assert.equal((await getJSON('warga', 'budi')).elemen, 'Api');
+  assert.equal(await processComment(c('6', 'budi', 'Cerita: Bolu menjaga gerbang desa sepanjang malam', 'post4')), 'evolusi');
+  // max auto tier (3 = Mythical) reached
+  assert.equal(await processComment(c('6b', 'budi', 'Cerita: Bolu memasak sup jamur untuk warga', 'post5')), 'cerita');
+  assert.equal((await getJSON('warga', 'budi')).tier, 3);
+  // outfit is stored but only public from Legendary
+  await processComment(c('6c', 'budi', 'Outfit: jubah ninja merah', 'post5'));
   // own comments ignored, unknown text goes to pending
   assert.equal(await processComment(c('7', 'duniapokomen', 'Nama: X | Hewan: A + B', 'post1'), { ownUsername: 'duniapokomen' }), 'skip:own');
   assert.equal(await processComment(c('8', 'sari', 'aku mau ikut dong min, jadi apa ya', 'post1')), 'pending');
@@ -52,8 +60,15 @@ test('api publik & admin', async () => {
   assert.equal(d.usulan[0].text, 'Kolam Minum');
   const call = (body, pw = 'admin123') => admin.POST(new Request('https://x/api/admin', { method: 'POST', body: JSON.stringify(body), headers: { authorization: 'Bearer ' + pw } }));
   assert.equal((await call({ action: 'status' }, 'salah')).status, 401);
-  const r = await (await call({ action: 'update_warga', username: 'budi', patch: { tier: 3 } })).json();
-  assert.equal(r.data.tier, 3);
+  const before = (await (await dunia.GET()).json()).warga.find((w) => w.u === 'budi');
+  assert.equal(before.outfit, null);
+  assert.equal(before.elemen, 'Api');
+  const r = await (await call({ action: 'update_warga', username: 'budi', patch: { tier: 5, wujud: 'Mecha' } })).json();
+  assert.equal(r.data.tier, 5);
+  const after = (await (await dunia.GET()).json()).warga.find((w) => w.u === 'budi');
+  assert.equal(after.outfit, 'jubah ninja merah');
+  assert.equal(after.wujud, 'Mecha');
+  assert.equal(after.tierNama, 'God Mode');
   const add = await (await call({ action: 'add_warga', username: '@tiktok_user', nama: 'Kiko', hewan: 'Rubah + Ikan' })).json();
   assert.deepEqual(add.data.hewan, ['Rubah', 'Ikan']);
   const d2 = await (await dunia.GET()).json();
@@ -79,7 +94,7 @@ test('trakteer: token, simpan, tanpa duplikat', async () => {
   assert.ok(d.dukungan.some((x) => x.nama === 'Rara'));
   assert.equal(d.trakteer, 'https://trakteer.id/duniapokomen');
   // warga tidak berubah karena traktiran
-  assert.equal(d.warga.find((w) => w.u === 'budi').tier, 3);
+  assert.equal(d.warga.find((w) => w.u === 'budi').tier, 5);
 });
 
 test('gambar anime: simpan, sajikan, tampil di data publik', async () => {

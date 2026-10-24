@@ -77,7 +77,10 @@
       <td>${w.spot + 1}</td><td>@${esc(w.username)}</td>
       <td><input type="text" data-f="nama" value="${esc(w.nama)}"></td>
       <td><input type="text" data-f="hewan" value="${esc((w.hewan || []).join(' + '))}"></td>
-      <td><select data-f="tier">${S.tiers.map((t, i) => `<option value="${i}" ${i === w.tier ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></td>
+      <td><select data-f="tier">${S.tiers.map((t, i) => `<option value="${i}" ${i === w.tier ? 'selected' : ''}>${i + 1}. ${esc(t)}</option>`).join('')}</select>
+        <input type="text" data-f="elemen" value="${esc(w.elemen || '')}" placeholder="Elemen" style="margin-top:4px">
+        <input type="text" data-f="outfit" value="${esc(w.outfit || '')}" placeholder="Outfit" style="margin-top:4px">
+        <input type="text" data-f="wujud" value="${esc(w.wujud || '')}" placeholder="Wujud Dewa" style="margin-top:4px"></td>
       <td class="artcell">${w.artVer ? `<img src="api/art?u=${encodeURIComponent(w.username)}&v=${w.artVer}" alt="" width="96" height="64">` : '<span class="muted">belum ada</span>'}
         <div class="adm-row"><button class="btn ghost" type="button" data-prompt>Salin prompt Gemini</button>
         <label class="btn ghost">Unggah gambar<input type="file" accept="image/*" data-art hidden></label>
@@ -113,28 +116,36 @@
   $('wq').addEventListener('input', () => S && renderWarga());
 
   // ---------- Gemini prompt + image compression
+  // Regular, Pseudo-evo, Mega, Mythical, Legendary, God Mode
   const TIER_FX = [
-    'soft gentle lighting, calm pastel colors, a few floating leaves',
-    'light sparkles around the body, soft glowing aura, shiny highlights in the eyes',
-    'radiant golden aura, swirling magical particles, energy ribbons, lens flare, glowing outline, dramatic rim light',
-    'LEGENDARY form wearing a small golden crown, cosmic galaxy sky, intense rainbow aura, glowing ancient runes floating around, light rays bursting from behind, epic heroic lighting, sparkling stardust everywhere',
+    'base form, small and cute, soft gentle lighting, calm pastel colors',
+    'grown-up bigger and stronger body than its base form, confident stance, light sparkles, shiny highlights in the eyes',
+    'MEGA EVOLUTION: its element awakens, intense elemental aura and elemental energy swirling around the body, glowing elemental markings on the fur/skin, dramatic rim light',
+    'MYTHICAL EVOLUTION: wearing light fantasy armor plates (helmet, shoulder guards, chest plate) fused with its elemental power, glowing gems on the armor, mythical aura',
+    'LEGENDARY EVOLUTION: wearing a custom outfit over its armor, flowing cape, heroic pose, radiant golden aura, lens flare, magical particles everywhere',
+    'GOD MODE: its base form is transformed into a completely new divine body, towering and majestic, golden halo, cosmic galaxy sky, intense rainbow aura, light rays bursting from behind, epic cinematic lighting',
   ];
-  const ELEM_BG = { Api: 'a warm volcanic valley at sunset with floating embers', Air: 'a sparkling lake with water splashes and bubbles', Angin: 'a bright sky with fluffy clouds and wind streaks', Daun: 'a lush forest meadow with flowers and falling leaves', Bintang: 'a magical starry night with shooting stars', Batu: 'rocky hills with glowing crystals' };
+  const WUJUD_EN = [[/beast|zoid/i, 'a giant mechanical beast robot (mecha beast anime style) with armored plates, glowing visor eyes and thrusters'], [/mecha|robot|gundam/i, 'a giant humanoid mecha robot (mecha anime style) with armored plates, glowing visor eyes and jet thrusters'], [/cyborg|android/i, 'a cyborg with half mechanical body and glowing circuit lines'], [/kristal|crystal/i, 'a living crystal body, translucent and faceted, refracting rainbow light'], [/roh|spirit|cahaya/i, 'a pure light spirit body, glowing and semi-transparent'], [/kaiju/i, 'a colossal kaiju monster form with glowing spikes']];
+  const ELEM_BG = { Api: 'a volcanic valley at sunset with floating embers', Air: 'a sparkling lake with water splashes and bubbles', Angin: 'a bright sky with clouds and wind streaks', Tanah: 'rocky canyon with floating boulders', Petir: 'a stormy sky with lightning bolts', Es: 'a frozen glacier with snowflakes', Daun: 'a lush forest meadow with falling leaves', Cahaya: 'a heavenly sky with sun rays', Kegelapan: 'a moonlit dark forest with purple mist' };
+  const ELEM_EN = { Api: 'fire', Air: 'water', Angin: 'wind', Tanah: 'earth', Petir: 'lightning', Es: 'ice', Daun: 'nature/leaf', Cahaya: 'light', Kegelapan: 'darkness' };
   const EN = { kucing: 'cat', naga: 'dragon', ayam: 'chicken', rubah: 'fox', ikan: 'fish', kelinci: 'rabbit', rusa: 'deer', panda: 'panda', lebah: 'bee', babi: 'pig', burung: 'bird', katak: 'frog', kodok: 'frog', unicorn: 'unicorn', paus: 'whale', harimau: 'tiger', macan: 'tiger', kupu: 'butterfly', 'kupu-kupu': 'butterfly', serigala: 'wolf', elang: 'eagle', kura: 'turtle', 'kura-kura': 'turtle', penyu: 'sea turtle', gajah: 'elephant', domba: 'sheep', kelelawar: 'bat', monyet: 'monkey', hiu: 'shark', bebek: 'duck', siput: 'snail', phoenix: 'phoenix', gurita: 'octopus', singa: 'lion', merak: 'peacock', hamster: 'hamster', pinguin: 'penguin', anjing: 'dog', sapi: 'cow', kambing: 'goat', kuda: 'horse', tupai: 'squirrel', beruang: 'bear', ular: 'snake', buaya: 'crocodile', komodo: 'komodo dragon', jerapah: 'giraffe', lumba: 'dolphin', 'lumba-lumba': 'dolphin', gagak: 'crow', angsa: 'swan', semut: 'ant', laba: 'spider', 'laba-laba': 'spider', tikus: 'mouse', badak: 'rhinoceros', zebra: 'zebra', koala: 'koala' };
   const toEN = (h) => { const k = String(h).toLowerCase().trim(); return EN[k] ? `${EN[k]} (${h})` : h; };
   function geminiPrompt(w) {
-    const pub = { u: w.username, nama: w.nama, hewan: w.hewan, tier: w.tier };
-    const el = window.KartuWarga.elementOf(pub).name;
+    const tier = Math.max(0, Math.min(5, w.tier || 0));
+    const el = tier >= 2 && w.elemen ? w.elemen : null;
     const story = (w.cerita || []).slice(-1)[0]?.text || '';
     return [
       `Create an anime-style illustration (Japanese anime, cel-shaded, clean line art, vibrant colors, high detail) of an original cute fantasy creature named "${w.nama}".`,
       `It is a hybrid of ${(w.hewan || []).map(toEN).join(' and ')}, clearly showing recognizable features of each animal blended into one creature.`,
       story ? `Personality and habit (written in Indonesian): "${story}". Show this habit in the pose or a small detail.` : 'Give it a cheerful, curious personality.',
       `Full body, centered, dynamic pose, big expressive eyes, friendly and family-friendly.`,
-      `Visual effects: ${TIER_FX[Math.max(0, Math.min(3, w.tier || 0))]}.`,
-      `Background: ${ELEM_BG[el] || ELEM_BG.Batu} (element: ${el}).`,
+      `Evolution stage: ${TIER_FX[tier]}.`,
+      el ? `Element: ${ELEM_EN[el] || el} (${el}) — show this element clearly in the aura and effects.` : '',
+      tier >= 4 && w.outfit ? `Custom outfit (written in Indonesian): "${w.outfit}".` : '',
+      tier >= 5 && w.wujud ? `New divine base form: ${(WUJUD_EN.find(([re]) => re.test(w.wujud)) || [0, w.wujud])[1]}, while keeping recognizable features of the original animals and its name "${w.nama}".` : '',
+      `Background: ${el ? (ELEM_BG[el] || 'a magical landscape matching the ' + el + ' element') : 'a peaceful pixel-farm style meadow'}.`,
       `Landscape orientation, 3:2 aspect ratio. No text, no letters, no logo, no watermark, no card frame.`,
-    ].join(' ');
+    ].filter(Boolean).join(' ');
   }
   function compress(file) {
     return new Promise((resolve, reject) => {

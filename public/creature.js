@@ -46,11 +46,35 @@
 
   const cache = new Map();
 
+  const EL_COL = { api: '#ff5a2a', air: '#3fa0ff', angin: '#9fe8ff', tanah: '#b07a3e', petir: '#ffe23a', es: '#bff2ff', daun: '#5fd04a', cahaya: '#fff2a8', kegelapan: '#7a3fb0', bintang: '#c27ae0' };
+  function elementColor(e) { const k = String(e || '').toLowerCase().trim(); return EL_COL[k] || FALLBACK[hash(k) % FALLBACK.length]; }
+  const OUT_COL = [[/merah|red/, '#d9483b'], [/biru|blue/, '#3f6fd0'], [/hijau|green/, '#3fae5a'], [/kuning|yellow/, '#f2c230'], [/ungu|purple|violet/, '#7a3fb0'], [/hitam|black/, '#2b2b35'], [/putih|white/, '#f4f4f0'], [/emas|gold/, '#e3b04b'], [/perak|silver/, '#b8c0cc'], [/pink|merah muda/, '#f48cb0'], [/oranye|orange|jingga/, '#f08a24'], [/coklat|cokelat|brown/, '#8a5a34']];
+  function outfitColor(o) { const t = String(o || '').toLowerCase(); for (const [re, c] of OUT_COL) if (re.test(t)) return c; return '#7a3fb0'; }
+  const GOD = {
+    mecha: { body: '#b8c0cc', acc: '#3f6fd0', acc2: '#d9483b', belly: '#e4e8ee' },
+    beast: { body: '#8c96a6', acc: '#d9483b', acc2: '#ffd23f', belly: '#c8ced8' },
+    cyborg: { body: null, acc: '#5c6678', acc2: '#5ff0ff', belly: null },
+    kristal: { body: '#8fe3f0', acc: '#c9f6ff', acc2: '#ffffff', belly: '#d6f8ff' },
+    roh: { body: '#fff6c8', acc: '#ffe27a', acc2: '#ffffff', belly: '#ffffff' },
+    kaiju: { body: '#3f6b4a', acc: '#c8f06a', acc2: '#2b4a34', belly: '#7aa070' },
+    ilahi: { body: '#ffe27a', acc: '#ffffff', acc2: '#ffd23f', belly: '#fff6d6' },
+  };
+  function godKind(wj) {
+    const t = String(wj || '').toLowerCase();
+    if (/beast|zoid|binatang mesin|mesin buas/.test(t)) return 'beast';
+    if (/mecha|mech|robot|gundam/.test(t)) return 'mecha';
+    if (/cyborg|android|siborg/.test(t)) return 'cyborg';
+    if (/kristal|crystal|permata/.test(t)) return 'kristal';
+    if (/roh|spirit|cahaya|hantu|arwah/.test(t)) return 'roh';
+    if (/kaiju|monster raksasa|godzilla/.test(t)) return 'kaiju';
+    return t ? 'ilahi' : 'mecha';
+  }
+
   function make(w) {
     const hewan = (w.hewan || []).map((h) => String(h).toLowerCase());
     const all = hewan.join(' ');
     const tier = Number(w.tier || 0);
-    const k = (w.u || w.nama) + '|' + all + '|' + tier;
+    const k = (w.u || w.nama) + '|' + all + '|' + tier + '|' + (w.elemen || '') + '|' + (w.outfit || '') + '|' + (w.wujud || '');
     if (cache.has(k)) return cache.get(k);
     const seed = hash(k);
     const S = 26;
@@ -65,13 +89,16 @@
     };
     const tri = (pts, col) => { g.fillStyle = col; g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) g.lineTo(p[0], p[1]); g.closePath(); g.fill(); };
 
-    const body = colorFor(hewan[0], seed);
-    const acc = hewan[1] ? colorFor(hewan[1], seed >> 3) : shade(body, 0.75);
-    const acc2 = hewan[2] ? colorFor(hewan[2], seed >> 5) : acc;
-    const belly = shade(body, 1.18);
+    let body = colorFor(hewan[0], seed);
+    let acc = hewan[1] ? colorFor(hewan[1], seed >> 3) : shade(body, 0.75);
+    let acc2 = hewan[2] ? colorFor(hewan[2], seed >> 5) : acc;
+    let belly = shade(body, 1.18);
+    // God Mode: swap the base graphics
+    const god = tier >= 5 ? godKind(w.wujud) : null;
+    if (god) { const G = GOD[god]; body = G.body || body; acc = G.acc || acc; acc2 = G.acc2 || acc2; belly = G.belly || belly; }
     const cx = 13;
     // wings (behind)
-    if (has(RE.wing, all) || tier >= 2) {
+    if (has(RE.wing, all) || tier >= 4) {
       const wc = has(RE.wing, hewan[0] || '') && hewan.length === 1 ? shade(body, .8) : acc;
       tri([[cx - 4, 15], [cx - 11, 8], [cx - 10, 17]], wc); tri([[cx + 4, 15], [cx + 11, 8], [cx + 10, 17]], wc);
       tri([[cx - 5, 16], [cx - 9, 11], [cx - 9, 17]], shade(wc, .8)); tri([[cx + 5, 16], [cx + 9, 11], [cx + 9, 17]], shade(wc, .8));
@@ -121,22 +148,65 @@
     else { px(cx, hy + 1, '#e8607a'); px(cx - 1, hy + 2, OL); px(cx + 1, hy + 2, OL); }
     // feet
     g.fillStyle = shade(body, .7); g.fillRect(cx - 4, 22, 2, 2); g.fillRect(cx + 2, 22, 2, 2);
-    // tier extras
-    if (tier >= 1) { g.fillStyle = acc2 === body ? '#d9483b' : acc2; g.fillRect(cx - 4, hy + 4, 8, 1); px(cx + 2, hy + 5, g.fillStyle); }
-    if (tier >= 3) {
-      g.fillStyle = '#ffd23f'; g.fillRect(cx - 3, hy - 8, 7, 3); px(cx - 3, hy - 9, '#ffd23f'); px(cx, hy - 9, '#ffd23f'); px(cx + 3, hy - 9, '#ffd23f');
-      px(cx, hy - 7, '#d9483b'); px(cx - 2, hy - 7, '#4aa3df'); px(cx + 2, hy - 7, '#4aa3df');
+    // God Mode details on the base body
+    if (god === 'mecha' || god === 'beast' || god === 'cyborg') {
+      const metal = '#5c6678';
+      g.fillStyle = god === 'beast' ? '#ff4a3d' : '#5ff0ff'; g.fillRect(cx - 4, hy - 1, 9, 2);     // visor
+      g.fillStyle = metal; g.fillRect(cx - 6, 17, 13, 1); g.fillRect(cx, 14, 1, 8);                 // panel lines
+      px(cx - 4, 20, '#ffd23f'); px(cx + 4, 20, '#ffd23f');                                          // bolts
+      px(cx, hy - 6, metal); px(cx, hy - 7, metal); px(cx, hy - 8, '#ff4a3d');                       // antenna
+      if (god === 'beast') for (let i = 0; i < 4; i++) tri([[cx - 3 + i * 2, 13], [cx - 2 + i * 2, 10], [cx - 1 + i * 2, 13]], '#c8ced8');
+      if (god === 'cyborg') { g.fillStyle = 'rgba(160,170,185,.9)'; g.fillRect(cx, hy - 4, 6, 14); px(cx + 2, hy - 1, '#ff4a3d'); }
+    } else if (god === 'kristal') {
+      g.fillStyle = 'rgba(255,255,255,.85)'; for (let i = 0; i < 6; i++) g.fillRect(cx - 5 + i * 2, 14 + (i % 3), 1, 1);
+      g.fillRect(cx - 3, hy - 3, 1, 3); g.fillRect(cx + 2, 16, 1, 3);
+    } else if (god === 'kaiju') {
+      for (let i = 0; i < 3; i++) tri([[cx - 2 + i * 2, 13], [cx - 1 + i * 2, 9], [cx + i * 2, 13]], '#c8f06a');
     }
-    // outline
-    const img = g.getImageData(0, 0, S, S); const d = img.data;
-    const op = (x, y) => x >= 0 && y >= 0 && x < S && y < S && d[(y * S + x) * 4 + 3] > 0;
+    // Pseudo-evo and up: bright eyes are drawn above; Legendary: outfit scarf on the base
+    const outfitCol = outfitColor(w.outfit);
+    if (tier >= 4) { g.fillStyle = outfitCol; g.fillRect(cx - 5, hy + 4, 10, 2); px(cx + 3, hy + 6, outfitCol); px(cx + 3, hy + 7, outfitCol); }
+
+    // ---- composite onto a bigger canvas: aura + cape behind, armor + halo in front
+    const F = 36, ox = 5, oy = 7;
+    const fc = document.createElement('canvas'); fc.width = F; fc.height = F;
+    const f = fc.getContext('2d');
+    const fpx = (x, y, col) => { f.fillStyle = col; f.fillRect(Math.round(x), Math.round(y), 1, 1); };
+    const fell = (ex, ey, rx, ry, col) => { f.fillStyle = col; for (let y = Math.floor(ey - ry); y <= Math.ceil(ey + ry); y++) for (let x = Math.floor(ex - rx); x <= Math.ceil(ex + rx); x++) if (((x - ex) / rx) ** 2 + ((y - ey) / ry) ** 2 <= 1) f.fillRect(x, y, 1, 1); };
+    const X = cx + ox;
+    // element aura (Mega Evolution)
+    const elCol = tier >= 2 && w.elemen ? elementColor(w.elemen) : null;
+    if (elCol) {
+      for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; fpx(X + Math.cos(a) * 13, oy + 15 + Math.sin(a) * 11, i % 2 ? elCol : shade(elCol, 1.3)); }
+      for (let i = 0; i < 5; i++) fpx(X - 9 + ((seed >> i) % 18), oy + 2 + ((seed >> (i + 3)) % 6), elCol);
+    }
+    // cape (Legendary outfit)
+    if (tier >= 4) { f.fillStyle = shade(outfitCol, .8); f.beginPath(); f.moveTo(X - 5, oy + 14); f.lineTo(X + 5, oy + 14); f.lineTo(X + 9, oy + 26); f.lineTo(X - 9, oy + 26); f.closePath(); f.fill(); }
+    // God Mode thrusters / glow
+    if (god === 'roh') fell(X, oy + 15, 12, 12, 'rgba(255,246,200,.45)');
+    f.drawImage(c, ox, oy);
+    // armor (Mythical)
+    if (tier >= 3 && god !== 'roh') {
+      const steel = god ? '#3d4656' : '#a9b2bf', steelD = shade(steel, .75);
+      f.fillStyle = steel; f.fillRect(X - 5, oy + hy - 5, 11, 2);                     // helmet band
+      f.fillRect(X - 1, oy + hy - 7, 3, 2);                                           // helmet crest
+      f.fillStyle = steelD; f.fillRect(X - 8, oy + 15, 3, 3); f.fillRect(X + 6, oy + 15, 3, 3); // shoulder pads
+      f.fillStyle = steel; f.fillRect(X - 3, oy + 15, 7, 4);                          // chest plate
+      fpx(X, oy + 16, elCol || '#5ff0ff');                                            // gem
+    }
+    // halo (God Mode)
+    if (tier >= 5) { f.strokeStyle = '#ffd23f'; f.lineWidth = 1; f.beginPath(); f.ellipse(X + .5, oy + 1.5, 5, 1.6, 0, 0, Math.PI * 2); f.stroke(); }
+    // outline everything
+    const img = f.getImageData(0, 0, F, F); const d = img.data;
+    const op = (x, y) => x >= 0 && y >= 0 && x < F && y < F && d[(y * F + x) * 4 + 3] > 40;
     const edge = [];
-    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (!op(x, y) && (op(x - 1, y) || op(x + 1, y) || op(x, y - 1) || op(x, y + 1))) edge.push([x, y]);
-    g.fillStyle = tier >= 3 ? '#8a5a00' : OL;
-    for (const [x, y] of edge) g.fillRect(x, y, 1, 1);
-    cache.set(k, c);
-    return c;
+    for (let y = 0; y < F; y++) for (let x = 0; x < F; x++) if (!op(x, y) && (op(x - 1, y) || op(x + 1, y) || op(x, y - 1) || op(x, y + 1))) edge.push([x, y]);
+    f.fillStyle = tier >= 5 ? '#6a4a00' : OL;
+    for (const [x, y] of edge) f.fillRect(x, y, 1, 1);
+    fc.grow = tier >= 1 ? (tier >= 3 ? 1.5 : 1.3) : 1; // Pseudo-evo: grows bigger
+    cache.set(k, fc);
+    return fc;
   }
 
-  window.Creature = { make, hash };
+  window.Creature = { make, hash, elementColor };
 })();

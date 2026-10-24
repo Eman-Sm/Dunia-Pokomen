@@ -16,7 +16,8 @@ globalThis.fetch = async (url, opt = {}) => {
   return new Response(JSON.stringify({ error: { message: 'unexpected ' + u } }), { status: 400 });
 };
 const { processComment, handleDM } = await import('../lib/rules.js');
-const { getJSON } = await import('../lib/db.js');
+const { getJSON, redis: _r } = await import('../lib/db.js');
+await _r('SET', 'tier_schema', '6');
 
 test('wajib follow: komentar → DM → cek follow → lahir', async () => {
   const r = await processComment({ id: 'c1', username: 'ani', userId: 'IGSID-ani', text: 'Nama: Piyo | Hewan: Ayam + Naga | Cerita: suka tidur di atap', mediaId: 'p1' });

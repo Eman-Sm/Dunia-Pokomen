@@ -186,7 +186,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .steps li::before { content: counter(s); font-family: var(--font-display); font-size: 1.1rem; width: 34px; height: 34px; display: grid; place-items: center; background: var(--gold); border: var(--px) solid var(--outline); }
 .formatbox { background: #2b2420; color: #f6e7c8; border: var(--px) solid var(--outline); padding: 12px 14px; font-family: var(--font-display); font-size: .98rem; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
 .copyrow { display: flex; gap: 8px; align-items: center; margin: 8px 0 16px; flex-wrap: wrap; }
-.ladder { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.ladder { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.ladder b { display: block; font-family: var(--font-display); font-weight: 600; font-size: .82rem; line-height: 1.15; }
+.ladder small { display: block; color: var(--ink-soft); font-size: .74rem; line-height: 1.2; margin-top: 2px; }
 .ladder div { text-align: center; background: #fff8e7; border: 2px solid var(--outline); padding: 8px 4px; font-size: .8rem; }
 .ladder canvas { width: 56px; height: 56px; image-rendering: pixelated; display: block; margin: 0 auto 4px; }
 
@@ -243,14 +245,21 @@ label.f { display: grid; gap: 3px; font-size: .82rem; font-weight: 800; }
 .kartu .glare { background: radial-gradient(circle at var(--mx) var(--my), rgba(255,255,255,.55), rgba(255,255,255,0) 45%); mix-blend-mode: soft-light; }
 .kartu.t1 .foil { background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.65) 48%, rgba(220,235,255,.4) 52%, transparent 65%);
   background-size: 260% 100%; animation: sweep 3.2s ease-in-out infinite; mix-blend-mode: screen; }
-.kartu.t2 .foil { background: repeating-linear-gradient(115deg, rgba(255,95,109,.5) 0 6%, rgba(255,195,113,.5) 6% 12%, rgba(255,243,107,.5) 12% 18%, rgba(107,255,149,.5) 18% 24%, rgba(94,200,255,.5) 24% 30%, rgba(167,123,255,.5) 30% 36%);
+/* t4 Legendary: gold holo */
+.kartu.t4 .foil { background: repeating-linear-gradient(115deg, rgba(255,95,109,.5) 0 6%, rgba(255,195,113,.5) 6% 12%, rgba(255,243,107,.5) 12% 18%, rgba(107,255,149,.5) 18% 24%, rgba(94,200,255,.5) 24% 30%, rgba(167,123,255,.5) 30% 36%);
   background-size: 300% 300%; background-position: var(--mx) var(--my); mix-blend-mode: color-dodge; opacity: .45; }
-.kartu.t2 { box-shadow: 0 0 0 3px #ffd23f, 0 18px 40px rgba(0,0,0,.5), 0 0 30px rgba(255,210,63,.45); }
-.kartu.t3 .foil { background:
+.kartu.t4 { box-shadow: 0 0 0 3px #ffd23f, 0 18px 40px rgba(0,0,0,.5), 0 0 30px rgba(255,210,63,.45); }
+/* t5 God Mode: cosmic rainbow */
+.kartu.t5 .foil { background:
     radial-gradient(circle, rgba(255,255,255,.9) 0 1px, transparent 2px) 0 0 / 18px 18px,
     repeating-linear-gradient(125deg, rgba(255,95,109,.55) 0 5%, rgba(255,243,107,.55) 5% 10%, rgba(107,255,149,.55) 10% 15%, rgba(94,200,255,.55) 15% 20%, rgba(255,107,214,.55) 20% 25%);
-  background-position: var(--mx) var(--my), var(--mx) var(--my); background-size: 18px 18px, 320% 320%; mix-blend-mode: color-dodge; opacity: .45; }
-.kartu.t3 { animation: legend-glow 3s linear infinite; }
+  background-position: var(--mx) var(--my), var(--mx) var(--my); background-size: 18px 18px, 320% 320%; mix-blend-mode: color-dodge; opacity: .3; }
+.kartu.t5 { animation: legend-glow 3s linear infinite; }
+/* t1 Pseudo-evo: silver sweep (above). t2 Mega: sweep + element glow. t3 Mythical: steel sheen + light holo */
+.kartu.t2 .foil { background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.6) 48%, transparent 62%); background-size: 260% 100%; animation: sweep 2.6s ease-in-out infinite; mix-blend-mode: screen; }
+.kartu.t2 { box-shadow: 0 0 0 3px var(--el, #ff9a5a), 0 18px 40px rgba(0,0,0,.5), 0 0 26px var(--el, #ff9a5a); }
+.kartu.t3 .foil { background: repeating-linear-gradient(135deg, rgba(255,255,255,.18) 0 3%, rgba(160,175,200,.28) 3% 6%); background-size: 240% 240%; background-position: var(--mx) var(--my); mix-blend-mode: overlay; }
+.kartu.t3 { box-shadow: 0 0 0 3px #8a93a3, 0 18px 40px rgba(0,0,0,.55), 0 0 18px rgba(140,160,190,.6); }
 @keyframes sweep { 0% { background-position: 120% 0; } 60%, 100% { background-position: -40% 0; } }
 @keyframes legend-glow { 0% { box-shadow: 0 0 0 3px #ff5f6d, 0 0 38px #ff5f6d; } 33% { box-shadow: 0 0 0 3px #5ec8ff, 0 0 38px #5ec8ff; } 66% { box-shadow: 0 0 0 3px #ffd23f, 0 0 38px #ffd23f; } 100% { box-shadow: 0 0 0 3px #ff5f6d, 0 0 38px #ff5f6d; } }
 .kartu-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
