@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dunia Pokomen</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Dunia pixel-art yang warganya lahir dari kolom komentar. Cari hewanmu, baca ceritanya, dan lihat fasilitas yang akan dibangun.">
+<meta property="og:title" content="Dunia Pokomen">
+<meta property="og:description" content="Populasi Komentar: tulis hewanmu di kolom komentar, dan dia lahir di dunia ini.">
+<meta property="og:image" content="assets/og.png">
+<link rel="icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&family=Pixelify+Sans:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#peta">
+      <img src="assets/presenter.png" alt="Admin Pokomen" width="52" height="52">
+      <span><span class="name">DUNIA POKOMEN</span><span class="sub">Populasi Komentar</span></span>
+    </a>
+    <nav class="tabs" aria-label="Bagian halaman">
+      <a href="#peta">Peta</a><a href="#warga">Buku Warga</a><a href="#fasilitas">Fasilitas</a><a href="#ikut">Cara Ikut</a>
+    </nav>
+    <div class="chips">
+      <span class="chip" id="chipHari">HARI KE-1</span>
+      <span class="chip gold" id="chipWarga">0 WARGA</span>
+      <span class="chip demo" id="chipDemo" hidden>MODE CONTOH</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="wrap hero" id="peta">
+    <div>
+      <h1>Selamat datang di Dunia Pokomen</h1>
+      <p>Setiap komentar di Instagram kami melahirkan satu warga baru. Geser dan perbesar peta, lalu cari hewanmu.</p>
+    </div>
+    <div class="bubble" id="bubble">Halo warga! Aku Admin semesta. Hewanmu sudah lahir belum?</div>
+  </section>
+
+  <section class="wrap">
+    <div class="mapframe wood">
+      <div class="map-tools">
+        <form class="search" id="searchForm" role="search">
+          <input type="search" id="searchInput" placeholder="Cari @username atau nama hewan" aria-label="Cari warga">
+          <button class="btn" type="submit">Cari</button>
+        </form>
+        <button class="btn ghost sq" id="zoomIn" type="button" aria-label="Perbesar">+</button>
+        <button class="btn ghost sq" id="zoomOut" type="button" aria-label="Perkecil">&minus;</button>
+        <button class="btn ghost" id="zoomHome" type="button">Ke desa</button>
+      </div>
+      <div class="mapbox" id="mapbox">
+        <canvas id="map" aria-label="Peta Dunia Pokomen"></canvas>
+        <div class="map-hint" id="mapHint">Seret untuk geser, scroll atau cubit untuk zoom</div>
+        <article class="card" id="card" hidden aria-live="polite"></article>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap ledger">
+    <section class="parchment" id="warga" aria-labelledby="wargaTitle">
+      <h2 id="wargaTitle">Buku Warga</h2>
+      <p id="wargaSub">Semua hewan yang sudah lahir dari kolom komentar.</p>
+      <div class="filters">
+        <input type="search" id="bookSearch" placeholder="Saring nama, @akun, atau hewan" aria-label="Saring warga">
+        <div class="filters" id="tierFilter" role="group" aria-label="Saring tingkat" style="margin:0"></div>
+      </div>
+      <div class="grid" id="book"></div>
+      <button class="btn ghost more" id="moreBtn" type="button" hidden>Tampilkan lebih banyak</button>
+    </section>
+
+    <div class="col">
+      <section class="parchment" id="fasilitas" aria-labelledby="fasTitle">
+        <h2 id="fasTitle">Usulan Fasilitas</h2>
+        <p>Usulan dengan like terbanyak dibangun di episode berikutnya.</p>
+        <ul class="votes" id="votes"></ul>
+      </section>
+      <section class="parchment" aria-labelledby="newsTitle">
+        <h2 id="newsTitle">Kabar Desa</h2>
+        <p>Kelahiran, evolusi, dan pembangunan terbaru.</p>
+        <ul class="news" id="news"></ul>
+      </section>
+    </div>
+  </div>
+
+  <section class="wrap join" id="ikut" aria-labelledby="ikutTitle">
+    <div class="parchment">
+      <div>
+        <h2 id="ikutTitle">Cara jadi warga</h2>
+        <ol class="steps">
+          <li><span>Buka postingan terbaru <a id="igLink" href="https://www.instagram.com/duniapokomen/" target="_blank" rel="noopener">@duniapokomen</a> dan tulis komentar dengan format di samping.</span></li>
+          <li><span>Dalam beberapa menit hewanmu lahir sebagai <b>Hewan Reguler</b> dan muncul di peta.</span></li>
+          <li><span>Di postingan berikutnya, ceritakan satu kebiasaan unik hewanmu. Setiap cerita di postingan baru membuatnya berevolusi.</span></li>
+          <li><span>Tingkat <b>Legenda</b> hanya diberikan Admin untuk cerita yang paling berkesan.</span></li>
+        </ol>
+        <div class="ladder" id="ladder"></div>
+      </div>
+      <div>
+        <h3 class="display" style="margin:0 0 6px">Daftar jadi warga</h3>
+        <div class="formatbox" id="fmt1">Nama: Bolu | Hewan: Kucing + Naga | Cerita: suka menghangatkan air mandi warga</div>
+        <div class="copyrow"><button class="btn" type="button" data-copy="fmt1">Salin format</button><span class="muted">Ganti isinya dengan hewanmu sendiri.</span></div>
+        <h3 class="display" style="margin:0 0 6px">Evolusi lewat cerita</h3>
+        <div class="formatbox" id="fmt2">Cerita: hari ini Bolu belajar berenang di danau barat</div>
+        <div class="copyrow"><button class="btn" type="button" data-copy="fmt2">Salin format</button></div>
+        <h3 class="display" style="margin:0 0 6px">Usulkan fasilitas</h3>
+        <div class="formatbox" id="fmt3">Usul: Kolam Minum</div>
+        <div class="copyrow"><button class="btn" type="button" data-copy="fmt3">Salin format</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Dunia Pokomen · Populasi Komentar</span>
+    <span>Data diperbarui otomatis dari komentar Instagram. <a href="admin.html">Masuk Admin</a></span>
+  </div>
+</footer>
+<div class="toast" id="toast" hidden></div>
+
+<script src="creature.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

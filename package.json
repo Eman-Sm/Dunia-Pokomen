@@ -1,0 +1,9 @@
+{
+  "name": "dunia-pokomen",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Website & server Dunia Pokomen: membaca komentar Instagram menjadi warga dunia pixel-art.",
+  "engines": { "node": ">=20" },
+  "scripts": { "test": "node --test test/*.test.js" }
+}
