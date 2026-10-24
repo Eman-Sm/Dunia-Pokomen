@@ -179,3 +179,17 @@ Instagram tidak punya notifikasi unfollow dan tidak membagikan daftar follower l
 2. **Daftar follower** — di Instagram: Pusat Akun → Informasi Anda → Unduh informasi → Followers dan following. Unggah `followers_1.json`/`.html` di Ruang Admin → *Unfollow = hewan mati*, centang yang mau dimatikan, lalu klik **Matikan yang dipilih**.
 
 Salah matikan? Klik **Hidupkan** di tabel Warga.
+
+## Gambar anime otomatis (Gemini API)
+
+Ruang Admin → Warga punya tombol **Buat dengan Gemini** (per warga) dan **Buat gambar untuk semua yang belum punya**. Prompt anime dan sprite hewan dikirim ke Gemini, hasilnya otomatis dipotong 3:2, dikompres dan dipasang di Kartu Warga.
+
+Environment variable di Vercel:
+
+| Nama | Isi |
+|---|---|
+| `GEMINI_API_KEY` | API key dari Google AI Studio (wajib) |
+| `GEMINI_IMAGE_MODEL` | opsional, default `gemini-3.1-flash-image` (Nano Banana 2). Lebih murah: `gemini-3.1-flash-lite-image` |
+| `GEMINI_DAILY_LIMIT` | opsional, batas gambar per hari (default 30) |
+
+Gemini API ditagih terpisah dari langganan Gemini. Pelanggan Google AI Pro mendapat kredit Google Cloud bulanan lewat Google Developer Program yang bisa dipakai untuk Gemini API.
