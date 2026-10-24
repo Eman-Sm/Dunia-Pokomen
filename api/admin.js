@@ -1,7 +1,8 @@
 // Admin API — every request needs  Authorization: Bearer <ADMIN_PASSWORD>
 // Body: { action: '...', ...params }
 import { redis, getJSON, setJSON, hgetallJSON } from '../lib/db.js';
-import { CONFIG, newWarga, log, birth, requireFollow, askIfMissing, ensureTierSchema } from '../lib/rules.js';
+import { CONFIG, newWarga, log, birth, requireFollow, askIfMissing, ensureTierSchema, matikan, hidupkan } from '../lib/rules.js';
+import { cekUnfollowOtomatis, bandingkanFollowers, parseFollowers } from '../lib/unfollow.js';
 import { syncLatest, ownUsername } from '../lib/sync.js';
 import { refreshToken, subscribeWebhooks, listMedia, me } from '../lib/ig.js';
 import { json, bearer, safeEqual, hariKe } from '../lib/http.js';
@@ -110,6 +111,23 @@ const actions = {
   async pemilu_set({ posts, tutup }) {
     const p = Array.isArray(posts) ? posts.filter(Boolean).slice(0, 5) : [];
     return pemiluSet({ posts: p, tutup: tutup ? new Date(tutup).toISOString() : null });
+  },
+  async matikan({ username, usernames }) {
+    const list = (usernames && usernames.length ? usernames : [username]).map(key).filter(Boolean).slice(0, 200);
+    const hasil = [];
+    for (const u of list) { try { await matikan(u, { sebab: 'unfollow', oleh: 'admin' }); hasil.push({ u, ok: true }); } catch (e) { hasil.push({ u, error: e.message }); } }
+    return { mati: hasil.filter((x) => x.ok).length, hasil };
+  },
+  async hidupkan({ username }) { return hidupkan(username); },
+  async cek_unfollow({ dryRun = false }) { return cekUnfollowOtomatis({ limit: 60, dryRun: !!dryRun }); },
+  async banding_followers({ text, followers }) {
+    const list = Array.isArray(followers) && followers.length ? followers : parseFollowers(text);
+    return bandingkanFollowers(list);
+  },
+  async unfollow_status() {
+    const last = await redis('GET', 'unfollow_last');
+    const warga = await hgetallJSON('warga');
+    return { last: last ? JSON.parse(last) : null, punyaId: warga.filter((w) => w.igsid && !w.mati).length, hidup: warga.filter((w) => !w.mati).length, mati: warga.filter((w) => w.mati).length, otomatis: process.env.CEK_UNFOLLOW !== '0' };
   },
   async pemilu_hitung() { return pemiluHitung({ force: true }); },
   async tetapkan_ketua({ username }) { return tetapkanKetua(username); },

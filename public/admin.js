@@ -30,7 +30,7 @@
     S = await api('status');
     $('loginBox').hidden = true; $('panel').hidden = false;
     $('chipHari').textContent = 'HARI KE-' + S.hari;
-    $('chipWarga').textContent = S.warga.filter((w) => !w.hidden).length + ' WARGA';
+    $('chipWarga').textContent = S.warga.filter((w) => !w.hidden && !w.mati).length + ' WARGA';
     const conn = [
       ['Akun', S.account ? '@' + S.account.username : '<b style="color:var(--berry)">Belum tersambung</b>' + (S.igError ? ' — ' + esc(S.igError) : '')],
       ['Sumber token', esc(S.tokenSource)],
@@ -42,7 +42,7 @@
     $('conn').innerHTML = conn.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
     if (S.hariPertama) $('hariPertama').value = S.hariPertama;
     renderPending(); renderWarga(); renderUsulan(); renderDukungan(); renderMenunggu();
-    loadPemilu();
+    loadPemilu(); loadUnfollow();
   }
 
   let PM = null;
@@ -109,7 +109,7 @@
         <label class="btn ghost">Unggah gambar<input type="file" accept="image/*" data-art hidden></label>
         ${w.artVer ? '<button class="btn red" type="button" data-noart>Hapus</button>' : ''}</div></td>
       <td><input type="checkbox" data-f="hidden" ${w.hidden ? 'checked' : ''} aria-label="Sembunyikan"></td>
-      <td class="adm-row"><button class="btn ghost" data-save type="button">Simpan</button><button class="btn red" data-del type="button">Hapus</button></td></tr>`).join('')
+      <td class="adm-row"><button class="btn ghost" data-save type="button">Simpan</button>${w.mati ? '<button class="btn green" data-revive type="button">Hidupkan</button>' : '<button class="btn ghost" data-kill type="button">Matikan</button>'}<button class="btn red" data-del type="button">Hapus</button>${w.mati ? '<br><span class="muted">RIP: unfollow</span>' : ''}</td></tr>`).join('')
       : '<tr><td colspan="8" class="muted">Belum ada warga.</td></tr>';
     $('wargaT').querySelectorAll('[data-save]').forEach((b) => b.onclick = () => {
       const tr = b.closest('tr'); const patch = {};
@@ -128,6 +128,14 @@
       catch (e) { toast('Gagal: ' + e.message); }
     });
     $('wargaT').querySelectorAll('[data-noart]').forEach((b) => b.onclick = () => run(b, 'remove_art', { username: b.closest('tr').dataset.u }, 'Gambar dihapus'));
+    $('wargaT').querySelectorAll('[data-revive]').forEach((b) => b.onclick = () => run(b, 'hidupkan', { username: b.closest('tr').dataset.u }, 'Hewan hidup kembali'));
+    $('wargaT').querySelectorAll('[data-kill]').forEach((b) => {
+      let armed = false;
+      b.onclick = () => {
+        if (!armed) { armed = true; b.textContent = 'Yakin mati?'; setTimeout(() => { armed = false; b.textContent = 'Matikan'; }, 3000); return; }
+        run(b, 'matikan', { username: b.closest('tr').dataset.u }, 'Hewan mati (diterlantarkan)');
+      };
+    });
     $('wargaT').querySelectorAll('[data-del]').forEach((b) => {
       let armed = false;
       b.onclick = () => {
@@ -137,6 +145,41 @@
     });
   }
   $('wq').addEventListener('input', () => S && renderWarga());
+
+  // ---------- unfollow = dead
+  async function loadUnfollow() {
+    try {
+      const d = await api('unfollow_status');
+      const l = d.last;
+      $('ufInfo').textContent = `${d.hidup} hewan hidup, ${d.mati} mati. ${d.punyaId} warga bisa dicek otomatis.` +
+        (l ? ` Cek terakhir ${new Date(l.t).toLocaleString('id-ID')}: ${l.dicek} dicek, ${l.unfollow.length} unfollow, ${l.tidakBisaDicek} tidak dijawab Instagram.` : '');
+    } catch (e) { $('ufInfo').textContent = e.message; }
+  }
+  function renderUf(list) {
+    $('ufT').innerHTML = list.length ? list.map((w) => `<tr><td><input type="checkbox" data-uf="${esc(w.username)}"></td><td>@${esc(w.username)}</td><td>${esc(w.nama)} (${esc((w.hewan || []).join(' + '))})</td><td>${esc(S.tiers[w.tier] || '')}</td></tr>`).join('')
+      : '<tr><td colspan="4" class="muted">Semua warga masih follow.</td></tr>';
+    $('ufKill').disabled = !list.length;
+  }
+  $('ufAuto').onclick = async () => { const d = await run($('ufAuto'), 'cek_unfollow', {}, 'Cek otomatis selesai'); if (d) loadUnfollow(); };
+  $('ufFile').onchange = async () => { const f = $('ufFile').files[0]; if (!f) return; $('ufText').value = await f.text(); toast('File dimuat. Klik Bandingkan.'); };
+  $('ufCompare').onclick = async () => {
+    try {
+      const d = await api('banding_followers', { text: $('ufText').value });
+      out({ jumlahFollower: d.jumlahFollower, jumlahWarga: d.jumlahWarga, bukanFollower: d.bukanFollower.length });
+      renderUf(d.bukanFollower);
+      toast(`${d.bukanFollower.length} warga tidak ada di daftar follower`);
+    } catch (e) { toast('Gagal: ' + e.message); }
+  };
+  $('ufAll').onchange = () => $('ufT').querySelectorAll('[data-uf]').forEach((c) => (c.checked = $('ufAll').checked));
+  $('ufKill').onclick = async () => {
+    const usernames = [...$('ufT').querySelectorAll('[data-uf]:checked')].map((c) => c.dataset.uf);
+    if (!usernames.length) return toast('Pilih dulu akunnya');
+    const b = $('ufKill');
+    if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = `Yakin matikan ${usernames.length} hewan?`; setTimeout(() => { b.dataset.armed = ''; b.textContent = 'Matikan yang dipilih'; }, 4000); return; }
+    b.dataset.armed = '';
+    await run(b, 'matikan', { usernames }, usernames.length + ' hewan mati');
+    renderUf([]); loadUnfollow();
+  };
 
   // ---------- Gemini prompt + image compression
   // Regular, Pseudo-evo, Mega, Mythical, Legendary, God Mode

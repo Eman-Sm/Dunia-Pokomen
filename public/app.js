@@ -119,12 +119,17 @@
     const sx = cam.x - Wc / cam.z / 2, sy = cam.y - Hc / cam.z / 2;
     ctx.drawImage(IMG, sx, sy, Wc / cam.z, Hc / cam.z, 0, 0, Wc, Hc);
     ctx.imageSmoothingEnabled = false;
-    const list = DATA.warga.map((w) => ({ w, p: spotOf(w) })).sort((a, b) => a.p[1] - b.p[1]);
+    const list = allWarga().map((w) => ({ w, p: spotOf(w) })).sort((a, b) => a.p[1] - b.p[1]);
     const labels = [];
     for (const { w, p } of list) {
      try {
       const [x, y] = toScreen(p[0], p[1]);
       if (x < -40 || y < -40 || x > Wc + 40 || y > Hc + 60) continue;
+      if (w.mati) {
+        const g = drawGrave(x, y);
+        labels.push({ w, x, y: g - 3, big: w === selected || w === hover });
+        continue;
+      }
       const sp = spriteFor(w);
       const custom = sp instanceof HTMLImageElement;
       const s = cam.z * (custom ? 26 / sp.width : (sp.grow || 1));
@@ -148,7 +153,7 @@
     const maxCh = compact ? 11 : 24;
     ctx.font = tagFont;
     for (const L of small) {
-      L.text = '@' + (L.w.u.length > maxCh ? L.w.u.slice(0, maxCh - 1) + '…' : L.w.u);
+      L.text = (L.w.mati ? 'RIP @' : '@') + (L.w.u.length > maxCh ? L.w.u.slice(0, maxCh - 1) + '…' : L.w.u);
       L.font = tagFont;
       const bw = ctx.measureText(L.text).width + (compact ? 6 : 10), bh = compact ? 12 : 15;
       let by = L.y - bh;
@@ -162,11 +167,22 @@
     }
     for (const L of labels.filter((L) => L.big)) drawLabel(L);
   }
+  // tombstone for a citizen that died because its owner unfollowed
+  function drawGrave(x, y) {
+    const z = cam.z, px = (dx, dy, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x + dx * z), Math.round(y + dy * z), Math.ceil(w * z), Math.ceil(h * z)); };
+    ctx.fillStyle = 'rgba(20,30,10,.28)'; ctx.beginPath(); ctx.ellipse(x, y, 8 * z, 2.4 * z, 0, 0, Math.PI * 2); ctx.fill();
+    px(-6, -15, 12, 15, '#2b1b17'); px(-5, -17, 10, 2, '#2b1b17'); px(-3, -18, 6, 1, '#2b1b17');
+    px(-5, -15, 10, 14, '#9aa0aa'); px(-4, -16, 8, 1, '#9aa0aa'); px(-5, -15, 2, 14, '#b7bcc5'); px(3, -15, 2, 14, '#7d838d');
+    px(-3, -12, 6, 1, '#5b616b'); px(-3, -9, 6, 1, '#5b616b'); px(-2, -6, 4, 1, '#5b616b');
+    px(-7, -1, 14, 2, '#6b4a2a'); px(-6, -2, 2, 1, '#4f9a45'); px(4, -2, 2, 1, '#4f9a45'); px(5, -3, 1, 1, '#f08ab0');
+    return y - 18 * z;
+  }
+  function allWarga() { return DATA ? DATA.warga.concat(DATA.makam || []) : []; }
   function drawUserTag({ w, x, y, text, font }, by, bw, bh) {
     const bx = Math.round(x - bw / 2); by = Math.round(by);
     if (by + bh < y - 2) { ctx.fillStyle = 'rgba(43,27,23,.7)'; ctx.fillRect(Math.round(x), by + bh, 1, Math.round(y - by - bh)); } // leader line
     ctx.fillStyle = '#2b1b17'; ctx.fillRect(bx - 1, by - 1, bw + 2, bh + 3);
-    ctx.fillStyle = w.gelar ? '#ffd23f' : w.tier >= 5 ? '#ffd23f' : w.tier >= 4 ? '#fff0b8' : '#fffaee'; ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = w.mati ? '#c9cdd4' : w.gelar ? '#ffd23f' : w.tier >= 5 ? '#ffd23f' : w.tier >= 4 ? '#fff0b8' : '#fffaee'; ctx.fillRect(bx, by, bw, bh);
     if (w.gelar) { ctx.fillStyle = '#ffd23f'; ctx.fillRect(Math.round(x) - 5, by - 6, 11, 4); ctx.fillRect(Math.round(x) - 5, by - 9, 2, 3); ctx.fillRect(Math.round(x) - 1, by - 10, 3, 4); ctx.fillRect(Math.round(x) + 4, by - 9, 2, 3); ctx.fillStyle = '#d9483b'; ctx.fillRect(Math.round(x), by - 5, 1, 2); }
     ctx.fillStyle = '#3b2416'; ctx.font = font; ctx.textBaseline = 'top';
     ctx.fillText(text, bx + (bh < 15 ? 3 : 5), by + 2);
@@ -249,7 +265,7 @@
     if (!DATA) return null;
     const [wx, wy] = toWorld(sx, sy);
     let best = null, bd = 1e9;
-    for (const w of DATA.warga) {
+    for (const w of allWarga()) {
       const [x, y] = spotOf(w);
       const dx = wx - x, dy = wy - (y - 9);
       const d = dx * dx + dy * dy * 0.7;
@@ -278,6 +294,20 @@
   function select(w, fly = true) {
     selected = w;
     const card = $('card');
+    if (w.mati) {
+      const tgl = new Date(w.mati.t).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      card.innerHTML = `
+      <button class="btn ghost sq close" type="button" aria-label="Tutup">×</button>
+      <div class="card-head"><span class="grave-ico" aria-hidden="true"></span>
+        <div><h3>${esc(w.nama)}</h3><span class="handle">@${esc(w.u)}</span><br><span class="tier mati">Telah tiada</span></div></div>
+      <ul class="hewan">${(w.hewan || []).map((h) => `<li>${esc(h)}</li>`).join('')}</ul>
+      <p class="rip">${esc(w.nama)} mati pada ${esc(tgl)} karena diterlantarkan pemiliknya (unfollow). Makamnya tetap di sini sebagai pengingat.</p>
+      <p class="muted">Pemiliknya bisa memulai lagi: follow kembali dan daftarkan hewan baru di postingan terbaru.</p>`;
+      card.querySelector('.close').onclick = closeCard;
+      card.hidden = false;
+      if (fly) { const [x, y] = spotOf(w); flyTo(x, y - 10, Math.max(cam.z, 4)); } else draw();
+      return;
+    }
     const lahir = w.lahir ? new Date(w.lahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
     card.innerHTML = `
       <button class="btn ghost sq close" type="button" aria-label="Tutup">×</button>
@@ -302,16 +332,17 @@
     e.preventDefault();
     const q = $('searchInput').value.trim().toLowerCase().replace(/^@/, '');
     if (!q || !DATA) return;
-    const w = DATA.warga.find((x) => x.u === q) || DATA.warga.find((x) => x.nama.toLowerCase() === q)
-      || DATA.warga.find((x) => x.u.includes(q) || x.nama.toLowerCase().includes(q) || (x.hewan || []).join(' ').toLowerCase().includes(q));
+    const W = allWarga();
+    const w = W.find((x) => x.u === q && !x.makam) || W.find((x) => x.nama.toLowerCase() === q)
+      || W.find((x) => x.u.includes(q) || x.nama.toLowerCase().includes(q) || (x.hewan || []).join(' ').toLowerCase().includes(q));
     if (w) select(w); else toast('Belum ada warga dengan nama itu. Sudah komen di postingan terbaru?');
   });
   $('zoomIn').onclick = () => flyTo(cam.x, cam.y, Math.min(7, cam.z * 1.6));
   $('zoomOut').onclick = () => flyTo(cam.x, cam.y, Math.max(minZ(), cam.z / 1.6));
   // camera that shows every registered citizen
   function fitAll() {
-    if (!DATA || !DATA.warga.length || !WORLD) return { x: WORLD.center[0], y: WORLD.center[1], z: homeZ() };
-    const pts = DATA.warga.map(spotOf);
+    if (!DATA || !allWarga().length || !WORLD) return { x: WORLD.center[0], y: WORLD.center[1], z: homeZ() };
+    const pts = allWarga().map(spotOf);
     const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
     const x0 = Math.min(...xs) - 30, x1 = Math.max(...xs) + 30, y0 = Math.min(...ys) - 70, y1 = Math.max(...ys) + 20;
     const z = Math.max(minZ(), Math.min(3.2, box.clientWidth / (x1 - x0), box.clientHeight / (y1 - y0)));
@@ -331,21 +362,22 @@
   }
   function renderBook() {
     const q = $('bookSearch').value.trim().toLowerCase().replace(/^@/, '');
-    const list = DATA.warga.filter((w) => (filterTier < 0 || w.tier === filterTier) &&
+    const list = allWarga().slice().sort((a, b) => (!!a.mati - !!b.mati) || a.spot - b.spot).filter((w) => (filterTier < 0 || w.tier === filterTier) &&
       (!q || w.u.includes(q) || w.nama.toLowerCase().includes(q) || (w.hewan || []).join(' ').toLowerCase().includes(q)));
     const book = $('book');
     book.innerHTML = '';
     if (!list.length) { book.innerHTML = '<div class="empty" style="grid-column:1/-1">Belum ada warga yang cocok. Jadilah yang pertama dengan berkomentar di Instagram.</div>'; }
     for (const w of list.slice(0, shown)) {
       const b = document.createElement('button');
-      b.type = 'button'; b.className = 'wcard';
-      b.innerHTML = `<span class="s"></span><span style="min-width:0"><b>${esc(w.nama)}</b><span>${esc((w.hewan || []).join(' + '))}</span><span>@${esc(w.u)} · ${esc(w.tierNama || TIERS[w.tier])}</span></span>`;
-      b.querySelector('.s').replaceWith(spriteNode(w, 44));
+      b.type = 'button'; b.className = 'wcard' + (w.mati ? ' mati' : '');
+      b.innerHTML = `<span class="s"></span><span style="min-width:0"><b>${esc(w.nama)}</b><span>${esc((w.hewan || []).join(' + '))}</span><span>@${esc(w.u)} · ${w.mati ? 'RIP · diterlantarkan' : esc(w.tierNama || TIERS[w.tier])}</span></span>`;
+      if (w.mati) { const g = document.createElement('span'); g.className = 'grave-ico'; g.setAttribute('aria-hidden', 'true'); b.querySelector('.s').replaceWith(g); }
+      else b.querySelector('.s').replaceWith(spriteNode(w, 44));
       b.onclick = () => { select(w); $('peta').scrollIntoView({ behavior: 'smooth' }); };
       book.appendChild(b);
     }
     $('moreBtn').hidden = list.length <= shown;
-    $('wargaSub').textContent = `${fmt(DATA.jumlahWarga)} hewan sudah lahir dari kolom komentar.`;
+    $('wargaSub').textContent = `${fmt(DATA.jumlahWarga)} hewan hidup dari kolom komentar.` + (DATA.jumlahMati ? ` ${fmt(DATA.jumlahMati)} mati diterlantarkan pemiliknya.` : '');
   }
   $('bookSearch').addEventListener('input', () => { shown = 60; renderBook(); });
   $('moreBtn').onclick = () => { shown += 60; renderBook(); };

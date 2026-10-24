@@ -1,14 +1,14 @@
 // Public data for the website: citizens, facility suggestions, news log.
 import { redis, hgetallJSON } from '../lib/db.js';
-import { publicWarga, CONFIG, ensureTierSchema } from '../lib/rules.js';
+import { publicWarga, publicMakam, CONFIG, ensureTierSchema } from '../lib/rules.js';
 import { json, hariKe } from '../lib/http.js';
 import { hitungJikaBasi, getConfig, publicPemilu } from '../lib/pemilu.js';
 
 export async function GET() {
   try {
     await ensureTierSchema();
-    const [warga, usulan, logRaw, start, dukRaw] = await Promise.all([
-      hgetallJSON('warga'), hgetallJSON('usulan'), redis('LRANGE', 'log', 0, 29), redis('GET', 'hari_pertama'), redis('LRANGE', 'dukungan', 0, 39),
+    const [warga, usulan, logRaw, start, dukRaw, makam] = await Promise.all([
+      hgetallJSON('warga'), hgetallJSON('usulan'), redis('LRANGE', 'log', 0, 29), redis('GET', 'hari_pertama'), redis('LRANGE', 'dukungan', 0, 39), hgetallJSON('makam'),
     ]);
     const dukungan = (dukRaw || []).map((s) => { try { return JSON.parse(s); } catch { return null; } })
       .filter((x) => x && !x.hidden).slice(0, 12)
@@ -23,7 +23,9 @@ export async function GET() {
       hari: hariKe(start),
       tiers: CONFIG.tiers,
       benefits: CONFIG.benefits,
-      jumlahWarga: visible.length,
+      jumlahWarga: visible.filter((w) => !w.mati).length,
+      jumlahMati: visible.filter((w) => w.mati).length + makam.length,
+      makam: makam.filter((w) => !w.hidden).map(publicMakam),
       warga: visible.map(publicWarga),
       usulan: us,
       wajibFollow: process.env.REQUIRE_FOLLOW === '1',

@@ -61,6 +61,24 @@
     </section>
 
     <section class="parchment">
+      <h2>Unfollow = hewan mati</h2>
+      <p class="muted">Instagram tidak memberi tahu siapa yang unfollow, jadi ada dua cara mengecek:</p>
+      <ol class="muted" style="margin:0 0 10px 18px">
+        <li><b>Otomatis (terbatas):</b> setiap hari pukul 05.00 WIB, sistem menanyakan status follow ke Instagram untuk warga yang ID-nya diketahui. Instagram hanya menjawab untuk akun yang pernah mengirim DM ke akunmu. Kalau Instagram tidak menjawab, hewannya tidak diapa-apakan.</li>
+        <li><b>Daftar follower:</b> di aplikasi Instagram buka <i>Pusat Akun → Informasi Anda → Unduh informasi → Followers dan following</i> (format JSON atau HTML). Unggah file <code>followers_1.json</code> / <code>followers_1.html</code> di sini, lalu pilih siapa yang dimatikan.</li>
+      </ol>
+      <p class="muted" id="ufInfo"></p>
+      <div class="adm-row">
+        <button class="btn ghost" type="button" id="ufAuto">Cek otomatis sekarang</button>
+        <label class="btn ghost">Unggah file followers<input type="file" id="ufFile" accept=".json,.html,.htm,.txt" hidden></label>
+      </div>
+      <label class="f" style="margin-top:8px">…atau tempel daftar username follower (satu per baris)<textarea id="ufText" rows="3" style="width:100%"></textarea></label>
+      <div class="adm-row"><button class="btn ghost" type="button" id="ufCompare">Bandingkan dengan warga</button></div>
+      <div class="tablewrap" style="margin-top:10px"><table><thead><tr><th><input type="checkbox" id="ufAll" aria-label="Pilih semua"></th><th>Akun</th><th>Hewan</th><th>Tingkat</th></tr></thead><tbody id="ufT"><tr><td colspan="4" class="muted">Belum ada perbandingan.</td></tr></tbody></table></div>
+      <div class="adm-row" style="margin-top:8px"><button class="btn red" type="button" id="ufKill" disabled>Matikan yang dipilih</button></div>
+    </section>
+
+    <section class="parchment">
       <h2>Menunggu konfirmasi follow</h2>
       <p id="followInfo" class="muted"></p>
       <div class="tablewrap"><table><thead><tr><th>Akun</th><th>Nama</th><th>Hewan</th><th>DM</th><th>Status</th><th></th></tr></thead><tbody id="menungguT"></tbody></table></div>

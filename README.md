@@ -168,3 +168,14 @@ node dev-server.mjs      # buka http://localhost:3000 (data contoh, password adm
 npm test                 # jalankan uji otomatis
 ```
 Tambahkan `?demo=1` di alamat website untuk melihat mode contoh dengan 40 warga.
+
+## Unfollow = hewan mati
+
+Kalau pemilik berhenti follow, hewannya **mati karena diterlantarkan**. Makamnya tetap di peta dan di Buku Warga, gelarnya (misalnya Ketua Koloni) dicabut, dan ia tidak bisa ikut pemilihan. Cerita baru dari pemiliknya diabaikan. Kalau pemiliknya follow lagi dan mendaftarkan hewan baru (format Nama/Hewan), hewan lama dipindah ke makam dan hewan baru lahir dari Regular.
+
+Instagram tidak punya notifikasi unfollow dan tidak membagikan daftar follower lewat API, jadi pengecekannya:
+
+1. **Otomatis (terbatas)** — cron harian menanyakan `is_user_follow_business` untuk warga yang ID Instagram-nya diketahui. Instagram hanya menjawab untuk akun yang pernah mengirim DM ke akunmu (misalnya lewat konfirmasi follow). Kalau tidak dijawab, hewannya tetap hidup. Matikan fitur ini dengan env `CEK_UNFOLLOW=0`.
+2. **Daftar follower** — di Instagram: Pusat Akun → Informasi Anda → Unduh informasi → Followers dan following. Unggah `followers_1.json`/`.html` di Ruang Admin → *Unfollow = hewan mati*, centang yang mau dimatikan, lalu klik **Matikan yang dipilih**.
+
+Salah matikan? Klik **Hidupkan** di tabel Warga.
