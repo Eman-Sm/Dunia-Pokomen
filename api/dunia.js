@@ -22,6 +22,7 @@ export async function GET() {
       log: (logRaw || []).map((s) => { try { return JSON.parse(s); } catch { return null; } }).filter(Boolean),
     }, 200, { 'Cache-Control': 's-maxage=20, stale-while-revalidate=60' });
   } catch (e) {
-    return json({ error: e.message }, 500);
+    // 200 so the message is readable; the website falls back to example data
+    return json({ error: e.message }, 200, { 'Cache-Control': 'no-store' });
   }
 }
