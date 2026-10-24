@@ -34,7 +34,7 @@
   function colorFor(word, seed) {
     const w = (word || '').toLowerCase();
     for (const [re, c] of COLORS) if (re.test(w)) return c;
-    return FALLBACK[seed % FALLBACK.length];
+    return FALLBACK[Math.abs(seed | 0) % FALLBACK.length];
   }
   function shade(hex, f) {
     const n = parseInt(hex.slice(1), 16);
@@ -90,8 +90,8 @@
     const tri = (pts, col) => { g.fillStyle = col; g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) g.lineTo(p[0], p[1]); g.closePath(); g.fill(); };
 
     let body = colorFor(hewan[0], seed);
-    let acc = hewan[1] ? colorFor(hewan[1], seed >> 3) : shade(body, 0.75);
-    let acc2 = hewan[2] ? colorFor(hewan[2], seed >> 5) : acc;
+    let acc = hewan[1] ? colorFor(hewan[1], seed >>> 3) : shade(body, 0.75);
+    let acc2 = hewan[2] ? colorFor(hewan[2], seed >>> 5) : acc;
     let belly = shade(body, 1.18);
     // God Mode: swap the base graphics
     const god = tier >= 5 ? godKind(w.wujud) : null;
@@ -178,7 +178,7 @@
     const elCol = tier >= 2 && w.elemen ? elementColor(w.elemen) : null;
     if (elCol) {
       for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; fpx(X + Math.cos(a) * 13, oy + 15 + Math.sin(a) * 11, i % 2 ? elCol : shade(elCol, 1.3)); }
-      for (let i = 0; i < 5; i++) fpx(X - 9 + ((seed >> i) % 18), oy + 2 + ((seed >> (i + 3)) % 6), elCol);
+      for (let i = 0; i < 5; i++) fpx(X - 9 + ((seed >>> i) % 18), oy + 2 + ((seed >>> (i + 3)) % 6), elCol);
     }
     // cape (Legendary outfit)
     if (tier >= 4) { f.fillStyle = shade(outfitCol, .8); f.beginPath(); f.moveTo(X - 5, oy + 14); f.lineTo(X + 5, oy + 14); f.lineTo(X + 9, oy + 26); f.lineTo(X - 9, oy + 26); f.closePath(); f.fill(); }

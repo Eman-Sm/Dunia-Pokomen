@@ -68,6 +68,7 @@
     $('chipWarga').textContent = fmt(data.jumlahWarga) + ' WARGA';
     $('chipDemo').hidden = !data.demo;
     $('stepDM').hidden = !data.wajibFollow;
+    { const f = fitAll(); cam.x = f.x; cam.y = f.y; cam.z = f.z; }
     renderBook(); renderVotes(); renderNews(); renderLadder(); renderTierFilter(); renderDukungan();
     const qk = new URLSearchParams(location.search).get('kartu');
     if (qk) { const w = DATA.warga.find((x) => x.u === qk.toLowerCase()); if (w) { select(w); openKartu(w); } }
@@ -117,9 +118,9 @@
     ctx.drawImage(IMG, sx, sy, Wc / cam.z, Hc / cam.z, 0, 0, Wc, Hc);
     ctx.imageSmoothingEnabled = false;
     const list = DATA.warga.map((w) => ({ w, p: spotOf(w) })).sort((a, b) => a.p[1] - b.p[1]);
-    const showNames = cam.z >= 2.6;
     const labels = [];
     for (const { w, p } of list) {
+     try {
       const [x, y] = toScreen(p[0], p[1]);
       if (x < -40 || y < -40 || x > Wc + 40 || y > Hc + 60) continue;
       const sp = spriteFor(w);
@@ -129,13 +130,43 @@
       const dw = sp.width * s, dh = sp.height * s;
       ctx.fillStyle = 'rgba(20,30,10,.28)';
       ctx.beginPath(); ctx.ellipse(x, y, 7 * cam.z, 2.2 * cam.z, 0, 0, Math.PI * 2); ctx.fill();
-      if (w.tier >= 3) { ctx.fillStyle = 'rgba(255,210,63,.35)'; ctx.beginPath(); ctx.ellipse(x, y - 10 * cam.z, 15 * cam.z, 14 * cam.z, 0, 0, Math.PI * 2); ctx.fill(); }
+      if (w.tier >= 4) { ctx.fillStyle = 'rgba(255,210,63,.35)'; ctx.beginPath(); ctx.ellipse(x, y - 10 * cam.z, 15 * cam.z, 14 * cam.z, 0, 0, Math.PI * 2); ctx.fill(); }
       const footY = custom ? dh - 2 * cam.z : 31 * s; // feet sit at row 31 of the 36px sprite
       ctx.drawImage(sp, Math.round(x - dw / 2), Math.round(y - footY - bob), Math.round(dw), Math.round(dh));
-      if (w === selected || w === hover) labels.push({ w, x, y: y - dh - 2, big: true });
-      else if (showNames) labels.push({ w, x, y: y + 3 * cam.z, big: false });
+      const top = y - footY - bob;
+      const headTop = custom ? top : top + 6 * s; // first painted row of the 36px sprite
+      labels.push({ w, x, y: headTop - 3, big: w === selected || w === hover });
+     } catch (err) { console.warn('sprite gagal', w.u, err); }
     }
-    for (const L of labels) drawLabel(L);
+    // @username above every creature; nudge labels upward when they would overlap
+    const placed = [];
+    const small = labels.filter((L) => !L.big).sort((a, b) => b.y - a.y);
+    const compact = cam.z < 1.8 || Wc < 520;
+    const tagFont = compact ? '700 9px "Pixelify Sans", monospace' : '700 11px "Pixelify Sans", monospace';
+    const maxCh = compact ? 11 : 24;
+    ctx.font = tagFont;
+    for (const L of small) {
+      L.text = '@' + (L.w.u.length > maxCh ? L.w.u.slice(0, maxCh - 1) + '…' : L.w.u);
+      L.font = tagFont;
+      const bw = ctx.measureText(L.text).width + (compact ? 6 : 10), bh = compact ? 12 : 15;
+      let by = L.y - bh;
+      for (let k = 0; k < 6; k++) {
+        const r = { x: L.x - bw / 2, y: by, w: bw, h: bh };
+        if (!placed.some((q) => r.x < q.x + q.w + 2 && r.x + r.w + 2 > q.x && r.y < q.y + q.h + 2 && r.y + r.h + 2 > q.y)) break;
+        by -= bh + 3;
+      }
+      placed.push({ x: L.x - bw / 2, y: by, w: bw, h: bh });
+      drawUserTag(L, by, bw, bh);
+    }
+    for (const L of labels.filter((L) => L.big)) drawLabel(L);
+  }
+  function drawUserTag({ w, x, y, text, font }, by, bw, bh) {
+    const bx = Math.round(x - bw / 2); by = Math.round(by);
+    if (by + bh < y - 2) { ctx.fillStyle = 'rgba(43,27,23,.7)'; ctx.fillRect(Math.round(x), by + bh, 1, Math.round(y - by - bh)); } // leader line
+    ctx.fillStyle = '#2b1b17'; ctx.fillRect(bx - 1, by - 1, bw + 2, bh + 3);
+    ctx.fillStyle = w.tier >= 5 ? '#ffd23f' : w.tier >= 4 ? '#fff0b8' : '#fffaee'; ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = '#3b2416'; ctx.font = font; ctx.textBaseline = 'top';
+    ctx.fillText(text, bx + (bh < 15 ? 3 : 5), by + 2);
   }
   function drawLabel({ w, x, y, big }) {
     ctx.font = big ? '600 14px "Pixelify Sans", monospace' : '600 11px "Pixelify Sans", monospace';
@@ -143,7 +174,7 @@
     const sub = big ? '@' + w.u + ' · ' + (w.tierNama || TIERS[w.tier]) : null;
     const tw = Math.max(ctx.measureText(t).width, sub ? (ctx.font = '600 11px Nunito, sans-serif', ctx.measureText(sub).width) : 0);
     const bw = tw + 12, bh = big ? 34 : 15;
-    const bx = Math.round(x - bw / 2), by = Math.round(big ? y - bh - 4 : y);
+    const bx = Math.round(x - bw / 2), by = Math.round(big ? y - bh - 2 : y);
     ctx.fillStyle = '#2b1b17'; ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 5);
     ctx.fillStyle = big ? '#fffaee' : 'rgba(255,250,238,.92)'; ctx.fillRect(bx, by, bw, bh);
     if (big) { ctx.fillStyle = '#d8572a'; ctx.fillRect(bx, by, 3, bh); }
@@ -274,7 +305,18 @@
   });
   $('zoomIn').onclick = () => flyTo(cam.x, cam.y, Math.min(7, cam.z * 1.6));
   $('zoomOut').onclick = () => flyTo(cam.x, cam.y, Math.max(minZ(), cam.z / 1.6));
-  $('zoomHome').onclick = () => flyTo(WORLD.center[0], WORLD.center[1], homeZ());
+  // camera that shows every registered citizen
+  function fitAll() {
+    if (!DATA || !DATA.warga.length || !WORLD) return { x: WORLD.center[0], y: WORLD.center[1], z: homeZ() };
+    const pts = DATA.warga.map(spotOf);
+    const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+    const x0 = Math.min(...xs) - 30, x1 = Math.max(...xs) + 30, y0 = Math.min(...ys) - 70, y1 = Math.max(...ys) + 20;
+    const z = Math.max(minZ(), Math.min(3.2, box.clientWidth / (x1 - x0), box.clientHeight / (y1 - y0)));
+    // on narrow screens keep creatures readable: never zoom out below 1.25 if the group is only slightly wider
+    if (box.clientWidth < 520 && z < 1.25 && (x1 - x0) * 1.25 < box.clientWidth * 1.35) return { x: (x0 + x1) / 2, y: (y0 + y1) / 2, z: 1.25 };
+    return { x: (x0 + x1) / 2, y: (y0 + y1) / 2, z };
+  }
+  $('zoomHome').onclick = () => { const f = fitAll(); flyTo(f.x, f.y, f.z); };
   const homeZ = () => Math.max(minZ(), Math.min(3, Math.max(1.7, box.clientWidth / 420)));
 
   // ---------------------------------------------------------------- lists
