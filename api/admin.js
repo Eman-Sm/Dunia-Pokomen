@@ -90,6 +90,7 @@ const actions = {
     if (dataUrl.length > 900000) throw new Error('Gambar terlalu besar setelah dikompres (maks ±650 KB)');
     await redis('SET', 'art:' + u, dataUrl);
     w.artVer = Date.now();
+    w.artTier = w.tier; // remember the stage the picture shows
     await setJSON('warga', u, w);
     await log('info', `Kartu Warga ${w.nama} milik @${u} kini punya gambar anime!`, { u });
     return { username: u, artVer: w.artVer };

@@ -95,7 +95,10 @@
 
   function renderWarga() {
     const q = $('wq').value.trim().toLowerCase();
-    const list = S.warga.filter((w) => !q || w.username.includes(q) || (w.nama || '').toLowerCase().includes(q));
+    const stale = (w) => w.artVer && !w.mati && (w.artTier ?? 0) < w.tier;
+    const nStale = S.warga.filter(stale).length;
+    $('wStaleN').textContent = nStale ? `(${nStale})` : '(0)';
+    const list = S.warga.filter((w) => (!q || w.username.includes(q) || (w.nama || '').toLowerCase().includes(q)) && (!$('wStale').checked || stale(w)));
     $('wargaT').innerHTML = list.length ? list.map((w) => `<tr data-u="${esc(w.username)}">
       <td>${w.spot + 1}</td><td>@${esc(w.username)}</td>
       <td><input type="text" data-f="nama" value="${esc(w.nama)}"></td>
@@ -105,6 +108,7 @@
         <input type="text" data-f="outfit" value="${esc(w.outfit || '')}" placeholder="Outfit" style="margin-top:4px">
         <input type="text" data-f="wujud" value="${esc(w.wujud || '')}" placeholder="Wujud Dewa" style="margin-top:4px"></td>
       <td class="artcell">${w.artVer ? `<img src="api/art?u=${encodeURIComponent(w.username)}&v=${w.artVer}" alt="" width="96" height="64">` : '<span class="muted">belum ada</span>'}
+        ${stale(w) ? `<div class="stale">⚠ Gambar perlu diperbarui: dibuat saat ${esc(S.tiers[w.artTier ?? 0])}, sekarang ${esc(S.tiers[w.tier])}</div>` : ''}
         <div class="adm-row"><button class="btn ghost" type="button" data-prompt>Salin prompt Gemini</button>
         <label class="btn ghost">Unggah gambar<input type="file" accept="image/*" data-art hidden></label>
         ${w.artVer ? '<button class="btn red" type="button" data-noart>Hapus</button>' : ''}</div></td>
@@ -145,6 +149,7 @@
     });
   }
   $('wq').addEventListener('input', () => S && renderWarga());
+  $('wStale').addEventListener('change', () => S && renderWarga());
 
   // ---------- unfollow = dead
   async function loadUnfollow() {

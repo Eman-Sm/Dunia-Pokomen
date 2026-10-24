@@ -293,3 +293,5 @@ label.f { display: grid; gap: 3px; font-size: .82rem; font-weight: 800; }
 .card .grave-ico { width: 88px; height: 88px; background-size: 62px 88px; }
 .tier.mati { background: #8a8f99; color: #fff; }
 .card .rip { background: #ece9e4; border: 2px solid var(--outline); padding: 8px 10px; margin: 10px 0 6px; }
+
+.stale { margin: 4px 0; padding: 3px 6px; background: #fff0b8; border: 2px solid var(--outline); font-size: .78rem; font-weight: 700; color: #7a4a00; max-width: 240px; }
