@@ -5,6 +5,7 @@ import { CONFIG, newWarga, log, birth, requireFollow, askIfMissing, ensureTierSc
 import { syncLatest, ownUsername } from '../lib/sync.js';
 import { refreshToken, subscribeWebhooks, listMedia, me } from '../lib/ig.js';
 import { json, bearer, safeEqual, hariKe } from '../lib/http.js';
+import { getConfig as pemiluCfg, setConfig as pemiluSet, hitung as pemiluHitung, tetapkanKetua } from '../lib/pemilu.js';
 
 const key = (u) => String(u || '').toLowerCase().replace(/^@/, '').trim();
 const parseHewan = (h) => (Array.isArray(h) ? h : String(h || '').split(/\s*[+&,]\s*/)).map((s) => s.trim()).filter(Boolean).slice(0, 3);
@@ -101,6 +102,17 @@ const actions = {
     await setJSON('warga', u, w);
     return { removed: true };
   },
+  async pemilu_status() {
+    let media = [], mediaError = null;
+    try { media = await listMedia(8); } catch (e) { mediaError = e.message; }
+    return { cfg: await pemiluCfg(), hasil: await getJSON('pemilu_hasil'), media, mediaError };
+  },
+  async pemilu_set({ posts, tutup }) {
+    const p = Array.isArray(posts) ? posts.filter(Boolean).slice(0, 5) : [];
+    return pemiluSet({ posts: p, tutup: tutup ? new Date(tutup).toISOString() : null });
+  },
+  async pemilu_hitung() { return pemiluHitung({ force: true }); },
+  async tetapkan_ketua({ username }) { return tetapkanKetua(username); },
   async approve_menunggu({ username }) {
     const x = await getJSON('menunggu', key(username));
     if (!x) throw new Error('Tidak ada di daftar tunggu');

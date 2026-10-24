@@ -31,6 +31,8 @@
         { id: 'c', u: 'bolu_100', text: 'Kolam Minum', likes: 1178, status: null },
         { id: 'd', u: 'tofu_149', text: 'Sarang Hangat', likes: 898, status: null },
       ],
+      pemilu: { tutup: new Date(Date.now() + 20 * 3.6e6).toISOString(), closed: false, updatedAt: new Date(Date.now() - 4 * 6e4).toISOString(), likesAvailable: true, jumlahCalon: 4, jumlahPeserta: 31,
+        kandidat: [{ u: 'kiko_114', likes: 87, komentar: 3, kampanye: 'Berry gratis untuk semua!' }, { u: 'bolu_100', likes: 64, komentar: 2, kampanye: 'Keamanan nomor satu' }, { u: 'momo_121', likes: 41, komentar: 2, kampanye: null }, { u: 'piyo_107', likes: 12, komentar: 4, kampanye: 'Koloni yang damai' }] },
       trakteer: 'https://trakteer.id/',
       dukungan: [
         { nama: 'Rara', pesan: 'Jagain Bolu ya Min, jangan tidur!', unit: 'Kopi Admin', jumlah: 3, t: new Date(Date.now() - 1.2e6).toISOString() },
@@ -69,7 +71,7 @@
     $('chipDemo').hidden = !data.demo;
     $('stepDM').hidden = !data.wajibFollow;
     { const f = fitAll(); cam.x = f.x; cam.y = f.y; cam.z = f.z; }
-    renderBook(); renderVotes(); renderNews(); renderLadder(); renderTierFilter(); renderDukungan();
+    renderBook(); renderVotes(); renderNews(); renderLadder(); renderTierFilter(); renderDukungan(); renderPemilu();
     const qk = new URLSearchParams(location.search).get('kartu');
     if (qk) { const w = DATA.warga.find((x) => x.u === qk.toLowerCase()); if (w) { select(w); openKartu(w); } }
     draw();
@@ -164,7 +166,8 @@
     const bx = Math.round(x - bw / 2); by = Math.round(by);
     if (by + bh < y - 2) { ctx.fillStyle = 'rgba(43,27,23,.7)'; ctx.fillRect(Math.round(x), by + bh, 1, Math.round(y - by - bh)); } // leader line
     ctx.fillStyle = '#2b1b17'; ctx.fillRect(bx - 1, by - 1, bw + 2, bh + 3);
-    ctx.fillStyle = w.tier >= 5 ? '#ffd23f' : w.tier >= 4 ? '#fff0b8' : '#fffaee'; ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = w.gelar ? '#ffd23f' : w.tier >= 5 ? '#ffd23f' : w.tier >= 4 ? '#fff0b8' : '#fffaee'; ctx.fillRect(bx, by, bw, bh);
+    if (w.gelar) { ctx.fillStyle = '#ffd23f'; ctx.fillRect(Math.round(x) - 5, by - 6, 11, 4); ctx.fillRect(Math.round(x) - 5, by - 9, 2, 3); ctx.fillRect(Math.round(x) - 1, by - 10, 3, 4); ctx.fillRect(Math.round(x) + 4, by - 9, 2, 3); ctx.fillStyle = '#d9483b'; ctx.fillRect(Math.round(x), by - 5, 1, 2); }
     ctx.fillStyle = '#3b2416'; ctx.font = font; ctx.textBaseline = 'top';
     ctx.fillText(text, bx + (bh < 15 ? 3 : 5), by + 2);
   }
@@ -281,7 +284,7 @@
       <div class="card-head"><span id="cardSprite"></span>
         <div><h3>${esc(w.nama)}</h3>
           <a class="handle" href="https://www.instagram.com/${encodeURIComponent(w.u)}/" target="_blank" rel="noopener">@${esc(w.u)}</a><br>
-          <span class="tier t${w.tier}">${esc(w.tierNama || TIERS[w.tier])}</span></div></div>
+          <span class="tier t${w.tier}">${esc(w.tierNama || TIERS[w.tier])}</span>${w.gelar ? `<span class="gelar">${esc(w.gelar)}</span>` : ''}</div></div>
       <ul class="hewan">${(w.hewan || []).map((h) => `<li>${esc(h)}</li>`).join('')}</ul>
       ${(w.cerita || []).length ? `<ul class="stories">${w.cerita.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>` : '<p class="muted">Belum ada cerita. Ceritakan kebiasaan uniknya di postingan berikutnya untuk berevolusi.</p>'}
       <p class="muted">Lahir ${esc(lahir)} · kavling #${w.spot + 1}</p>
@@ -367,6 +370,35 @@
     const log = DATA.log || [];
     n.innerHTML = log.length ? log.slice(0, 10).map((l) => `<li><span class="dot ${esc(l.type)}"></span><span>${esc(l.text)}<time datetime="${esc(l.t)}">${ago(l.t)}</time></span></li>`).join('')
       : '<li class="empty">Desa masih sepi. Kabar pertama muncul begitu warga pertama lahir.</li>';
+  }
+  function renderPemilu() {
+    const P = DATA.pemilu;
+    const ketua = DATA.warga.find((w) => w.gelar === 'Ketua Koloni');
+    $('pemilu').hidden = !P || (!P.kandidat.length && !P.tutup && !ketua);
+    if ($('pemilu').hidden) return;
+    const clock = $('pemiluClock');
+    const tick = () => {
+      if (ketua && P.closed) { clock.innerHTML = `<small>KETUA KOLONI</small>@${esc(ketua.u)}`; return; }
+      if (!P.tutup) { clock.innerHTML = '<small>STATUS</small>Pemilihan dibuka'; return; }
+      const ms = Date.parse(P.tutup) - Date.now();
+      if (ms <= 0) { clock.innerHTML = '<small>STATUS</small>Ditutup, menunggu pengumuman'; return; }
+      const h = Math.floor(ms / 3.6e6), m = Math.floor(ms / 6e4) % 60, s = Math.floor(ms / 1e3) % 60;
+      clock.innerHTML = `<small>DITUTUP DALAM</small>${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    };
+    tick(); clearInterval(renderPemilu.t); renderPemilu.t = setInterval(tick, 1000);
+    const list = $('klasemen'); list.innerHTML = '';
+    if (!P.kandidat.length) list.innerHTML = '<li class="empty" style="display:block;cursor:default">Belum ada calon. Komen di postingan Hari ke-1 dan Hari ke-2 supaya masuk daftar calon!</li>';
+    P.kandidat.forEach((k, i) => {
+      const w = DATA.warga.find((x) => x.u === k.u);
+      const li = document.createElement('li'); if (i === 0) li.className = 'top';
+      li.innerHTML = `<span class="rank">${i + 1}</span><span class="s"></span><span style="min-width:0"><b>@${esc(k.u)}${w ? ' · ' + esc(w.nama) : ''}</b>${k.kampanye ? `<span class="slogan">“${esc(k.kampanye)}”</span>` : ''}</span><span class="likes">♥ ${fmt(k.likes)}</span>`;
+      const s = li.querySelector('.s');
+      if (w) s.replaceWith(spriteNode(w, 44)); else s.textContent = '';
+      if (w) li.onclick = () => { select(w); $('peta').scrollIntoView({ behavior: 'smooth' }); };
+      list.appendChild(li);
+    });
+    $('pemiluNote').textContent = (P.likesAvailable === false ? 'Jumlah like belum tersedia dari Instagram, peringkat sementara diurutkan dari komentar paling awal. ' : '')
+      + (P.updatedAt ? `Diperbarui ${ago(P.updatedAt)} · ${fmt(P.jumlahCalon)} calon dari ${fmt(P.jumlahPeserta)} akun yang berkomentar.` : '');
   }
   function renderDukungan() {
     const url = DATA.trakteer;

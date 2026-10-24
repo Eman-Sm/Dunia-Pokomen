@@ -42,8 +42,31 @@
     $('conn').innerHTML = conn.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
     if (S.hariPertama) $('hariPertama').value = S.hariPertama;
     renderPending(); renderWarga(); renderUsulan(); renderDukungan(); renderMenunggu();
+    loadPemilu();
   }
 
+  let PM = null;
+  async function loadPemilu() {
+    try { PM = await api('pemilu_status'); } catch (e) { $('pmInfo').textContent = 'Gagal memuat: ' + e.message; return; }
+    const sel = new Set(PM.cfg.posts || []);
+    $('pmMedia').innerHTML = PM.media.length ? PM.media.map((m) => `<label class="f" style="font-weight:600;display:flex;gap:8px;align-items:center">
+      <input type="checkbox" data-media="${esc(m.id)}" ${sel.has(m.id) ? 'checked' : ''}> ${esc(new Date(m.timestamp).toLocaleString('id-ID'))} · ${esc((m.caption || '').slice(0, 60))}</label>`).join('')
+      : `<span class="muted">${PM.mediaError ? 'Tidak bisa membaca postingan: ' + esc(PM.mediaError) : 'Belum ada postingan.'}</span>`;
+    if (PM.cfg.tutup) { const d = new Date(PM.cfg.tutup); $('pmTutup').value = new Date(d.getTime() + 7 * 3600e3).toISOString().slice(0, 16); }
+    const h = PM.hasil;
+    const warga = new Map(S.warga.map((w) => [w.username, w]));
+    $('pmT').innerHTML = h && h.kandidat.length ? h.kandidat.slice(0, 30).map((k, i) => `<tr><td>${i + 1}</td><td>@${esc(k.u)}</td><td>${esc(warga.get(k.u)?.nama || '-')}${warga.get(k.u)?.gelar ? ' 👑' : ''}</td><td>${k.likes}</td><td>${k.komentar}</td><td>${esc(k.kampanye || '')}</td>
+      <td><button class="btn ghost" type="button" data-ketua="${esc(k.u)}">Tetapkan Ketua</button></td></tr>`).join('')
+      : '<tr><td colspan="7" class="muted">Belum ada calon. Klik Hitung ulang setelah ada komentar di postingan terpilih.</td></tr>';
+    $('pmInfo').textContent = h ? `Terakhir dihitung ${new Date(h.updatedAt).toLocaleString('id-ID')} · ${h.jumlahCalon} calon dari ${h.jumlahPeserta} akun${h.likesAvailable ? '' : ' · like belum terbaca dari Instagram'}${h.closed ? ' · DITUTUP' : ''}` : 'Belum pernah dihitung.';
+    $('pmT').querySelectorAll('[data-ketua]').forEach((b) => b.onclick = () => run(b, 'tetapkan_ketua', { username: b.dataset.ketua }, 'Ketua Koloni ditetapkan'));
+  }
+  $('pmSave').onclick = (e) => {
+    const posts = [...document.querySelectorAll('[data-media]:checked')].map((x) => x.dataset.media).reverse();
+    const v = $('pmTutup').value;
+    run(e.target, 'pemilu_set', { posts, tutup: v ? v + ':00+07:00' : null }, 'Pengaturan pemilihan disimpan');
+  };
+  $('pmCount').onclick = (e) => run(e.target, 'pemilu_hitung', {}, 'Klasemen diperbarui');
   function renderMenunggu() {
     $('followInfo').textContent = S.requireFollow
       ? 'Wajib follow AKTIF. Pendaftar menerima DM otomatis dan baru lahir setelah membalas DM dan terbukti sudah follow.'

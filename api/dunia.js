@@ -2,6 +2,7 @@
 import { redis, hgetallJSON } from '../lib/db.js';
 import { publicWarga, CONFIG, ensureTierSchema } from '../lib/rules.js';
 import { json, hariKe } from '../lib/http.js';
+import { hitungJikaBasi, getConfig, publicPemilu } from '../lib/pemilu.js';
 
 export async function GET() {
   try {
@@ -13,6 +14,7 @@ export async function GET() {
       .filter((x) => x && !x.hidden).slice(0, 12)
       .map(({ nama, pesan, unit, jumlah, t }) => ({ nama, pesan, unit: process.env.TRAKTEER_UNIT_NAME || 'Kopi Admin', jumlah, t }));
     const visible = warga.filter((w) => !w.hidden).sort((a, b) => a.spot - b.spot);
+    const [pemiluHasil, pemiluCfg] = await Promise.all([hitungJikaBasi(20), getConfig()]);
     const us = usulan.filter((x) => x.status !== 'ditolak')
       .sort((a, b) => (b.status === 'dibangun') - (a.status === 'dibangun') || b.likes - a.likes)
       .slice(0, 50)
@@ -27,6 +29,7 @@ export async function GET() {
       wajibFollow: process.env.REQUIRE_FOLLOW === '1',
       trakteer: process.env.TRAKTEER_URL || null,
       dukungan,
+      pemilu: publicPemilu(pemiluHasil, pemiluCfg),
       log: (logRaw || []).map((s) => { try { return JSON.parse(s); } catch { return null; } }).filter(Boolean),
     }, 200, { 'Cache-Control': 's-maxage=20, stale-while-revalidate=60' });
   } catch (e) {

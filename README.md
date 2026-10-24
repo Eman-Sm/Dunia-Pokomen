@@ -139,6 +139,14 @@ Alur saat aktif: komentar pendaftaran → server mengirim DM pribadi otomatis �
 Pendaftar yang belum membalas DM muncul di **Ruang Admin → Menunggu konfirmasi follow** dan bisa dilahirkan manual.
 Batas Instagram: DM otomatis hanya bisa dikirim sekali per komentar, maksimal 7 hari setelah komentar dibuat.
 
+## Pemilihan Ketua Koloni
+- Calon: akun yang berkomentar di SEMUA postingan yang dipilih (default: 2 postingan terbaru = Hari ke-1 & Hari ke-2).
+- Peringkat: total like di komentar mereka pada postingan itu (balasan ikut dihitung). Seri: yang berkomentar lebih awal menang.
+- `Kampanye: ...` di komentar tampil sebagai slogan.
+- Ruang Admin → **Pemilihan Ketua Koloni**: centang postingan yang dihitung, atur waktu tutup, **Hitung ulang sekarang**,
+  lalu **Tetapkan Ketua** setelah ditutup. Gelar hanya kosmetik (mahkota di peta & kartu).
+- Klasemen di website diperbarui otomatis paling lama tiap 20 menit sampai pemilihan ditutup.
+
 ## Gambar anime Kartu Warga (Gemini)
 1. Ruang Admin → tabel **Warga** → **Salin prompt Gemini** (prompt otomatis dari nama, gabungan hewan, cerita, elemen, dan efek sesuai tingkat).
 2. Tempel di gemini.google.com, unduh gambar hasilnya.

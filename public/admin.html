@@ -48,6 +48,19 @@
     </section>
 
     <section class="parchment">
+      <h2>Pemilihan Ketua Koloni</h2>
+      <p class="muted">Pilih postingan yang dihitung (Hari ke-1 dan Hari ke-2). Calon = akun yang berkomentar di SEMUA postingan terpilih. Peringkat = total like di komentarnya. Hasil dihitung ulang otomatis tiap 20 menit sampai pemilihan ditutup.</p>
+      <div id="pmMedia" class="adm-row" style="flex-direction:column;align-items:flex-start"></div>
+      <div class="formgrid" style="margin-top:10px">
+        <label class="f">Ditutup pada (WIB)<input type="datetime-local" id="pmTutup"></label>
+        <button class="btn ghost" type="button" id="pmSave">Simpan pengaturan</button>
+        <button class="btn green" type="button" id="pmCount">Hitung ulang sekarang</button>
+      </div>
+      <div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>#</th><th>Akun</th><th>Hewan</th><th>Like</th><th>Komentar</th><th>Kampanye</th><th></th></tr></thead><tbody id="pmT"></tbody></table></div>
+      <p class="muted" id="pmInfo"></p>
+    </section>
+
+    <section class="parchment">
       <h2>Menunggu konfirmasi follow</h2>
       <p id="followInfo" class="muted"></p>
       <div class="tablewrap"><table><thead><tr><th>Akun</th><th>Nama</th><th>Hewan</th><th>DM</th><th>Status</th><th></th></tr></thead><tbody id="menungguT"></tbody></table></div>
