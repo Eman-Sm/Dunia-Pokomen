@@ -10,7 +10,7 @@ export async function GET() {
     ]);
     const dukungan = (dukRaw || []).map((s) => { try { return JSON.parse(s); } catch { return null; } })
       .filter((x) => x && !x.hidden).slice(0, 12)
-      .map(({ nama, pesan, unit, jumlah, t }) => ({ nama, pesan, unit: process.env.TRAKTEER_UNIT_NAME || unit, jumlah, t }));
+      .map(({ nama, pesan, unit, jumlah, t }) => ({ nama, pesan, unit: process.env.TRAKTEER_UNIT_NAME || 'Kopi Admin', jumlah, t }));
     const visible = warga.filter((w) => !w.hidden).sort((a, b) => a.spot - b.spot);
     const us = usulan.filter((x) => x.status !== 'ditolak')
       .sort((a, b) => (b.status === 'dibangun') - (a.status === 'dibangun') || b.likes - a.likes)

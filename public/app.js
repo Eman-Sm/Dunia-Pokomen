@@ -30,8 +30,8 @@
       ],
       trakteer: 'https://trakteer.id/',
       dukungan: [
-        { nama: 'Rara', pesan: 'Semangat bikin episode 2, Admin!', unit: 'Cendol', jumlah: 3, t: new Date(Date.now() - 1.2e6).toISOString() },
-        { nama: 'Seseorang', pesan: '', unit: 'Cendol', jumlah: 1, t: new Date(Date.now() - 7.2e6).toISOString() },
+        { nama: 'Rara', pesan: 'Jagain Bolu ya Min, jangan tidur!', unit: 'Kopi Admin', jumlah: 3, t: new Date(Date.now() - 1.2e6).toISOString() },
+        { nama: 'Seseorang', pesan: '', unit: 'Kopi Admin', jumlah: 1, t: new Date(Date.now() - 7.2e6).toISOString() },
       ],
       log: [
         { t: new Date(Date.now() - 6e5).toISOString(), type: 'legenda', text: 'Momo milik @momo_121 kini menjadi Legenda!' },
@@ -319,9 +319,13 @@
     const list = DATA.dukungan || [];
     $('dukungan').hidden = !url && !list.length;
     for (const id of ['traktirTop', 'traktirBtn']) { $(id).hidden = !url; if (url) $(id).href = url; }
+    // "melek meter": every cup keeps Admin awake one more hour, counted over the last 24 hours
+    const jam = list.filter((x) => Date.now() - Date.parse(x.t) < 864e5).reduce((a, x) => a + (Number(x.jumlah) || 0), 0);
+    const pct = Math.min(100, Math.round((jam / 8) * 100));
+    $('melek').innerHTML = `<span>${jam >= 8 ? 'Admin melek semalaman! Warga aman.' : jam ? `Admin melek ${jam} dari 8 jam ronda malam ini` : 'Admin mulai ngantuk… zzz'}</span><div class="bar" aria-hidden="true"><i style="width:${pct}%"></i></div>`;
     $('dukList').innerHTML = list.length
-      ? list.map((x) => `<li><span class="dot dukung"></span><span><b>${esc(x.nama)}</b> mentraktir ${fmt(x.jumlah)} ${esc(x.unit)}${x.pesan ? `<br>“${esc(x.pesan)}”` : ''}<time datetime="${esc(x.t)}">${ago(x.t)}</time></span></li>`).join('')
-      : '<li class="empty">Belum ada traktiran. Jadilah pendukung pertama!</li>';
+      ? list.map((x) => `<li><span class="dot dukung"></span><span><b>${esc(x.nama)}</b> mengirim ${fmt(x.jumlah)} ${esc(x.unit)} · melek +${fmt(x.jumlah)} jam${x.pesan ? `<br>“${esc(x.pesan)}”` : ''}<time datetime="${esc(x.t)}">${ago(x.t)}</time></span></li>`).join('')
+      : '<li class="empty">Belum ada kopi malam ini. Admin mulai ngantuk, padahal netizen jahil masih berkeliaran.</li>';
   }
   function renderLadder() {
     const ex = { u: 'contoh', nama: 'Bolu', hewan: ['Kucing', 'Naga'] };

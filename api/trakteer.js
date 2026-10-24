@@ -37,14 +37,14 @@ export async function POST(request) {
     id,
     nama: String(pick(d, 'supporter_name', 'name') || 'Seseorang').slice(0, 40),
     pesan: String(pick(d, 'supporter_message', 'message') || '').slice(0, 200),
-    unit: String(process.env.TRAKTEER_UNIT_NAME || pick(d, 'unit', 'unit_name') || 'Traktiran').slice(0, 30),
+    unit: String(process.env.TRAKTEER_UNIT_NAME || 'Kopi Admin').slice(0, 30),
     jumlah: Number(pick(d, 'quantity', 'qty') || 1),
     t: pick(d, 'created_at') || new Date().toISOString(),
     hidden: false,
   };
   await redis('LPUSH', 'dukungan', JSON.stringify(item));
   await redis('LTRIM', 'dukungan', 0, 199);
-  await log('dukung', `${item.nama} mentraktir Admin ${item.jumlah} ${item.unit}. Terima kasih!`);
+  await log('dukung', `${item.nama} mengirim ${item.jumlah} ${item.unit}. Admin melek +${item.jumlah} jam jaga ronda!`);
   return json({ ok: true });
 }
 
