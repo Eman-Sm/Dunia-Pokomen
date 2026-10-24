@@ -9,7 +9,8 @@ export async function GET() {
       hgetallJSON('warga'), hgetallJSON('usulan'), redis('LRANGE', 'log', 0, 29), redis('GET', 'hari_pertama'), redis('LRANGE', 'dukungan', 0, 39),
     ]);
     const dukungan = (dukRaw || []).map((s) => { try { return JSON.parse(s); } catch { return null; } })
-      .filter((x) => x && !x.hidden).slice(0, 12).map(({ nama, pesan, unit, jumlah, t }) => ({ nama, pesan, unit, jumlah, t }));
+      .filter((x) => x && !x.hidden).slice(0, 12)
+      .map(({ nama, pesan, unit, jumlah, t }) => ({ nama, pesan, unit: process.env.TRAKTEER_UNIT_NAME || unit, jumlah, t }));
     const visible = warga.filter((w) => !w.hidden).sort((a, b) => a.spot - b.spot);
     const us = usulan.filter((x) => x.status !== 'ditolak')
       .sort((a, b) => (b.status === 'dibangun') - (a.status === 'dibangun') || b.likes - a.likes)

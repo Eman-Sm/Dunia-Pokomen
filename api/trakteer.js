@@ -37,7 +37,7 @@ export async function POST(request) {
     id,
     nama: String(pick(d, 'supporter_name', 'name') || 'Seseorang').slice(0, 40),
     pesan: String(pick(d, 'supporter_message', 'message') || '').slice(0, 200),
-    unit: String(pick(d, 'unit', 'unit_name') || 'Traktiran').slice(0, 30),
+    unit: String(process.env.TRAKTEER_UNIT_NAME || pick(d, 'unit', 'unit_name') || 'Traktiran').slice(0, 30),
     jumlah: Number(pick(d, 'quantity', 'qty') || 1),
     t: pick(d, 'created_at') || new Date().toISOString(),
     hidden: false,
