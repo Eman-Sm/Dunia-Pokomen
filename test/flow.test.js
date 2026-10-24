@@ -9,6 +9,7 @@ process.env.ADMIN_PASSWORD = 'admin123';
 const { processComment } = await import('../lib/rules.js');
 const { getJSON, redis: _r } = await import('../lib/db.js');
 await _r('SET', 'tier_schema', '6');
+await _r('SET', 'evolusi_cerita_1', 'selesai');
 const webhook = await import('../api/webhook.js');
 const dunia = await import('../api/dunia.js');
 const admin = await import('../api/admin.js');
@@ -17,16 +18,17 @@ test('lahir, evolusi, anti-spam, legenda', async () => {
   const c = (id, u, text, mediaId) => ({ id, username: u, text, mediaId, timestamp: new Date().toISOString() });
   assert.equal(await processComment(c('1', 'budi', 'Nama: Bolu | Hewan: Kucing + Naga | Cerita: suka menghangatkan air mandi warga', 'post1')), 'lahir');
   assert.equal(await processComment(c('1', 'budi', 'Nama: Bolu | Hewan: Kucing + Naga', 'post1')), 'skip:seen');
-  // story on the same post as birth does not evolve
+  // birth with a story -> born as Pseudo-evo
+  assert.equal((await getJSON('warga', 'budi')).tier, 1);
+  // story on the same post as birth does not evolve again
   assert.equal(await processComment(c('2', 'budi', 'Cerita: Bolu suka tidur di atas awan', 'post1')), 'cerita');
-  // story on a new post -> Evolusi 1
+  // story on a new post -> Mega Evolution
   assert.equal(await processComment(c('3', 'budi', 'Cerita: Bolu belajar berenang di danau barat', 'post2')), 'evolusi');
   // second story on the same post -> no extra evolution
   assert.equal(await processComment(c('4', 'budi', 'Cerita: Bolu menangkap ikan pakai ekornya', 'post2')), 'cerita');
-  assert.equal(await processComment(c('5', 'budi', 'Cerita: Bolu menolong anak ayam yang tersesat', 'post3')), 'evolusi');
   // Mega Evolution (index 2) reached without element -> server tried to ask (no IG token in tests, so it records an error)
   assert.equal((await getJSON('warga', 'budi')).tier, 2);
-  assert.equal(await processComment(c('5b', 'budi', 'Elemen: Api', 'post3')), 'elemen');
+  assert.equal(await processComment(c('5b', 'budi', 'Elemen: Api', 'post2')), 'elemen');
   assert.equal((await getJSON('warga', 'budi')).elemen, 'Api');
   assert.equal(await processComment(c('6', 'budi', 'Cerita: Bolu menjaga gerbang desa sepanjang malam', 'post4')), 'evolusi');
   // max auto tier (3 = Mythical) reached

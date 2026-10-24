@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 process.env.POKOMEN_MEMORY_DB = '1';
 globalThis.fetch = async () => new Response('{}');
-const { birth, evolusiCeritaAwal } = await import('../lib/rules.js');
+const { birth, evolusiCeritaAwal, CONFIG } = await import('../lib/rules.js');
+CONFIG.birthStoryEvolves = false; // simulate the old data
 const { getJSON, setJSON, redis } = await import('../lib/db.js');
 await redis('SET', 'tier_schema', '6');
 
