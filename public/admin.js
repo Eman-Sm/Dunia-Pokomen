@@ -165,7 +165,7 @@
     const tb = $('pending');
     if (!S.pending.length) { tb.innerHTML = '<tr><td colspan="6" class="muted">Antrean kosong.</td></tr>'; return; }
     tb.innerHTML = S.pending.map((p, i) => `<tr>
-      <td>@${esc(p.username)}</td><td style="max-width:280px">${esc(p.text)}</td>
+      <td>@${esc(p.username)}</td><td style="max-width:280px">${esc(p.text)}${p.formatDibalas ? '<br><span class="muted">↳ sudah dibalas format otomatis</span>' : ''}</td>
       <td><input type="text" id="pn${i}" value="${esc(p.parsed?.nama || '')}"></td>
       <td><input type="text" id="ph${i}" value="${esc((p.parsed?.hewan || []).join(' + '))}"></td>
       <td><input type="text" id="pc${i}" value="${esc(p.parsed?.cerita || '')}"></td>
