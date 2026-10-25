@@ -581,18 +581,18 @@
     tick(); clearInterval(renderPemilu.t); renderPemilu.t = setInterval(tick, 1000);
     const list = $('klasemen'); list.innerHTML = '';
     if (!P.kandidat.length) list.innerHTML = P.menunggu
-      ? `<li class="empty" style="display:block;cursor:default">Pemilihan dimulai setelah postingan <b>Hari ke-2</b> tayang. Sudah komen di Hari ke-1? Komen lagi di Hari ke-2 supaya masuk daftar calon!</li>`
-      : '<li class="empty" style="display:block;cursor:default">Belum ada calon. Komen di postingan Hari ke-1 dan Hari ke-2 supaya masuk daftar calon!</li>';
+      ? `<li class="empty" style="display:block;cursor:default">Pemilihan dimulai saat postingan <b>Hari ke-3</b> tayang. Syarat calon: komen di <b>Hari ke-2</b> dan <b>Hari ke-3</b>. Hadir juga di Hari ke-1 untuk nilai tambah!</li>`
+      : '<li class="empty" style="display:block;cursor:default">Belum ada calon. Komen di postingan Hari ke-2 dan Hari ke-3 supaya masuk daftar calon!</li>';
     P.kandidat.forEach((k, i) => {
       const w = DATA.warga.find((x) => x.u === k.u);
       const li = document.createElement('li'); if (i === 0) li.className = 'top';
-      li.innerHTML = `<span class="rank">${i + 1}</span><span class="s"></span><span style="min-width:0"><b>@${esc(k.u)}${w ? ' · ' + esc(w.nama) : ''}</b>${k.kampanye ? `<span class="slogan">“${esc(k.kampanye)}”</span>` : ''}</span><span class="likes">♥ ${fmt(k.likes)}</span>`;
+      li.innerHTML = `<span class="rank">${i + 1}</span><span class="s"></span><span style="min-width:0"><b>@${esc(k.u)}${w ? ' · ' + esc(w.nama) : ''}</b>${k.kampanye ? `<span class="slogan">“${esc(k.kampanye)}”</span>` : ''}</span><span class="likes">${k.hadir ? `<small>${k.hadir} hari</small> ` : ''}♥ ${fmt(k.likes)}</span>`;
       const s = li.querySelector('.s');
       if (w) s.replaceWith(spriteNode(w, 44)); else s.textContent = '';
       if (w) li.onclick = () => { select(w); $('peta').scrollIntoView({ behavior: 'smooth' }); };
       list.appendChild(li);
     });
-    $('pemiluNote').textContent = (P.likesAvailable === false ? 'Jumlah like belum tersedia dari Instagram, peringkat sementara diurutkan dari komentar paling awal. ' : '')
+    $('pemiluNote').textContent = 'Peringkat: jumlah hari hadir di komentar, lalu total like jika seri. ' + (P.likesAvailable === false ? 'Jumlah like belum tersedia dari Instagram, peringkat sementara diurutkan dari komentar paling awal. ' : '')
       + (P.updatedAt ? `Diperbarui ${ago(P.updatedAt)} · ${fmt(P.jumlahCalon)} calon dari ${fmt(P.jumlahPeserta)} akun yang berkomentar.` : '');
   }
   function renderDukungan() {

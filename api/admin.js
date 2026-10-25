@@ -110,9 +110,10 @@ const actions = {
     try { media = await listMedia(8); } catch (e) { mediaError = e.message; }
     return { cfg: await pemiluCfg(), hasil: await getJSON('pemilu_hasil'), media, mediaError };
   },
-  async pemilu_set({ posts, tutup }) {
-    const p = Array.isArray(posts) ? posts.filter(Boolean).slice(0, 5) : [];
-    return pemiluSet({ posts: p, tutup: tutup ? new Date(tutup).toISOString() : null });
+  async pemilu_set({ posts, wajib, tutup }) {
+    const p = Array.isArray(posts) ? posts.filter(Boolean).slice(0, 6) : [];
+    const wj = Array.isArray(wajib) ? wajib.filter((x) => p.includes(x)) : [];
+    return pemiluSet({ posts: p, wajib: wj, tutup: tutup ? new Date(tutup).toISOString() : null });
   },
   async matikan({ username, usernames }) {
     const list = (usernames && usernames.length ? usernames : [username]).map(key).filter(Boolean).slice(0, 200);
