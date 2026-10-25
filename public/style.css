@@ -354,3 +354,6 @@ body.admin-shell { height: 100vh; overflow: hidden; display: flex; flex-directio
 /* public site embedded in Ruang Admin */
 body.embed > .topbar, body.embed .topbar { display: none; }
 body.embed .hero { padding-top: 12px; }
+
+.card .skill { margin: 8px 0; padding: 6px 10px; background: #2d2160; color: #ffe27a; border: 2px solid var(--outline); font-weight: 700; }
+.card .skill b { color: #fff; }

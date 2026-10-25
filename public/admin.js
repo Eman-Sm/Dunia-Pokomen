@@ -157,6 +157,7 @@
       <td><select data-f="tier">${S.tiers.map((t, i) => `<option value="${i}" ${i === w.tier ? 'selected' : ''}>${i + 1}. ${esc(t)}</option>`).join('')}</select>
         <input type="text" data-f="elemen" value="${esc(w.elemen || '')}" placeholder="Elemen" style="margin-top:4px">
         <input type="text" data-f="outfit" value="${esc(w.outfit || '')}" placeholder="Outfit" style="margin-top:4px">
+        <input type="text" data-f="skill" value="${esc(w.skill || '')}" placeholder="Skill (tampil dari Mythical)" style="margin-top:4px">
         <input type="text" data-f="wujud" value="${esc(w.wujud || '')}" placeholder="Wujud Dewa" style="margin-top:4px"></td>
       <td class="artcell">${w.artVer ? `<img src="api/art?u=${encodeURIComponent(w.username)}&v=${w.artVer}" alt="" width="96" height="64">` : '<span class="muted">belum ada</span>'}
         ${stale(w) ? `<div class="stale">⚠ Gambar perlu diperbarui: dibuat saat ${esc(S.tiers[w.artTier ?? 0])}, sekarang ${esc(S.tiers[w.tier])}</div>` : ''}

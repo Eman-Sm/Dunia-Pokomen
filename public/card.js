@@ -160,6 +160,7 @@
     if (tier >= 1) feats.push('Tumbuh besar');
     if (tier >= 2) feats.push(elName ? 'Elemen ' + elName : 'Elemen ?');
     if (tier >= 3) feats.push('Armor');
+    if (tier >= 3) feats.push(w.skill ? 'Skill: ' + w.skill : 'Skill ?');
     if (tier >= 4) feats.push(w.outfit ? 'Outfit: ' + w.outfit : 'Outfit ?');
     if (tier >= 5) feats.push(w.wujud ? 'Wujud: ' + w.wujud : 'Wujud ?');
     ctx.font = `700 14px ${BODY}`; ctx.fillStyle = dark ? '#ffd23f' : '#b8743a';

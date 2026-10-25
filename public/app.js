@@ -19,7 +19,7 @@
     const ELS = ['Api', 'Air', 'Petir', 'Daun', 'Es', 'Cahaya'], OUTS = ['jubah ninja merah', 'zirah samurai biru', 'mantel penyihir ungu'], WJ = ['Mecha', 'Mecha Beast', 'Kristal', 'Roh Cahaya'];
     const warga = names.map((n, i) => ({
       u: n.toLowerCase() + '_' + (100 + i * 7), nama: n, hewan: combos[i % combos.length], tier: tierOf(i), tierNama: TIERS[tierOf(i)],
-      elemen: tierOf(i) >= 2 ? ELS[i % ELS.length] : null, outfit: tierOf(i) >= 4 ? OUTS[i % OUTS.length] : null, wujud: tierOf(i) >= 5 ? WJ[(i / 10 | 0) % WJ.length] : null,
+      elemen: tierOf(i) >= 2 ? ELS[i % ELS.length] : null, outfit: tierOf(i) >= 4 ? OUTS[i % OUTS.length] : null, wujud: tierOf(i) >= 5 ? WJ[(i / 10 | 0) % WJ.length] : null, skill: tierOf(i) >= 3 ? ['menyemburkan api', 'terbang tinggi', 'memanggil petir', 'gelembung air', 'badai salju', 'menghilang seperti ninja', 'lari secepat kilat', 'gempa bumi', 'sihir bintang', 'tornado daun'][i % 10] : null,
       spot: i, cerita: [stories[i % stories.length], ...(tierOf(i) ? [stories[(i + 3) % stories.length]] : [])].map((s) => `${n} ${s}.`),
       lahir: new Date(Date.now() - i * 3.6e6).toISOString(), sprite: null,
     }));
@@ -140,6 +140,11 @@
       if (w.mati) continue;
       const a = actor(w);
       if (w === selected || slp) { a.mode = 'idle'; a.until = now + 800; continue; }
+      if (w.tier >= 3 && w.skill) {
+        if (!a.skillNext) a.skillNext = now + rand(1500, 8000);
+        if (now >= a.skillNext) { a.skillT = now; a.skillKind = skillKind(w.skill); a.skillNext = now + (SKILL_TEST ? rand(2600, 3400) : rand(7000, 13000)); a.mode = 'idle'; a.until = now + 2400; }
+        if (now - (a.skillT || -1e9) < SKILL_MS) continue;
+      }
       if (a.mode === 'walk') {
         const dx = a.tx - a.x, dy = a.ty - a.y, d = Math.hypot(dx, dy);
         const sp = (10 + Math.min(4, w.tier || 0) * 1.5) * dt / 1000;
@@ -160,6 +165,77 @@
         } else { a.emote = EMO[Math.floor(Math.random() * EMO.length)]; a.emoteT = now; a.until = now + rand(1200, 3000); }
       }
     }
+  }
+  // ---------------------------------------------------------------- skills (Mythical Evolution and up)
+  const SKILL_MS = 2300;
+  const SKILL_TEST = new URLSearchParams(location.search).has('skilltest'); // preview: skills fire every ~3 s
+  const SKILL_KINDS = [
+    ['api', /api|fire|sembur|bakar|panas|naga api|flame/], ['terbang', /terbang|fly|melayang|sayap|melesat ke udara/],
+    ['petir', /petir|listrik|halilintar|thunder|lightning|setrum/], ['es', /\bes\b|salju|beku|ice|frost|dingin/],
+    ['air', /air|water|gelembung|ombak|hujan|bubble|semprot/], ['daun', /daun|tanaman|bunga|akar|hutan|alam|leaf|pohon/],
+    ['hilang', /hilang|teleport|tembus|bayangan|invisible|ninja|sembunyi|kamuflase/], ['lari', /cepat|lari|sprint|dash|kilat|speed/],
+    ['angin', /angin|tornado|badai|puyuh|wind/], ['cahaya', /cahaya|sinar|laser|light|terang/],
+    ['tanah', /tanah|batu|gempa|rock|pasir/], ['racun', /racun|poison|bisa\b|toxic/], ['sihir', /./],
+  ];
+  function skillKind(t) { const s = String(t || '').toLowerCase(); return (SKILL_KINDS.find(([, re]) => re.test(s)) || ['sihir'])[0]; }
+  function skillState(w, A, now) {
+    if (!(w.tier >= 3) || !w.skill || w.mati || A.skillT == null) return null;
+    const p = (now - A.skillT) / SKILL_MS;
+    return p >= 0 && p < 1 ? { kind: A.skillKind || skillKind(w.skill), p } : null;
+  }
+  function drawSkill(sk, w, x, y, top, face, z) {
+    const { kind, p } = sk, fade = p < .12 ? p / .12 : p > .82 ? (1 - p) / .18 : 1;
+    const mx = x + face * 7 * z, my = top + 12 * z; // mouth / front point
+    ctx.save(); ctx.globalAlpha = Math.max(0, fade);
+    const dot = (px, py, r, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(px, py, Math.max(1, r), 0, Math.PI * 2); ctx.fill(); };
+    const seed = (i) => ((Math.sin(i * 12.9898 + w.spot * 78.233) * 43758.5453) % 1 + 1) % 1;
+    if (kind === 'api') {
+      for (let i = 0; i < 22; i++) { const t = ((p * 3 + seed(i)) % 1), spread = (seed(i + 9) - .5) * .9;
+        const d = t * 34 * z; const px = mx + face * d, py = my + spread * d * .6 - t * 4 * z;
+        dot(px, py, (2.6 - t * 1.6) * z, t < .3 ? '#fff3a0' : t < .6 ? '#ffb02e' : '#e8483b'); }
+    } else if (kind === 'terbang') {
+      for (let i = 0; i < 4; i++) { const yy = y - (2 + i * 3) * z; ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x - (8 - i) * z, yy); ctx.lineTo(x + (8 - i) * z, yy); ctx.stroke(); }
+    } else if (kind === 'petir') {
+      for (let b = 0; b < 3; b++) { if (((p * 9 + b * 3) | 0) % 3) continue; let px = x + (b - 1) * 10 * z, py = top - 40 * z;
+        ctx.strokeStyle = '#fff36a'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(px, py);
+        for (let k = 0; k < 5; k++) { px += (seed(b * 7 + k) - .5) * 10 * z; py += 9 * z; ctx.lineTo(px, py); } ctx.stroke(); }
+      dot(x, top + 14 * z, 16 * z * (1 - p), 'rgba(255,250,170,.35)');
+    } else if (kind === 'air' || kind === 'racun') {
+      const col = kind === 'air' ? ['#bfe8ff', '#5fb4f0'] : ['#c8f08a', '#6fbf3a'];
+      for (let i = 0; i < 14; i++) { const t = (p * 2 + seed(i)) % 1; const px = x + (seed(i + 3) - .5) * 26 * z, py = top + 18 * z - t * 30 * z;
+        ctx.strokeStyle = col[1]; ctx.lineWidth = 1.2; ctx.fillStyle = col[0]; ctx.beginPath(); ctx.arc(px, py, (1.5 + seed(i) * 2) * z, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+    } else if (kind === 'es') {
+      const r = (6 + p * 26) * z;
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2 + p; const px = x + Math.cos(a) * r, py = top + 14 * z + Math.sin(a) * r * .5;
+        ctx.strokeStyle = '#e6fbff'; ctx.lineWidth = 1.4; for (let k = 0; k < 3; k++) { const aa = k * Math.PI / 3; ctx.beginPath(); ctx.moveTo(px - Math.cos(aa) * 2.5 * z, py - Math.sin(aa) * 2.5 * z); ctx.lineTo(px + Math.cos(aa) * 2.5 * z, py + Math.sin(aa) * 2.5 * z); ctx.stroke(); } }
+    } else if (kind === 'daun' || kind === 'angin') {
+      for (let i = 0; i < 12; i++) { const a = p * 9 + i / 12 * Math.PI * 2, r = (10 + seed(i) * 8) * z; const px = x + Math.cos(a) * r, py = top + 14 * z + Math.sin(a) * r * .45 - p * 10 * z;
+        if (kind === 'daun') { ctx.fillStyle = i % 3 ? '#5fd04a' : '#f48cb0'; ctx.beginPath(); ctx.ellipse(px, py, 2.6 * z, 1.3 * z, a, 0, Math.PI * 2); ctx.fill(); }
+        else { ctx.strokeStyle = 'rgba(230,250,255,.8)'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(x, top + 14 * z - p * 10 * z, r, a, a + .9); ctx.stroke(); } }
+    } else if (kind === 'cahaya') {
+      for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2 + p; ctx.strokeStyle = 'rgba(255,240,160,.85)'; ctx.lineWidth = 2; ctx.beginPath();
+        ctx.moveTo(x + Math.cos(a) * 9 * z, top + 14 * z + Math.sin(a) * 9 * z); ctx.lineTo(x + Math.cos(a) * (14 + p * 18) * z, top + 14 * z + Math.sin(a) * (14 + p * 18) * z); ctx.stroke(); }
+    } else if (kind === 'tanah') {
+      for (let i = 0; i < 9; i++) { const t = (p * 2 + seed(i)) % 1, a = seed(i + 4) * Math.PI; const px = x + Math.cos(a) * 18 * z * (seed(i) - .5) * 2, py = y - Math.sin(t * Math.PI) * 18 * z;
+        ctx.fillStyle = i % 2 ? '#9a6a3a' : '#7d838d'; ctx.fillRect(px - 2 * z, py - 2 * z, 4 * z, 3 * z); }
+    } else if (kind === 'hilang') {
+      for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2; dot(x + Math.cos(a) * (6 + p * 10) * z, top + 16 * z + Math.sin(a) * 4 * z, (3 - p * 2) * z, 'rgba(120,90,160,.5)'); }
+    } else if (kind === 'lari') {
+      for (let i = 0; i < 5; i++) { const yy = top + (10 + i * 4) * z; ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x - face * (10 + i * 2) * z, yy); ctx.lineTo(x - face * (24 + i * 3 + p * 8) * z, yy); ctx.stroke(); }
+    } else {
+      for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 + p * 4, r = (8 + p * 16) * z; const px = x + Math.cos(a) * r, py = top + 14 * z + Math.sin(a) * r * .6;
+        ctx.fillStyle = i % 2 ? '#ffd23f' : '#c79ae8'; ctx.fillRect(px - 1.5, py - 4, 3, 8); ctx.fillRect(px - 4, py - 1.5, 8, 3); }
+    }
+    // skill name
+    if (z >= 1.4 && p < .9) {
+      const label = '✦ ' + (w.skill.length > 22 ? w.skill.slice(0, 21) + '…' : w.skill);
+      ctx.globalAlpha = Math.min(1, fade * 1.2);
+      ctx.font = `700 ${Math.round(7 + 2.2 * z)}px "Pixelify Sans", monospace`; ctx.textAlign = 'center';
+      const ly = top - 4 * z - p * 6 * z;
+      ctx.lineWidth = 3; ctx.strokeStyle = '#2b1b17'; ctx.strokeText(label, x, ly); ctx.fillStyle = '#ffe27a'; ctx.fillText(label, x, ly);
+      ctx.textAlign = 'start';
+    }
+    ctx.restore();
   }
   const posOf = (w) => { if (w.mati) return spotOf(w); const a = actor(w); return [a.x, a.y]; };
 
@@ -201,11 +277,17 @@
       if (sp.hd) { ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; }
       // flip to face the walking direction, squash a little when breathing / landing a step
       const sq = walking ? 1 + .06 * Math.cos(A.walk * 2) : breath;
-      ctx.save(); ctx.translate(Math.round(x), Math.round(y - bob)); ctx.scale(A.face < 0 ? -1 : 1, 1); ctx.scale(1 / Math.sqrt(sq), sq);
+      const SK = slp ? null : skillState(w, A, now);
+      const lift = SK && SK.kind === 'terbang' ? Math.sin(SK.p * Math.PI) * 16 * cam.z : 0;
+      const shake = SK && SK.kind === 'tanah' ? Math.sin(now / 30) * 1.5 * cam.z : 0;
+      const alpha = SK && SK.kind === 'hilang' ? (SK.p < .5 ? Math.max(.08, 1 - SK.p * 2) : Math.min(1, (SK.p - .5) * 2)) : 1;
+      if (SK && SK.kind === 'lari') for (let g = 3; g >= 1; g--) { ctx.save(); ctx.globalAlpha = .18 * (4 - g) / 3; ctx.translate(Math.round(x - A.face * g * 7 * cam.z), Math.round(y - bob)); ctx.scale(A.face < 0 ? -1 : 1, 1); ctx.drawImage(sp, -dw / 2, -footY, dw, dh); ctx.restore(); }
+      ctx.save(); ctx.globalAlpha = alpha; ctx.translate(Math.round(x + shake), Math.round(y - bob - lift)); ctx.scale(A.face < 0 ? -1 : 1, 1); ctx.scale(1 / Math.sqrt(sq), sq);
       ctx.drawImage(sp, -dw / 2, -footY, dw, dh);
       ctx.restore();
       ctx.imageSmoothingEnabled = false;
-      const top = y - footY * sq - bob;
+      const top = y - footY * sq - bob - lift;
+      if (SK) { ctx.imageSmoothingEnabled = false; drawSkill(SK, w, x, y, top, A.face, cam.z); }
       if (A.emote && now - A.emoteT < 1600 && !slp) {
         const age = (now - A.emoteT) / 1600, fs = Math.round(8 + 3 * cam.z);
         ctx.font = `700 ${fs}px "Pixelify Sans", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
@@ -477,6 +559,7 @@
           <a class="handle" href="https://www.instagram.com/${encodeURIComponent(w.u)}/" target="_blank" rel="noopener">@${esc(w.u)}</a><br>
           <span class="tier t${w.tier}">${esc(w.tierNama || TIERS[w.tier])}</span>${w.gelar ? `<span class="gelar">${esc(w.gelar)}</span>` : ''}</div></div>
       <ul class="hewan">${(w.hewan || []).map((h) => `<li>${esc(h)}</li>`).join('')}</ul>
+      ${w.skill ? `<p class="skill">✦ Skill: <b>${esc(w.skill)}</b></p>` : w.tier >= 3 ? '<p class="muted">Skill belum diisi. Pemiliknya bisa menulis <b>Skill: ...</b> di komentar.</p>' : ''}
       ${(w.cerita || []).length ? `<ul class="stories">${w.cerita.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>` : '<p class="muted">Belum ada cerita. Ceritakan kebiasaan uniknya di postingan berikutnya untuk berevolusi.</p>'}
       <p class="muted">Lahir ${esc(lahir)} · kavling #${w.spot + 1}</p>
       <button class="btn" type="button" id="openKartu" style="margin-top:10px">Lihat Kartu Warga</button>`;

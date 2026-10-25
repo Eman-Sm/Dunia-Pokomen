@@ -73,7 +73,7 @@ const actions = {
     if (patch.hidden !== undefined) w.hidden = !!patch.hidden;
     if (patch.spriteUrl !== undefined) w.spriteUrl = patch.spriteUrl || null;
     if (patch.cerita) w.cerita.push({ text: String(patch.cerita).slice(0, 280), mediaId: null, t: new Date().toISOString() });
-    for (const f of ['elemen', 'outfit', 'wujud']) if (patch[f] !== undefined) w[f] = String(patch[f] || '').trim().slice(0, 120) || null;
+    for (const f of ['elemen', 'outfit', 'wujud', 'skill']) if (patch[f] !== undefined) w[f] = String(patch[f] || '').trim().slice(0, 120) || null;
     if (patch.tier !== undefined) w.tier = Math.max(0, Math.min(CONFIG.tiers.length - 1, Number(patch.tier)));
     let tanya = null;
     if (w.tier > before) {

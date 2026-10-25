@@ -45,3 +45,10 @@ test('komentar biasa', () => {
   const p = parseComment('keren banget kontennya 🔥');
   assert.equal(p.nama, null); assert.equal(p.hewan, null);
 });
+
+test('skill dibaca dari komentar', async () => {
+  const { parseComment } = await import('../lib/parse.js');
+  assert.equal(parseComment('Skill: menyemburkan api dari mulut').skill, 'menyemburkan api dari mulut');
+  assert.equal(parseComment('Jurus: terbang ke awan').skill, 'terbang ke awan');
+  assert.equal(parseComment('Nama: Bolu | Hewan: Kucing + Naga | Skill: petir').skill, 'petir');
+});
