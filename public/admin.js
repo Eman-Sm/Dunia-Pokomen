@@ -174,12 +174,21 @@
     tb.querySelectorAll('[data-no]').forEach((b) => b.onclick = () => run(b, 'resolve_pending', { id: S.pending[b.dataset.no].id, approve: false }, 'Komentar diabaikan'));
   }
 
+  let wTier = 'all';
+  try { wTier = sessionStorage.getItem('pokomen_wtier') || 'all'; } catch { /* ignore */ }
   function renderWarga() {
     const q = $('wq').value.trim().toLowerCase();
     const stale = (w) => w.artVer && !w.mati && (w.artTier ?? 0) < w.tier;
     const nStale = S.warga.filter(stale).length;
     $('wStaleN').textContent = nStale ? `(${nStale})` : '(0)';
-    const list = S.warga.filter((w) => (!q || w.username.includes(q) || (w.nama || '').toLowerCase().includes(q)) && (!$('wStale').checked || stale(w)));
+    // tier chips: Semua, each tier with its count, and the dead
+    const hidup = S.warga.filter((w) => !w.mati);
+    const chips = [['all', 'Semua', S.warga.length]].concat(S.tiers.map((t, i) => [String(i), t, hidup.filter((w) => w.tier === i).length]), [['mati', 'Mati', S.warga.length - hidup.length]]);
+    if (!chips.some(([v]) => v === wTier)) wTier = 'all';
+    $('wTier').innerHTML = chips.map(([v, label, n]) => `<button type="button" class="tchip t${v}" data-v="${v}" aria-pressed="${v === wTier}"${n || v === 'all' ? '' : ' disabled'}>${esc(label)} <b>${n}</b></button>`).join('');
+    $('wTier').querySelectorAll('button').forEach((b) => b.onclick = () => { wTier = b.dataset.v; try { sessionStorage.setItem('pokomen_wtier', wTier); } catch { /* ignore */ } renderWarga(); });
+    const tierOk = (w) => wTier === 'all' || (wTier === 'mati' ? w.mati : !w.mati && String(w.tier) === wTier);
+    const list = S.warga.filter((w) => tierOk(w) && (!q || w.username.includes(q) || (w.nama || '').toLowerCase().includes(q)) && (!$('wStale').checked || stale(w)));
     $('wargaT').innerHTML = list.length ? list.map((w) => `<tr data-u="${esc(w.username)}">
       <td>${w.spot + 1}</td><td>@${esc(w.username)}</td>
       <td><input type="text" data-f="nama" value="${esc(w.nama)}"></td>
