@@ -119,6 +119,42 @@
   }
 
   let tick = 0;
+  // ---------------------------------------------------------------- living citizens: wander around their plot
+  const ACT = new Map();
+  const rand = (a, b) => a + Math.random() * (b - a);
+  function actor(w) {
+    const k = w.u + (w.makam ? ':m' + w.spot : '');
+    let a = ACT.get(k);
+    const [hx, hy] = spotOf(w);
+    if (!a || a.hx !== hx || a.hy !== hy) {
+      a = { hx, hy, x: hx + rand(-6, 6), y: hy + rand(-3, 3), tx: hx, ty: hy, mode: 'idle', until: performance.now() + rand(300, 4000), face: Math.random() < .5 ? -1 : 1, walk: 0, emote: null, emoteT: 0, seed: Math.random() * 10 };
+      ACT.set(k, a);
+    }
+    return a;
+  }
+  const sleeping = () => { const h = jamWIB(); return h >= 22 || h < 5; };
+  const EMO = ['♥', '♪', '!', '?', '✦'];
+  function stepActors(now, dt) {
+    const slp = sleeping();
+    for (const w of allWarga()) {
+      if (w.mati) continue;
+      const a = actor(w);
+      if (w === selected || slp) { a.mode = 'idle'; a.until = now + 800; continue; }
+      if (a.mode === 'walk') {
+        const dx = a.tx - a.x, dy = a.ty - a.y, d = Math.hypot(dx, dy);
+        const sp = (10 + Math.min(4, w.tier || 0) * 1.5) * dt / 1000;
+        if (d <= sp) { a.x = a.tx; a.y = a.ty; a.mode = 'idle'; a.until = now + rand(1500, 6000); }
+        else { a.x += dx / d * sp; a.y += dy / d * sp; a.walk += dt / 1000 * 9; if (Math.abs(dx) > .3) a.face = dx < 0 ? -1 : 1; }
+      } else if (now > a.until) {
+        if (Math.random() < .72) {
+          const R = 16 + Math.min(4, w.tier || 0) * 2, ang = rand(0, Math.PI * 2), r = rand(4, R);
+          a.tx = a.hx + Math.cos(ang) * r; a.ty = a.hy + Math.sin(ang) * r * .55; a.mode = 'walk';
+        } else { a.emote = EMO[Math.floor(Math.random() * EMO.length)]; a.emoteT = now; a.until = now + rand(1200, 3000); }
+      }
+    }
+  }
+  const posOf = (w) => { if (w.mati) return spotOf(w); const a = actor(w); return [a.x, a.y]; };
+
   function draw() {
     if (!IMG || !DATA) return;
     clampCam();
@@ -129,7 +165,8 @@
     const sx = cam.x - Wc / cam.z / 2, sy = cam.y - Hc / cam.z / 2;
     ctx.drawImage(IMG, sx, sy, Wc / cam.z, Hc / cam.z, 0, 0, Wc, Hc);
     ctx.imageSmoothingEnabled = false;
-    const list = allWarga().map((w) => ({ w, p: spotOf(w) })).sort((a, b) => a.p[1] - b.p[1]);
+    const list = allWarga().map((w) => ({ w, p: posOf(w) })).sort((a, b) => a.p[1] - b.p[1]);
+    const now = performance.now(), slp = sleeping();
     const labels = [];
     for (const { w, p } of list) {
      try {
@@ -144,16 +181,32 @@
       const custom = sp instanceof HTMLImageElement;
       const u = custom ? 1 : (sp.px || 1); // HD sprites have px units per pixel
       const s = cam.z * (custom ? 26 / sp.width : (sp.grow || 1) / u);
-      const bob = ((tick + w.spot) % 4 < 2 ? 0 : 1) * cam.z;
+      const A = actor(w);
+      const walking = A.mode === 'walk';
+      const bob = walking ? Math.abs(Math.sin(A.walk)) * 2.2 * cam.z : 0;
+      const breath = slp ? 1 + .02 * Math.sin(now / 900 + A.seed) : 1 + .025 * Math.sin(now / 420 + A.seed);
       const dw = sp.width * s, dh = sp.height * s;
       ctx.fillStyle = 'rgba(20,30,10,.28)';
       ctx.beginPath(); ctx.ellipse(x, y, 7 * cam.z, 2.2 * cam.z, 0, 0, Math.PI * 2); ctx.fill();
       if (w.tier >= 4) { ctx.fillStyle = 'rgba(255,210,63,.35)'; ctx.beginPath(); ctx.ellipse(x, y - 10 * cam.z, 15 * cam.z, 14 * cam.z, 0, 0, Math.PI * 2); ctx.fill(); }
       const footY = custom ? dh - 2 * cam.z : 31 * u * s; // feet sit at row 31 of the 36-unit sprite
       if (sp.hd) { ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; }
-      ctx.drawImage(sp, Math.round(x - dw / 2), Math.round(y - footY - bob), Math.round(dw), Math.round(dh));
+      // flip to face the walking direction, squash a little when breathing / landing a step
+      const sq = walking ? 1 + .06 * Math.cos(A.walk * 2) : breath;
+      ctx.save(); ctx.translate(Math.round(x), Math.round(y - bob)); ctx.scale(A.face < 0 ? -1 : 1, 1); ctx.scale(1 / Math.sqrt(sq), sq);
+      ctx.drawImage(sp, -dw / 2, -footY, dw, dh);
+      ctx.restore();
       ctx.imageSmoothingEnabled = false;
-      const top = y - footY - bob;
+      const top = y - footY * sq - bob;
+      if (A.emote && now - A.emoteT < 1600 && !slp) {
+        const age = (now - A.emoteT) / 1600, fs = Math.round(8 + 3 * cam.z);
+        ctx.font = `700 ${fs}px "Pixelify Sans", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+        const ex = x + 7 * cam.z, ey = top + 4 * cam.z - age * 6 * cam.z;
+        ctx.globalAlpha = age > .75 ? (1 - age) / .25 : 1;
+        ctx.lineWidth = 3; ctx.strokeStyle = '#2b1b17'; ctx.strokeText(A.emote, ex, ey);
+        ctx.fillStyle = A.emote === '♥' ? '#ff6b8a' : A.emote === '♪' ? '#7cc0e8' : A.emote === '✦' ? '#ffd23f' : '#fffaee'; ctx.fillText(A.emote, ex, ey);
+        ctx.globalAlpha = 1; ctx.textAlign = 'start';
+      }
       const headTop = custom ? top : top + (sp.hd ? 3 : 6) * u * s; // first painted row of the 36px sprite
       labels.push({ w, x, y: headTop - 3, big: w === selected || w === hover });
      } catch (err) { console.warn('sprite gagal', w.u, err); }
@@ -365,7 +418,7 @@
     const [wx, wy] = toWorld(sx, sy);
     let best = null, bd = 1e9;
     for (const w of allWarga()) {
-      const [x, y] = spotOf(w);
+      const [x, y] = posOf(w);
       const dx = wx - x, dy = wy - (y - 9);
       const d = dx * dx + dy * dy * 0.7;
       if (Math.abs(dx) < 11 && dy > -14 && dy < 11 && d < bd) { bd = d; best = w; }
@@ -405,7 +458,7 @@
       <p class="muted">Pemiliknya bisa memulai lagi: follow kembali dan daftarkan hewan baru di postingan terbaru.</p>`;
       card.querySelector('.close').onclick = closeCard;
       card.hidden = false;
-      if (fly) { const [x, y] = spotOf(w); flyTo(x, y - 10, Math.max(cam.z, 4)); } else draw();
+      if (fly) { const [x, y] = posOf(w); flyTo(x, y - 10, Math.max(cam.z, 4)); } else draw();
       return;
     }
     const lahir = w.lahir ? new Date(w.lahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
@@ -424,7 +477,7 @@
     card.querySelector('.close').onclick = closeCard;
     card.querySelector('#openKartu').onclick = () => openKartu(w);
     card.hidden = false;
-    if (fly) { const [x, y] = spotOf(w); flyTo(x, y - 10, Math.max(cam.z, 4)); } else draw();
+    if (fly) { const [x, y] = posOf(w); flyTo(x, y - 10, Math.max(cam.z, 4)); } else draw();
   }
   function closeCard() { selected = null; $('card').hidden = true; draw(); }
 
@@ -619,7 +672,17 @@
 
   // ---------------------------------------------------------------- boot
   window.addEventListener('resize', resize);
-  setInterval(() => { tick++; if (!document.hidden) draw(); }, 420);
+  // ~30 fps animation loop (tick keeps the old 420 ms rhythm for lights and fireflies)
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(100, now - last);
+    if (dt >= 33) {
+      last = now; tick = now / 420;
+      if (!document.hidden && DATA && WORLD) { stepActors(now, dt); draw(); }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
   Promise.all([
     fetch('assets/world.json').then((r) => r.json()),
     new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = 'assets/world.png'; }),
