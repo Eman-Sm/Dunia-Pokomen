@@ -5,6 +5,7 @@
 // becomes "Sahabat Admin" with a special crown (see lib/sahabat.js).
 import { redis } from '../lib/db.js';
 import { log } from '../lib/rules.js';
+import { isTest } from '../lib/sahabat.js';
 import { json, safeEqual } from '../lib/http.js';
 
 const pick = (o, ...keys) => { for (const k of keys) if (o && o[k] !== undefined && o[k] !== null && o[k] !== '') return o[k]; return null; };
@@ -43,9 +44,11 @@ export async function POST(request) {
     t: pick(d, 'created_at') || new Date().toISOString(),
     hidden: false,
   };
+  // Trakteer's 'Kirim Tes' button: keep it for format checks, but never count or show it
+  if (body.is_test || d.is_test || isTest(item)) { item.test = true; item.hidden = true; }
   await redis('LPUSH', 'dukungan', JSON.stringify(item));
   await redis('LTRIM', 'dukungan', 0, 199);
-  await log('dukung', `${item.nama} mengirim ${item.jumlah} ${item.unit}. Admin melek +${item.jumlah} jam jaga ronda!`);
+  if (!item.test) await log('dukung', `${item.nama} mengirim ${item.jumlah} ${item.unit}. Admin melek +${item.jumlah} jam jaga ronda!`);
   return json({ ok: true });
 }
 

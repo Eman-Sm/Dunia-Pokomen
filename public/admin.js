@@ -391,11 +391,12 @@
     $('trInfo').textContent = S.trakteerReady ? 'Trakteer tersambung. Pendukung baru muncul otomatis di Papan Terima Kasih.' : 'Belum aktif: isi TRAKTEER_URL dan TRAKTEER_WEBHOOK_TOKEN di Vercel lalu redeploy.';
     const rej = S.trakteerLastRejected;
     $('trRaw').textContent = (S.trakteerLastRaw || 'Belum ada data masuk.') + (rej ? `\n\nPermintaan terakhir yang DITOLAK: ${rej.t}\nAlasan: ${rej.alasan}\nToken di URL: ${rej.adaTokenDiURL ? 'ada' : 'TIDAK ada'} · Token di header: ${rej.adaTokenDiHeader ? 'ada' : 'tidak ada'}` : '');
+    const isTes = (x) => x.test || /^\s*\[.*test.*\]\s*$/i.test(String(x.nama || ''));
     const lb = S.kopiBoard || [];
     $('sahabatInfo').innerHTML = lb.length ? '♛ <b>Sahabat Admin sekarang: ' + esc(lb[0].nama) + '</b> (@' + esc(lb[0].u) + ', ' + lb[0].total + ' kopi)' + (lb[1] ? ' · berikutnya: ' + lb.slice(1, 4).map((x) => esc(x.nama) + ' ' + x.total).join(', ') : '') : 'Belum ada Sahabat Admin: belum ada pengirim kopi yang tercocokkan dengan hewan di dunia.';
     const byU = Object.fromEntries(S.warga.filter((w) => !w.mati).map((w) => [String(w.username).toLowerCase(), w]));
     const auto = (x) => { if (x.username === '-') return null; if (x.username) return x.username; const n = String(x.nama || '').toLowerCase().replace(/^@/, '').replace(/\s+/g, ''); if (byU[n]) return n; const m = [...String(x.pesan || '').matchAll(/@([a-z0-9._]{2,30})/gi)].map((k) => k[1].toLowerCase().replace(/\.$/, '')).find((u) => byU[u]); return m || null; };
-    $('dukT').innerHTML = S.dukungan.length ? S.dukungan.map((x) => { const u = auto(x); return `<tr data-id="${esc(x.id)}"><td>${esc(x.nama)}</td><td>${esc(x.jumlah)} ${esc(x.unit)}</td><td>${esc(x.pesan)}</td>
+    $('dukT').innerHTML = S.dukungan.length ? S.dukungan.map((x) => { const u = auto(x); return `<tr data-id="${esc(x.id)}"${isTes(x) ? ' class="muted"' : ''}><td>${esc(x.nama)}${isTes(x) ? ' <span class="muted">(tes, tidak dihitung)</span>' : ''}</td><td>${esc(x.jumlah)} ${esc(x.unit)}</td><td>${esc(x.pesan)}</td>
       <td>${u ? esc(byU[u]?.nama || '?') + ' <span class="muted">@' + esc(u) + (x.username ? '' : ' (otomatis)') + '</span>' : x.username === '-' ? '<span class="muted">bukan warga</span>' : '<span class="muted">belum cocok</span>'}
         <div class="adm-row" style="margin-top:4px"><input type="text" data-link placeholder="@username" value="${esc(x.username || '')}" style="max-width:150px"><button class="btn ghost" type="button" data-linkbtn>Simpan</button></div></td>
       <td><input type="checkbox" data-show ${x.hidden ? '' : 'checked'} aria-label="Tampilkan di website"></td></tr>`; }).join('')

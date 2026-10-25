@@ -29,3 +29,11 @@ test('hanya kopi terbanyak jadi Sahabat Admin; seri = yang lebih dulu', () => {
   items.push({ nama: 'cici', jumlah: 1, t: '2026-10-25T12:00:00Z' });
   assert.equal(papanKopi(items, warga)[0].u, 'cici');
 });
+
+test('tes webhook Trakteer tidak dihitung', async () => {
+  const { isTest } = await import('../lib/sahabat.js');
+  assert.equal(isTest({ nama: '[ Stream Test ]' }), true);
+  assert.equal(isTest({ nama: 'Seseorang' }), false);
+  const p = papanKopi([{ nama: '[ Stream Test ]', username: 'budi', jumlah: 9, t: 'x' }, { nama: 'cici', jumlah: 1, t: 'y' }], warga);
+  assert.deepEqual(p.map((x) => x.u), ['cici']);
+});

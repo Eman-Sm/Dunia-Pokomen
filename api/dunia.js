@@ -3,7 +3,7 @@ import { redis, hgetallJSON } from '../lib/db.js';
 import { publicWarga, publicMakam, CONFIG, ensureTierSchema } from '../lib/rules.js';
 import { json, hariKe } from '../lib/http.js';
 import { hitungJikaBasi, getConfig, publicPemilu } from '../lib/pemilu.js';
-import { papanKopi } from '../lib/sahabat.js';
+import { papanKopi, isTest } from '../lib/sahabat.js';
 
 export async function GET() {
   try {
@@ -15,7 +15,7 @@ export async function GET() {
     const papan = papanKopi(dukAll, warga);
     const sahabat = papan[0] || null;
     const dukungan = dukAll
-      .filter((x) => x && !x.hidden).slice(0, 12)
+      .filter((x) => x && !x.hidden && !isTest(x)).slice(0, 12)
       .map(({ nama, pesan, unit, jumlah, t }) => ({ nama, pesan, unit: process.env.TRAKTEER_UNIT_NAME || 'Kopi Admin', jumlah, t }));
     const visible = warga.filter((w) => !w.hidden).sort((a, b) => a.spot - b.spot);
     const [pemiluHasil, pemiluCfg] = await Promise.all([hitungJikaBasi(20), getConfig()]);
@@ -38,7 +38,7 @@ export async function GET() {
       trakteer: process.env.TRAKTEER_URL || null,
       dukungan,
       pemilu: publicPemilu(pemiluHasil, pemiluCfg),
-      log: (logRaw || []).map((s) => { try { return JSON.parse(s); } catch { return null; } }).filter(Boolean),
+      log: (logRaw || []).map((s) => { try { return JSON.parse(s); } catch { return null; } }).filter((x) => x && !(x.type === 'dukung' && /^\s*\[.*test.*\]/i.test(x.text || ''))),
     }, 200, { 'Cache-Control': 's-maxage=20, stale-while-revalidate=60' });
   } catch (e) {
     // 200 so the message is readable; the website falls back to example data
