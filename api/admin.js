@@ -3,6 +3,7 @@
 import { redis, getJSON, setJSON, hgetallJSON } from '../lib/db.js';
 import { CONFIG, newWarga, log, birth, requireFollow, askIfMissing, ensureTierSchema, matikan, hidupkan } from '../lib/rules.js';
 import { cekUnfollowOtomatis, bandingkanFollowers, parseFollowers } from '../lib/unfollow.js';
+import { generateArt, quota as geminiQuota } from '../lib/gemini.js';
 import { syncLatest, ownUsername } from '../lib/sync.js';
 import { refreshToken, subscribeWebhooks, listMedia, me } from '../lib/ig.js';
 import { json, bearer, safeEqual, hariKe } from '../lib/http.js';
@@ -129,6 +130,15 @@ const actions = {
     const last = await redis('GET', 'unfollow_last');
     const warga = await hgetallJSON('warga');
     return { last: last ? JSON.parse(last) : null, punyaId: warga.filter((w) => w.igsid && !w.mati).length, hidup: warga.filter((w) => !w.mati).length, mati: warga.filter((w) => w.mati).length, otomatis: process.env.CEK_UNFOLLOW !== '0' };
+  },
+  async gemini_status() { return geminiQuota(); },
+  async gemini_art({ username, prompt, ref }) {
+    const u = key(username);
+    if (!(await getJSON('warga', u))) throw new Error('Warga tidak ditemukan');
+    if (!prompt || prompt.length < 20) throw new Error('Prompt kosong');
+    if (ref && ref.length > 200000) ref = null;
+    const r = await generateArt({ prompt: String(prompt).slice(0, 4000), ref });
+    return { username: u, ...r, quota: await geminiQuota() };
   },
   async pemilu_hitung() { return pemiluHitung({ force: true }); },
   async tetapkan_ketua({ username }) { return tetapkanKetua(username); },
