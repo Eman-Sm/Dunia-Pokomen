@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&family=Pixelify+Sans:wght@500;600;700&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="admin-shell">
 <header class="topbar">
   <div class="wrap">
     <a class="brand" href="./"><img src="assets/presenter.png" alt="" width="52" height="52"><span><span class="name">RUANG ADMIN</span><span class="sub">Dunia Pokomen</span></span></a>
@@ -17,7 +17,9 @@
   </div>
 </header>
 
-<main class="wrap admin-main">
+<div class="admin-layout" id="adminLayout">
+<aside class="admin-side" id="adminSide" aria-label="Panel admin">
+  <nav class="adm-tabs" id="admTabs" aria-label="Bagian admin" hidden></nav>
   <section class="parchment" id="loginBox">
     <h2>Masuk</h2>
     <form id="loginForm" class="adm-row">
@@ -27,7 +29,7 @@
     <p class="muted" id="loginMsg"></p>
   </section>
 
-  <div id="panel" hidden style="display:grid;gap:22px">
+  <div id="panel" hidden class="adm-panel">
     <section class="parchment">
       <h2>Koneksi Instagram</h2>
       <dl class="kv" id="conn"></dl>
@@ -131,7 +133,18 @@
       </form>
     </section>
   </div>
-</main>
+</aside>
+<div class="adm-resize" id="admResize" role="separator" aria-orientation="vertical" aria-label="Ubah lebar panel" tabindex="0"></div>
+<section class="adm-world" aria-label="Dunia Pokomen langsung">
+  <div class="adm-world-bar">
+    <b>Dunia langsung</b>
+    <button class="btn ghost" type="button" id="worldReload">Muat ulang data</button>
+    <a class="btn ghost" href="./" target="_blank" rel="noopener">Buka di tab baru</a>
+  </div>
+  <iframe id="world" src="./?admin=1" title="Dunia Pokomen"></iframe>
+</section>
+</div>
+<button class="btn adm-worldtoggle" type="button" id="worldToggle">Lihat dunia</button>
 <div class="toast" id="toast" hidden></div>
 <script src="creature-hd.js"></script>
 <script src="creature.js"></script>

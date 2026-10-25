@@ -26,6 +26,36 @@
     catch (err) { $('loginMsg').textContent = err.message; }
   });
 
+  // ---------- sidebar tabs + live world
+  const world = () => { try { return $('world').contentWindow.Pokomen; } catch { return null; } };
+  const reloadWorld = () => { const P = world(); if (P) P.reload(); };
+  function buildTabs() {
+    const nav = $('admTabs'); const secs = [...$('panel').querySelectorAll(':scope > section')];
+    let cur = 0; try { cur = Number(localStorage.getItem('pokomen_tab') || 0); } catch { /* ignore */ }
+    if (!(cur < secs.length)) cur = 0;
+    nav.innerHTML = secs.map((sec, i) => { sec.id = sec.id || 'sec' + i; const t = sec.querySelector('h2').textContent.replace(/ = .*/, ''); return `<button type="button" role="tab" data-i="${i}" aria-controls="${sec.id}">${esc(t)}<span class="n" hidden></span></button>`; }).join('');
+    const show = (i) => { secs.forEach((sec, k) => (sec.hidden = k !== i)); nav.querySelectorAll('button').forEach((b, k) => b.setAttribute('aria-selected', k === i)); try { localStorage.setItem('pokomen_tab', i); } catch { /* ignore */ } $('adminSide').scrollTop = 0; };
+    nav.querySelectorAll('button').forEach((b) => (b.onclick = () => show(Number(b.dataset.i))));
+    nav.hidden = false; show(cur);
+  }
+  function badge(sectionHeading, n) {
+    const b = [...$('admTabs').querySelectorAll('button')].find((x) => x.textContent.startsWith(sectionHeading)); if (!b) return;
+    const s = b.querySelector('.n'); s.hidden = !n; s.textContent = n;
+  }
+  $('worldReload').onclick = () => { reloadWorld(); toast('Data dunia dimuat ulang'); };
+  $('worldToggle').onclick = () => { document.body.classList.toggle('show-world'); $('worldToggle').textContent = document.body.classList.contains('show-world') ? 'Kembali ke panel' : 'Lihat dunia'; };
+  { // resizable sidebar
+    const L = $('adminLayout'), H = $('admResize');
+    const set = (px) => { px = Math.max(360, Math.min(window.innerWidth - 320, px)); L.style.setProperty('--side', px + 'px'); try { localStorage.setItem('pokomen_side', px); } catch { /* ignore */ } };
+    try { const v = Number(localStorage.getItem('pokomen_side')); if (v) set(v); } catch { /* ignore */ }
+    H.addEventListener('pointerdown', (e) => {
+      H.setPointerCapture(e.pointerId); $('world').style.pointerEvents = 'none';
+      const mv = (ev) => set(ev.clientX); const up = () => { H.removeEventListener('pointermove', mv); $('world').style.pointerEvents = ''; };
+      H.addEventListener('pointermove', mv); H.addEventListener('pointerup', up, { once: true });
+    });
+    H.addEventListener('keydown', (e) => { const cur = $('adminSide').getBoundingClientRect().width; if (e.key === 'ArrowLeft') set(cur - 40); if (e.key === 'ArrowRight') set(cur + 40); });
+  }
+
   async function refresh() {
     S = await api('status');
     $('loginBox').hidden = true; $('panel').hidden = false;
@@ -43,6 +73,10 @@
     if (S.hariPertama) $('hariPertama').value = S.hariPertama;
     renderPending(); renderWarga(); renderUsulan(); renderDukungan(); renderMenunggu();
     loadPemilu(); loadUnfollow();
+    if ($('admTabs').hidden) buildTabs();
+    badge('Antrean komentar', S.pending.length); badge('Menunggu konfirmasi', S.menunggu.length);
+    const stale = S.warga.filter((w) => w.artVer && !w.mati && (w.artTier ?? 0) < w.tier).length; badge('Warga', stale);
+    reloadWorld();
   }
 
   let PM = null;
@@ -113,7 +147,7 @@
         <label class="btn ghost">Unggah gambar<input type="file" accept="image/*" data-art hidden></label>
         ${w.artVer ? '<button class="btn red" type="button" data-noart>Hapus</button>' : ''}</div></td>
       <td><input type="checkbox" data-f="hidden" ${w.hidden ? 'checked' : ''} aria-label="Sembunyikan"></td>
-      <td class="adm-row"><button class="btn ghost" data-save type="button">Simpan</button>${w.mati ? '<button class="btn green" data-revive type="button">Hidupkan</button>' : '<button class="btn ghost" data-kill type="button">Matikan</button>'}<button class="btn red" data-del type="button">Hapus</button>${w.mati ? '<br><span class="muted">RIP: unfollow</span>' : ''}</td></tr>`).join('')
+      <td class="adm-row"><button class="btn ghost" data-map type="button">Lihat di peta</button><button class="btn ghost" data-save type="button">Simpan</button>${w.mati ? '<button class="btn green" data-revive type="button">Hidupkan</button>' : '<button class="btn ghost" data-kill type="button">Matikan</button>'}<button class="btn red" data-del type="button">Hapus</button>${w.mati ? '<br><span class="muted">RIP: unfollow</span>' : ''}</td></tr>`).join('')
       : '<tr><td colspan="8" class="muted">Belum ada warga.</td></tr>';
     $('wargaT').querySelectorAll('[data-save]').forEach((b) => b.onclick = () => {
       const tr = b.closest('tr'); const patch = {};
@@ -132,6 +166,7 @@
       catch (e) { toast('Gagal: ' + e.message); }
     });
     $('wargaT').querySelectorAll('[data-noart]').forEach((b) => b.onclick = () => run(b, 'remove_art', { username: b.closest('tr').dataset.u }, 'Gambar dihapus'));
+    $('wargaT').querySelectorAll('[data-map]').forEach((b) => b.onclick = () => { const P = world(); if (!P || !P.focus(b.closest('tr').dataset.u)) toast('Peta belum siap atau warga tersembunyi'); if (window.innerWidth <= 900) { document.body.classList.add('show-world'); $('worldToggle').textContent = 'Kembali ke panel'; } });
     $('wargaT').querySelectorAll('[data-revive]').forEach((b) => b.onclick = () => run(b, 'hidupkan', { username: b.closest('tr').dataset.u }, 'Hewan hidup kembali'));
     $('wargaT').querySelectorAll('[data-kill]').forEach((b) => {
       let armed = false;

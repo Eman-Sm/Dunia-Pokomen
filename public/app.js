@@ -71,6 +71,7 @@
     $('chipDemo').hidden = !data.demo;
     $('stepDM').hidden = !data.wajibFollow;
     { const f = fitAll(); cam.x = f.x; cam.y = f.y; cam.z = f.z; }
+    updateJam();
     renderBook(); renderVotes(); renderNews(); renderLadder(); renderTierFilter(); renderDukungan(); renderPemilu();
     const qk = new URLSearchParams(location.search).get('kartu');
     if (qk) { const w = DATA.warga.find((x) => x.u === qk.toLowerCase()); if (w) { select(w); openKartu(w); } }
@@ -148,6 +149,7 @@
       labels.push({ w, x, y: headTop - 3, big: w === selected || w === hover });
      } catch (err) { console.warn('sprite gagal', w.u, err); }
     }
+    drawSky(Wc, Hc, list);
     // @username above every creature; nudge labels upward when they would overlap
     const placed = [];
     const small = labels.filter((L) => !L.big).sort((a, b) => b.y - a.y);
@@ -170,6 +172,91 @@
     }
     for (const L of labels.filter((L) => L.big)) drawLabel(L);
   }
+  // ---------------------------------------------------------------- day & night (Jakarta time, WIB = UTC+7)
+  const jamParam = Number(new URLSearchParams(location.search).get('jam'));
+  function jamWIB() {
+    if (!Number.isNaN(jamParam) && new URLSearchParams(location.search).has('jam')) return ((jamParam % 24) + 24) % 24;
+    return ((Date.now() / 3.6e6 + 7) % 24 + 24) % 24;
+  }
+  // dark: 0 day .. 1 night, warm: dawn/dusk glow
+  function langit(h) {
+    const ramp = (a, b, x) => Math.max(0, Math.min(1, (x - a) / (b - a)));
+    let dark = 0, warm = 0;
+    if (h < 4.5 || h >= 19.5) dark = 1;
+    else if (h < 6.5) { dark = 1 - ramp(4.5, 6.5, h); warm = 1 - Math.abs(h - 5.6) / 1.1; }
+    else if (h >= 16.5) { dark = ramp(17.6, 19.5, h); warm = 1 - Math.abs(h - 17.8) / 1.4; }
+    warm = Math.max(0, Math.min(1, warm));
+    const nama = h < 4.5 ? 'Malam' : h < 6.5 ? 'Fajar' : h < 11 ? 'Pagi' : h < 15 ? 'Siang' : h < 18 ? 'Sore' : 'Malam';
+    return { dark, warm, nama };
+  }
+  const iso = (u, v) => [850 + (u - v) * 16, 804 + (u + v) * 8];
+  const LIGHTS = [[862, 894, 26], [836, 900, 18]]; // Balai Warga window & door lantern
+  [[1, 1], [1, 4], [4, 1], [9, 1], [9, 4], [1, 9], [4, 9], [9, 9]].forEach(([u, v]) => { const [x, y] = iso(u, v); LIGHTS.push([x, y + 2, 14]); }); // plot lanterns
+  function drawSky(Wc, Hc, list) {
+    const { dark, warm } = langit(jamWIB());
+    if (dark <= 0.01 && warm <= 0.01) return;
+    const mixc = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+    let c = mixc([255, 255, 255], [70, 82, 150], dark * .82);
+    c = mixc(c, [255, 176, 120], warm * .45);
+    ctx.save();
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`; ctx.fillRect(0, 0, Wc, Hc);
+    if (dark > .25) {
+      ctx.globalCompositeOperation = 'lighter';
+      const a = (dark - .25) / .75;
+      const flick = 0.92 + 0.08 * Math.sin(tick * 1.7);
+      for (const [x, y, r] of LIGHTS) {
+        const [sx, sy] = toScreen(x, y); const R = r * cam.z;
+        if (sx < -R || sy < -R || sx > Wc + R || sy > Hc + R) continue;
+        const gr = ctx.createRadialGradient(sx, sy, 0, sx, sy, R);
+        gr.addColorStop(0, `rgba(255,200,110,${.55 * a * flick})`); gr.addColorStop(1, 'rgba(255,160,60,0)');
+        ctx.fillStyle = gr; ctx.fillRect(sx - R, sy - R, R * 2, R * 2);
+      }
+      // evolved citizens glow softly at night
+      for (const { w, p } of list) {
+        if (!(w.tier >= 2) || w.mati) continue;
+        const [sx, sy] = toScreen(p[0], p[1] - 10); const R = 16 * cam.z;
+        if (sx < -R || sy < -R || sx > Wc + R || sy > Hc + R) continue;
+        const col = w.elemen && window.Creature.elementColor ? window.Creature.elementColor(w.elemen) : '#fff2a8';
+        const n = parseInt(col.slice(1), 16);
+        const gr = ctx.createRadialGradient(sx, sy, 0, sx, sy, R);
+        gr.addColorStop(0, `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${.35 * a})`); gr.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = gr; ctx.fillRect(sx - R, sy - R, R * 2, R * 2);
+      }
+      // fireflies
+      ctx.globalCompositeOperation = 'source-over';
+      for (let i = 0; i < 60; i++) {
+        const bx = 520 + ((i * 137) % 660), by = 620 + ((i * 89) % 560);
+        const x = bx + Math.sin(tick * .35 + i) * 6, y = by + Math.cos(tick * .29 + i * 1.3) * 5;
+        const [sx, sy] = toScreen(x, y);
+        if (sx < 0 || sy < 0 || sx > Wc || sy > Hc) continue;
+        const on = (Math.sin(tick * .9 + i * 2.1) + 1) / 2;
+        ctx.fillStyle = `rgba(230,255,140,${.85 * a * on})`; ctx.fillRect(Math.round(sx), Math.round(sy), Math.max(2, cam.z), Math.max(2, cam.z));
+      }
+      // sleeping citizens (22:00 - 05:00)
+      const h = jamWIB();
+      if (h >= 22 || h < 5) {
+        ctx.font = `700 ${Math.round(6 + 2.5 * cam.z)}px "Pixelify Sans", monospace`; ctx.textBaseline = 'alphabetic';
+        for (const { w, p } of list) {
+          if (w.mati || (w.spot % 3 === 0)) continue;
+          const [sx, sy] = toScreen(p[0] + 6, p[1] - 22);
+          if (sx < 0 || sy < 0 || sx > Wc || sy > Hc) continue;
+          const ph = ((tick + w.spot * 3) % 9) / 9;
+          ctx.fillStyle = `rgba(230,236,255,${(1 - ph) * .9})`;
+          ctx.fillText('z', sx + ph * 5 * cam.z, sy - ph * 7 * cam.z);
+        }
+      }
+    }
+    ctx.restore();
+  }
+  function updateJam() {
+    const h = jamWIB(); const L = langit(h);
+    const hh = String(Math.floor(h)).padStart(2, '0'), mm = String(Math.floor((h % 1) * 60)).padStart(2, '0');
+    const ico = L.nama === 'Malam' ? '🌙' : L.nama === 'Fajar' ? '🌅' : L.nama === 'Sore' ? '🌇' : '☀️';
+    const el = $('chipJam'); if (el) el.textContent = `${ico} ${hh}:${mm} WIB · ${L.nama}`;
+  }
+  setInterval(() => { updateJam(); }, 20000);
+
   // tombstone for a citizen that died because its owner unfollowed
   function drawGrave(x, y) {
     const z = cam.z, px = (dx, dy, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x + dx * z), Math.round(y + dy * z), Math.ceil(w * z), Math.ceil(h * z)); };
@@ -513,6 +600,12 @@
   }));
   let toastT;
   function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 2600); }
+
+  // used by Ruang Admin (same-origin iframe)
+  window.Pokomen = {
+    focus(u) { const w = allWarga().find((x) => x.u === String(u).toLowerCase() && !x.makam) || allWarga().find((x) => x.u === String(u).toLowerCase()); if (w) { $('peta').scrollIntoView({ behavior: 'smooth' }); select(w); } return !!w; },
+    async reload() { try { const r = await fetch('api/dunia?t=' + Date.now(), { cache: 'no-store' }); const d = await r.json(); if (!d.error) { DATA = d; renderBook(); renderVotes(); renderNews(); renderPemilu(); $('chipWarga').textContent = fmt(d.jumlahWarga) + ' WARGA'; draw(); } } catch { /* ignore */ } },
+  };
 
   // ---------------------------------------------------------------- boot
   window.addEventListener('resize', resize);
