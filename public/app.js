@@ -70,7 +70,7 @@
     $('chipWarga').textContent = fmt(data.jumlahWarga) + ' WARGA';
     $('chipDemo').hidden = !data.demo;
     $('stepDM').hidden = !data.wajibFollow;
-    { const f = fitAll(); cam.x = f.x; cam.y = f.y; cam.z = f.z; }
+    fitted = false; refit();
     updateJam();
     renderBook(); renderVotes(); renderNews(); renderLadder(); renderTierFilter(); renderDukungan(); renderPemilu();
     const qk = new URLSearchParams(location.search).get('kartu');
@@ -81,12 +81,21 @@
   // ---------------------------------------------------------------- map
   const box = $('mapbox'), canvas = $('map'), ctx = canvas.getContext('2d');
   let DPR = 1;
+  // the map can start hidden (e.g. inside Ruang Admin on a phone): fit the camera once it has a size
+  let fitted = false;
+  function refit() {
+    if (fitted || !DATA || !WORLD || box.clientWidth < 10 || box.clientHeight < 10) return;
+    const f = fitAll(); cam.x = f.x; cam.y = f.y; cam.z = f.z; fitted = true;
+  }
   function resize() {
     DPR = Math.min(2, window.devicePixelRatio || 1);
     canvas.width = Math.round(box.clientWidth * DPR);
     canvas.height = Math.round(box.clientHeight * DPR);
+    refit();
+    if (!(cam.z > 0) || !Number.isFinite(cam.z)) { fitted = false; refit(); }
     draw();
   }
+  if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(box);
   const minZ = () => Math.max(box.clientWidth / (WORLD ? WORLD.w : 1700), box.clientHeight / (WORLD ? WORLD.h : 1800));
   function clampCam() {
     cam.z = Math.max(minZ(), Math.min(7, cam.z));
@@ -601,6 +610,7 @@
   let toastT;
   function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 2600); }
 
+  if (new URLSearchParams(location.search).has('admin')) document.body.classList.add('embed'); // inside Ruang Admin
   // used by Ruang Admin (same-origin iframe)
   window.Pokomen = {
     focus(u) { const w = allWarga().find((x) => x.u === String(u).toLowerCase() && !x.makam) || allWarga().find((x) => x.u === String(u).toLowerCase()); if (w) { $('peta').scrollIntoView({ behavior: 'smooth' }); select(w); } return !!w; },

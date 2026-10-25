@@ -56,7 +56,7 @@
     const s = b.querySelector('.n'); s.hidden = !n; s.textContent = n;
   }
   $('worldReload').onclick = () => { reloadWorld(); toast('Data dunia dimuat ulang'); };
-  $('worldToggle').onclick = () => { document.body.classList.toggle('show-world'); $('worldToggle').textContent = document.body.classList.contains('show-world') ? 'Kembali ke panel' : 'Lihat dunia'; };
+  $('worldToggle').onclick = () => { document.body.classList.toggle('show-world'); try { const W = $('world').contentWindow; W.dispatchEvent(new Event('resize')); setTimeout(() => { const el = W.document.querySelector('.mapframe'); if (el) el.scrollIntoView({ block: 'start' }); }, 60); } catch { /* ignore */ } $('worldToggle').textContent = document.body.classList.contains('show-world') ? 'Kembali ke panel' : 'Lihat dunia'; };
   { // resizable sidebar
     const L = $('adminLayout'), H = $('admResize');
     const set = (px) => { px = Math.max(360, Math.min(window.innerWidth - 320, px)); L.style.setProperty('--side', px + 'px'); try { localStorage.setItem('pokomen_side', px); } catch { /* ignore */ } };

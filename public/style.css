@@ -327,6 +327,8 @@ body.admin-shell { height: 100vh; overflow: hidden; display: flex; flex-directio
   .adm-world { position: fixed; inset: 0; z-index: 50; display: none; }
   body.show-world .adm-world { display: flex; }
   .adm-worldtoggle { display: block; position: fixed; right: 14px; bottom: 14px; z-index: 60; }
+  .adm-world-bar a { display: none; }
+  .adm-world-bar { padding: 6px 10px; }
 }
 .admin-side { grid-template-columns: minmax(0, 1fr); }
 .admin-side > *, .adm-panel > *, .admin-side .parchment > * { min-width: 0; }
@@ -348,3 +350,7 @@ body.admin-shell { height: 100vh; overflow: hidden; display: flex; flex-directio
 .admin-side #wargaT td:nth-child(7)::before { display: inline; margin: 0; }
 .admin-side #wargaT td:last-child { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
 .admin-side #wargaT input[type=text], .admin-side #wargaT select { width: 100%; }
+
+/* public site embedded in Ruang Admin */
+body.embed > .topbar, body.embed .topbar { display: none; }
+body.embed .hero { padding-top: 12px; }
