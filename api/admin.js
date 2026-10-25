@@ -11,6 +11,8 @@ import { refreshToken, subscribeWebhooks, listMedia, me } from '../lib/ig.js';
 import { json, bearer, safeEqual, hariKe } from '../lib/http.js';
 import { getConfig as pemiluCfg, setConfig as pemiluSet, hitung as pemiluHitung, tetapkanKetua } from '../lib/pemilu.js';
 
+const HEX = /^#[0-9a-f]{6}$/i;
+const cleanPal = (p) => (p && HEX.test(p.body) ? { body: p.body, acc: HEX.test(p.acc) ? p.acc : null, acc2: HEX.test(p.acc2) ? p.acc2 : null } : null);
 const key = (u) => String(u || '').toLowerCase().replace(/^@/, '').trim();
 const parseHewan = (h) => (Array.isArray(h) ? h : String(h || '').split(/\s*[+&,]\s*/)).map((s) => s.trim()).filter(Boolean).slice(0, 3);
 
@@ -91,7 +93,7 @@ const actions = {
     await setJSON('warga', u, w);
     return { ...w, tanya };
   },
-  async set_art({ username, dataUrl }) {
+  async set_art({ username, dataUrl, pal }) {
     const u = key(username);
     const w = await getJSON('warga', u);
     if (!w) throw new Error('Warga tidak ditemukan');
@@ -100,16 +102,46 @@ const actions = {
     await redis('SET', 'art:' + u, dataUrl);
     w.artVer = Date.now();
     w.artTier = w.tier; // remember the stage the picture shows
+    w.pal = cleanPal(pal) || null; // world colours follow the card art
     await setJSON('warga', u, w);
     await log('info', `Kartu Warga ${w.nama} milik @${u} kini punya gambar anime!`, { u });
     return { username: u, artVer: w.artVer };
+  },
+  async set_pal({ username, pal }) {
+    const u = key(username);
+    const w = await getJSON('warga', u);
+    if (!w) throw new Error('Warga tidak ditemukan');
+    w.pal = cleanPal(pal);
+    if (!w.pal) throw new Error('Warna tidak valid');
+    await setJSON('warga', u, w);
+    return { username: u, pal: w.pal };
+  },
+  async set_sprite({ username, dataUrl }) {
+    const u = key(username);
+    const w = await getJSON('warga', u);
+    if (!w) throw new Error('Warga tidak ditemukan');
+    if (!/^data:image\/png;base64,/.test(dataUrl || '')) throw new Error('Sprite harus PNG transparan');
+    if (dataUrl.length > 300000) throw new Error('Sprite terlalu besar');
+    await redis('SET', 'sprite:' + u, dataUrl);
+    w.spriteVer = Date.now(); w.spriteTier = w.tier;
+    await setJSON('warga', u, w);
+    return { username: u, spriteVer: w.spriteVer };
+  },
+  async remove_sprite({ username }) {
+    const u = key(username);
+    const w = await getJSON('warga', u);
+    if (!w) throw new Error('Warga tidak ditemukan');
+    await redis('DEL', 'sprite:' + u);
+    w.spriteVer = null;
+    await setJSON('warga', u, w);
+    return { removed: true };
   },
   async remove_art({ username }) {
     const u = key(username);
     const w = await getJSON('warga', u);
     if (!w) throw new Error('Warga tidak ditemukan');
     await redis('DEL', 'art:' + u);
-    w.artVer = null;
+    w.artVer = null; w.pal = null;
     await setJSON('warga', u, w);
     return { removed: true };
   },

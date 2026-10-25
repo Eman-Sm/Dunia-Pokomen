@@ -375,3 +375,8 @@ body.embed .hero { padding-top: 12px; }
 .tchip[aria-pressed="true"] { background: var(--gold); box-shadow: inset 0 -3px 0 rgba(0,0,0,.15); }
 .tchip:disabled { opacity: .45; cursor: default; }
 .tchip.tmati[aria-pressed="true"] { background: #c9cdd4; }
+
+/* admin: world look follows card art */
+.worldlook { margin-top: 8px; padding: 6px 8px; border: 2px dashed var(--outline); background: #fffaee; font-size: .85rem; }
+.worldlook .sw { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--outline); vertical-align: middle; margin-right: 2px; }
+.worldlook .spr { vertical-align: middle; background: repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 0 0 / 10px 10px; }

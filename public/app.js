@@ -266,7 +266,7 @@
       const sp = spriteFor(w);
       const custom = sp instanceof HTMLImageElement;
       const u = custom ? 1 : (sp.px || 1); // HD sprites have px units per pixel
-      const s = cam.z * (custom ? 26 / sp.width : (sp.grow || 1) / u);
+      const s = cam.z * (custom ? 26 * (w.tier >= 3 ? 1.5 : w.tier >= 2 ? 1.3 : 1.1) / Math.max(sp.width, sp.height * .9) : (sp.grow || 1) / u);
       const A = actor(w);
       const walking = A.mode === 'walk';
       const bob = walking ? Math.abs(Math.sin(A.walk)) * 2.2 * cam.z : 0;
@@ -275,8 +275,8 @@
       ctx.fillStyle = 'rgba(20,30,10,.28)';
       ctx.beginPath(); ctx.ellipse(x, y, 7 * cam.z, 2.2 * cam.z, 0, 0, Math.PI * 2); ctx.fill();
       if (w.tier >= 4) { ctx.fillStyle = 'rgba(255,210,63,.35)'; ctx.beginPath(); ctx.ellipse(x, y - 10 * cam.z, 15 * cam.z, 14 * cam.z, 0, 0, Math.PI * 2); ctx.fill(); }
-      const footY = custom ? dh - 2 * cam.z : 31 * u * s; // feet sit at row 31 of the 36-unit sprite
-      if (sp.hd) { ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; }
+      const footY = custom ? dh - 1 * cam.z : 31 * u * s; // feet sit at row 31 of the 36-unit sprite
+      if (sp.hd || custom) { ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; }
       // flip to face the walking direction, squash a little when breathing / landing a step
       const sq = walking ? 1 + .06 * Math.cos(A.walk * 2) : breath;
       const SK = slp ? null : skillState(w, A, now);

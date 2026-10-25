@@ -202,7 +202,13 @@
         ${stale(w) ? `<div class="stale">⚠ Gambar perlu diperbarui: dibuat saat ${esc(S.tiers[w.artTier ?? 0])}, sekarang ${esc(S.tiers[w.tier])}</div>` : ''}
         <div class="adm-row"><button class="btn green" type="button" data-gen>${w.artVer ? 'Buat ulang (Gemini)' : 'Buat dengan Gemini'}</button><button class="btn ghost" type="button" data-prompt>Salin prompt Gemini</button>
         <label class="btn ghost">Unggah gambar<input type="file" accept="image/*" data-art hidden></label>
-        ${w.artVer ? '<button class="btn red" type="button" data-noart>Hapus</button>' : ''}</div></td>
+        ${w.artVer ? '<button class="btn red" type="button" data-noart>Hapus</button>' : ''}</div>
+        ${w.artVer ? `<div class="worldlook"><b>Rupa di dunia</b>
+          ${w.spriteVer ? `<img class="spr" src="api/art?u=${encodeURIComponent(w.username)}&k=sprite&v=${w.spriteVer}" alt="" height="48"> <span class="muted">sprite dari gambar kartu</span>`
+            : w.pal ? `<span class="sw" style="background:${esc(w.pal.body)}"></span><span class="sw" style="background:${esc(w.pal.acc)}"></span><span class="sw" style="background:${esc(w.pal.acc2)}"></span> <span class="muted">warna mengikuti kartu</span>`
+            : '<span class="muted">warna belum disamakan</span>'}
+          <div class="adm-row"><button class="btn ghost" type="button" data-pal>Samakan warna</button><button class="btn ghost" type="button" data-sprompt>Salin prompt sprite</button>
+          <label class="btn ghost">Unggah sprite<input type="file" accept="image/*" data-sprite hidden></label>${w.spriteVer ? '<button class="btn red" type="button" data-nosprite>Hapus sprite</button>' : ''}</div></div>` : ''}</td>
       <td><input type="checkbox" data-f="hidden" ${w.hidden ? 'checked' : ''} aria-label="Sembunyikan"></td>
       <td class="adm-row"><button class="btn ghost" data-map type="button">Lihat di peta</button><button class="btn ghost" data-save type="button">Simpan</button>${w.mati ? '<button class="btn green" data-revive type="button">Hidupkan</button>' : '<button class="btn ghost" data-kill type="button">Matikan</button>'}<button class="btn red" data-del type="button">Hapus</button>${w.mati ? '<br><span class="muted">RIP: unfollow</span>' : ''}</td></tr>`).join('')
       : '<tr><td colspan="8" class="muted">Belum ada warga.</td></tr>';
@@ -219,9 +225,30 @@
     });
     $('wargaT').querySelectorAll('[data-art]').forEach((inp) => inp.onchange = async () => {
       const f = inp.files[0]; if (!f) return;
-      try { const dataUrl = await compress(f); await run(null, 'set_art', { username: inp.closest('tr').dataset.u, dataUrl }, 'Gambar anime tersimpan di kartu'); }
+      try { const dataUrl = await compress(f); await run(null, 'set_art', { username: inp.closest('tr').dataset.u, dataUrl, pal: await palOf(dataUrl) }, 'Gambar anime tersimpan di kartu. Warna hewan di dunia ikut menyesuaikan.'); }
       catch (e) { toast('Gagal: ' + e.message); }
     });
+    $('wargaT').querySelectorAll('[data-pal]').forEach((b) => b.onclick = async () => {
+      const w = S.warga.find((x) => x.username === b.closest('tr').dataset.u);
+      const pal = await palOf(`api/art?u=${encodeURIComponent(w.username)}&v=${w.artVer}`);
+      if (!pal) return toast('Warna gambar tidak terbaca');
+      run(b, 'set_pal', { username: w.username, pal }, 'Warna ' + w.nama + ' di dunia disamakan dengan kartu');
+    });
+    $('wargaT').querySelectorAll('[data-sprompt]').forEach((b) => b.onclick = () => {
+      const w = S.warga.find((x) => x.username === b.closest('tr').dataset.u);
+      const p = spritePrompt(w);
+      navigator.clipboard.writeText(p).then(() => toast('Prompt sprite disalin. Di Gemini, lampirkan gambar kartu ' + w.nama + ' lalu tempel prompt ini.'), () => { out(p); toast('Prompt ada di kotak Hasil aksi terakhir.'); });
+    });
+    $('wargaT').querySelectorAll('[data-sprite]').forEach((inp) => inp.onchange = async () => {
+      const f = inp.files[0]; if (!f) return;
+      try {
+        const url = URL.createObjectURL(f); const im = await loadImg(url); URL.revokeObjectURL(url);
+        const { canvas, coverage } = window.ArtPal.cutout(im, 128);
+        if (!canvas || coverage > .85) return toast('Latar belakang tidak bisa dihapus. Gunakan gambar dengan latar putih polos.');
+        await run(null, 'set_sprite', { username: inp.closest('tr').dataset.u, dataUrl: canvas.toDataURL('image/png') }, 'Sprite tersimpan. Hewan di dunia kini sama dengan kartunya.');
+      } catch (e) { toast('Gagal: ' + e.message); }
+    });
+    $('wargaT').querySelectorAll('[data-nosprite]').forEach((b) => b.onclick = () => run(b, 'remove_sprite', { username: b.closest('tr').dataset.u }, 'Sprite dihapus'));
     $('wargaT').querySelectorAll('[data-gen]').forEach((b) => b.onclick = () => genArt(b.closest('tr').dataset.u, b));
     $('wargaT').querySelectorAll('[data-noart]').forEach((b) => b.onclick = () => run(b, 'remove_art', { username: b.closest('tr').dataset.u }, 'Gambar dihapus'));
     $('wargaT').querySelectorAll('[data-map]').forEach((b) => b.onclick = () => { const P = world(); if (!P || !P.focus(b.closest('tr').dataset.u)) toast('Peta belum siap atau warga tersembunyi'); if (window.innerWidth <= 900) { document.body.classList.add('show-world'); $('worldToggle').textContent = 'Kembali ke panel'; } });
@@ -243,6 +270,20 @@
   }
   $('wq').addEventListener('input', () => S && renderWarga());
   $('wStale').addEventListener('change', () => S && renderWarga());
+
+  // ---------- match every citizen's world colours to its card art
+  $('palAll').onclick = async () => {
+    const b = $('palAll'); const list = S.warga.filter((w) => w.artVer && !w.mati);
+    if (!list.length) return toast('Belum ada warga yang punya gambar kartu');
+    b.disabled = true; let ok = 0;
+    for (const [i, w] of list.entries()) {
+      b.textContent = `Menyamakan ${i + 1}/${list.length}…`;
+      const pal = await palOf(`api/art?u=${encodeURIComponent(w.username)}&v=${w.artVer}`);
+      if (pal) { try { await api('set_pal', { username: w.username, pal }); ok++; } catch { /* skip */ } }
+    }
+    b.disabled = false; b.textContent = 'Samakan warna semua hewan dengan kartunya';
+    toast(ok + ' hewan kini berwarna sesuai kartunya'); await refresh(); reloadWorld();
+  };
 
   // ---------- Gemini API (one click art)
   let GEM = null;
@@ -266,7 +307,7 @@
     const d = await api('gemini_art', { username: w.username, prompt: geminiPrompt(w), ref: spriteRef(w) });
     const blob = await (await fetch(d.dataUrl)).blob();
     const dataUrl = await compress(blob);
-    await api('set_art', { username: w.username, dataUrl });
+    await api('set_art', { username: w.username, dataUrl, pal: await palOf(dataUrl) });
     GEM = d.quota;
     return d;
   }
@@ -360,6 +401,16 @@
       `Background: ${el ? (ELEM_BG[el] || 'a magical landscape matching the ' + el + ' element') : 'a peaceful pixel-farm style meadow'}.`,
       `Landscape orientation, 3:2 aspect ratio. No text, no letters, no logo, no watermark, no card frame.`,
     ].filter(Boolean).join(' ');
+  }
+  const loadImg = (src) => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error('Gambar tidak bisa dibaca')); im.src = src; });
+  async function palOf(src) { try { return window.ArtPal.palette(await loadImg(src)); } catch { return null; } }
+  function spritePrompt(w) {
+    return [
+      `Use the attached image as the reference. Draw the EXACT same creature "${w.nama}" (same colors, markings, horns, wings, mane, accessories and outfit) as a small full-body game character sprite.`,
+      'Cute chibi proportions, standing on all its legs, side view facing right, whole body visible.',
+      'Clean anime cel shading with a thin dark outline.',
+      'Plain pure white background, no shadow, no ground, no aura, no particles, no text. Square image, the creature fills most of the frame.',
+    ].join(' ');
   }
   function compress(file) {
     return new Promise((resolve, reject) => {

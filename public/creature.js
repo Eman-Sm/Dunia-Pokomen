@@ -79,7 +79,8 @@
     const hewan = (w.hewan || []).map((h) => String(h).toLowerCase());
     const all = hewan.join(' ');
     const tier = Number(w.tier || 0);
-    const k = (w.u || w.nama) + '|' + all + '|' + tier + '|' + (w.elemen || '') + '|' + (w.outfit || '') + '|' + (w.wujud || '');
+    const pal = w.pal && /^#[0-9a-f]{6}$/i.test(w.pal.body) ? w.pal : null; // colours taken from the anime card art
+    const k = (w.u || w.nama) + '|' + all + '|' + tier + '|' + (w.elemen || '') + '|' + (w.outfit || '') + '|' + (w.wujud || '') + (pal ? '|' + pal.body + (pal.acc || '') + (pal.acc2 || '') : '');
     if (cache.has(k)) return cache.get(k);
     const seed = hash(k);
     const S = 26;
@@ -101,10 +102,16 @@
     // God Mode: swap the base graphics
     const god = tier >= 5 ? godKind(w.wujud) : null;
     if (god) { const G = GOD[god]; body = G.body || body; acc = G.acc || acc; acc2 = G.acc2 || acc2; belly = G.belly || belly; }
+    // card-art colours; a colour the owner wrote ("Unicorn Putih", "Naga Ungu") still wins
+    if (pal) {
+      const b0 = adjColor(hewan[0]), a1 = adjColor(hewan[1]), a2 = adjColor(hewan[2]);
+      body = b0 || pal.body; acc = a1 || pal.acc || acc; acc2 = a2 || pal.acc2 || acc2;
+      belly = body === '#34303a' ? '#5a5560' : shade(body, 1.18);
+    }
     // Mega Evolution and up: finer painter; every higher tier adds resolution and detail
     if (tier >= 2 && window.CreatureHD) {
       // colour words in the comment ("Naga Ungu", "Ular Emas", "macan tutul hitam") are honoured in HD
-      if (!god) {
+      if (!god && !pal) {
         const b0 = adjColor(hewan[0]), a1 = adjColor(hewan[1]), a2 = adjColor(hewan[2]);
         if (b0) { body = b0; belly = b0 === '#34303a' ? '#5a5560' : shade(b0, 1.18); }
         if (a1) acc = a1; if (a2) acc2 = a2;
