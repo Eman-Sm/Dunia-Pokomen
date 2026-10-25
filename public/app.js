@@ -678,6 +678,8 @@
     async reload() { try { const r = await fetch('api/dunia?t=' + Date.now(), { cache: 'no-store' }); const d = await r.json(); if (!d.error) { DATA = d; renderBook(); renderVotes(); renderNews(); renderPemilu(); $('chipWarga').textContent = fmt(d.jumlahWarga) + ' WARGA'; draw(); } } catch { /* ignore */ } },
   };
 
+  // bump when the map changes so browsers do not keep the old cached image
+  const WORLD_VER = '2026-10-25-hutan';
   // ---------------------------------------------------------------- boot
   window.addEventListener('resize', resize);
   // ~30 fps animation loop (tick keeps the old 420 ms rhythm for lights and fireflies)
@@ -692,8 +694,8 @@
   }
   requestAnimationFrame(frame);
   Promise.all([
-    fetch('assets/world.json').then((r) => r.json()),
-    new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = 'assets/world.png'; }),
+    fetch('assets/world.json?v=' + WORLD_VER).then((r) => r.json()),
+    new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = 'assets/world.png?v=' + WORLD_VER; }),
   ]).then(([w, im]) => {
     WORLD = w; IMG = im;
     cam.x = w.center[0]; cam.y = w.center[1];
