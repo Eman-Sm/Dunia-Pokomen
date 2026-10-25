@@ -70,6 +70,11 @@
     return t ? 'ilahi' : 'mecha';
   }
 
+  const ADJ = [[/merah muda|pink/, '#f48cb0'], [/ungu|purple|violet/, '#8a5ad0'], [/merah|red/, '#d9483b'], [/biru|blue/, '#3f7fd0'], [/hitam|black/, '#34303a'],
+    [/putih|white/, '#f4f2ee'], [/emas|gold/, '#e8b830'], [/kuning|yellow/, '#f2d040'], [/hijau tua/, '#3a6a3a'], [/hijau muda/, '#8fd06a'], [/hijau|green/, '#4fae6a'],
+    [/oren|oranye|orange|jingga/, '#f08a24'], [/coklat|cokelat|brown/, '#8a5a34'], [/abu|grey|gray|perak|silver/, '#9aa3ad']];
+  function adjColor(word) { const t = String(word || '').toLowerCase(); for (const [re, c] of ADJ) if (re.test(t)) return c; return null; }
+
   function make(w) {
     const hewan = (w.hewan || []).map((h) => String(h).toLowerCase());
     const all = hewan.join(' ');
@@ -96,6 +101,20 @@
     // God Mode: swap the base graphics
     const god = tier >= 5 ? godKind(w.wujud) : null;
     if (god) { const G = GOD[god]; body = G.body || body; acc = G.acc || acc; acc2 = G.acc2 || acc2; belly = G.belly || belly; }
+    // Mega Evolution and up: high-detail painter (smoother, species features)
+    if (tier >= 2 && window.CreatureHD) {
+      // colour words in the comment ("Naga Ungu", "Ular Emas", "macan tutul hitam") are honoured in HD
+      if (!god) {
+        const b0 = adjColor(hewan[0]), a1 = adjColor(hewan[1]), a2 = adjColor(hewan[2]);
+        if (b0) { body = b0; belly = b0 === '#34303a' ? '#5a5560' : shade(b0, 1.18); }
+        if (a1) acc = a1; if (a2) acc2 = a2;
+      }
+      const hd = window.CreatureHD.paint(w, { hewan, all, tier, seed, god, body, acc, acc2, belly,
+        elCol: w.elemen ? elementColor(w.elemen) : null, outfitCol: outfitColor(w.outfit) });
+      hd.grow = tier >= 3 ? 1.5 : 1.3;
+      cache.set(k, hd);
+      return hd;
+    }
     const cx = 13;
     // wings (behind)
     if (has(RE.wing, all) || tier >= 4) {

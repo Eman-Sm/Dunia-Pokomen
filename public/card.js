@@ -132,9 +132,10 @@
     // creature, big
     const sp = env && env.sprite ? env.sprite : window.Creature.make(w);
     // Pseudo-evo and up: the creature grows on the card too
-    const k = sp.width === 36 ? (tier >= 3 ? 7 : tier >= 1 ? 6 : 5) : Math.floor(Math.min(220 / sp.width, 220 / sp.height));
+    const u = sp.px || 1, base36 = sp.width === 36 * u;
+    const k = base36 ? (tier >= 3 ? 7 : tier >= 1 ? 6 : 5) / u : Math.floor(Math.min(220 / sp.width, 220 / sp.height));
     const sw = sp.width * k, sh = sp.height * k;
-    const sx = ax + aw / 2 - sw / 2, sy = ay + ah - (sp.width === 36 ? 31 * k : sh) - 18;
+    const sx = ax + aw / 2 - sw / 2, sy = ay + ah - (base36 ? 31 * u * k : sh) - 18;
     if (tier >= 2) { // glow: element colour (Mega/Mythical), gold (Legendary), divine (God Mode)
       const g = ctx.createRadialGradient(ax + aw / 2, sy + sh * .55, 10, ax + aw / 2, sy + sh * .55, sw * .75);
       const gc = tier >= 4 ? 'rgba(255,214,90,.85)' : elName ? elCol + 'cc' : 'rgba(255,240,170,.6)';
@@ -142,7 +143,9 @@
       ctx.fillStyle = g; ctx.fillRect(ax, ay, aw, ah);
     }
     ctx.fillStyle = 'rgba(20,30,10,.35)'; ctx.beginPath(); ctx.ellipse(ax + aw / 2, sy + sh - 6, sw * .38, 12, 0, 0, Math.PI * 2); ctx.fill();
+    if (sp.hd) { ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; }
     ctx.drawImage(sp, Math.round(sx), Math.round(sy), sw, sh);
+    ctx.imageSmoothingEnabled = false;
     }
 
     // ---- info strip

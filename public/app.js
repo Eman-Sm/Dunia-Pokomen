@@ -132,16 +132,19 @@
       }
       const sp = spriteFor(w);
       const custom = sp instanceof HTMLImageElement;
-      const s = cam.z * (custom ? 26 / sp.width : (sp.grow || 1));
+      const u = custom ? 1 : (sp.px || 1); // HD sprites have px units per pixel
+      const s = cam.z * (custom ? 26 / sp.width : (sp.grow || 1) / u);
       const bob = ((tick + w.spot) % 4 < 2 ? 0 : 1) * cam.z;
       const dw = sp.width * s, dh = sp.height * s;
       ctx.fillStyle = 'rgba(20,30,10,.28)';
       ctx.beginPath(); ctx.ellipse(x, y, 7 * cam.z, 2.2 * cam.z, 0, 0, Math.PI * 2); ctx.fill();
       if (w.tier >= 4) { ctx.fillStyle = 'rgba(255,210,63,.35)'; ctx.beginPath(); ctx.ellipse(x, y - 10 * cam.z, 15 * cam.z, 14 * cam.z, 0, 0, Math.PI * 2); ctx.fill(); }
-      const footY = custom ? dh - 2 * cam.z : 31 * s; // feet sit at row 31 of the 36px sprite
+      const footY = custom ? dh - 2 * cam.z : 31 * u * s; // feet sit at row 31 of the 36-unit sprite
+      if (sp.hd) { ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; }
       ctx.drawImage(sp, Math.round(x - dw / 2), Math.round(y - footY - bob), Math.round(dw), Math.round(dh));
+      ctx.imageSmoothingEnabled = false;
       const top = y - footY - bob;
-      const headTop = custom ? top : top + 6 * s; // first painted row of the 36px sprite
+      const headTop = custom ? top : top + (sp.hd ? 3 : 6) * u * s; // first painted row of the 36px sprite
       labels.push({ w, x, y: headTop - 3, big: w === selected || w === hover });
      } catch (err) { console.warn('sprite gagal', w.u, err); }
     }
@@ -289,6 +292,7 @@
     const sp = spriteFor(w);
     if (sp instanceof HTMLImageElement) { const im = new Image(); im.src = sp.src; im.alt = w.nama; im.width = size; im.height = size; return im; }
     const c = document.createElement('canvas'); c.width = sp.width; c.height = sp.height; c.getContext('2d').drawImage(sp, 0, 0);
+    if (sp.hd) c.style.imageRendering = 'auto';
     c.setAttribute('role', 'img'); c.setAttribute('aria-label', w.nama); return c;
   }
   function select(w, fly = true) {
