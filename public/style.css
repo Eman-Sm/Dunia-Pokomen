@@ -357,3 +357,13 @@ body.embed .hero { padding-top: 12px; }
 
 .card .skill { margin: 8px 0; padding: 6px 10px; background: #2d2160; color: #ffe27a; border: 2px solid var(--outline); font-weight: 700; }
 .card .skill b { color: #fff; }
+
+/* Sahabat Admin: top coffee supporter */
+.gelar.sahabat { background: #ffd6ea; color: #8a2a5a; }
+.sahabat-board { margin: 12px 0; padding: 10px 12px; border: 2px solid var(--outline); background: #fff3f8; }
+.sahabat-board h3 { margin: 0 0 4px; color: #b03a78; font-family: var(--font-display); }
+.sahabat-board ol { margin: 8px 0 0; padding-left: 22px; }
+.sahabat-board li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; }
+.sahabat-board li.top { font-size: 1.05em; }
+.sahabat-board .linklike { background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+.sahabat-board .linklike:hover b { text-decoration: underline; }

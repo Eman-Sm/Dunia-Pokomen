@@ -94,7 +94,7 @@
     ctx.fillText(w.nama, 44, 84);
     ctx.font = `600 18px ${DISPLAY}`; ctx.fillStyle = dark ? '#ffd23f' : '#7a5a40';
     const no = 'WARGA No. ' + String((w.spot ?? 0) + 1).padStart(4, '0');
-    ctx.fillText(no + (w.gelar ? '  ·  ' + w.gelar.toUpperCase() : ''), 44, 108);
+    ctx.fillText(no + [w.gelar, w.sahabat ? 'Sahabat Admin' : null].filter(Boolean).map((g) => '  ·  ' + g.toUpperCase()).join(''), 44, 108);
     // tier badge
     ctx.font = `700 18px ${DISPLAY}`;
     const tn = (w.tierNama || TIER_NAMES[tier]).toUpperCase();

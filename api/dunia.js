@@ -3,14 +3,18 @@ import { redis, hgetallJSON } from '../lib/db.js';
 import { publicWarga, publicMakam, CONFIG, ensureTierSchema } from '../lib/rules.js';
 import { json, hariKe } from '../lib/http.js';
 import { hitungJikaBasi, getConfig, publicPemilu } from '../lib/pemilu.js';
+import { papanKopi } from '../lib/sahabat.js';
 
 export async function GET() {
   try {
     await ensureTierSchema();
     const [warga, usulan, logRaw, start, dukRaw, makam] = await Promise.all([
-      hgetallJSON('warga'), hgetallJSON('usulan'), redis('LRANGE', 'log', 0, 29), redis('GET', 'hari_pertama'), redis('LRANGE', 'dukungan', 0, 39), hgetallJSON('makam'),
+      hgetallJSON('warga'), hgetallJSON('usulan'), redis('LRANGE', 'log', 0, 29), redis('GET', 'hari_pertama'), redis('LRANGE', 'dukungan', 0, 199), hgetallJSON('makam'),
     ]);
-    const dukungan = (dukRaw || []).map((s) => { try { return JSON.parse(s); } catch { return null; } })
+    const dukAll = (dukRaw || []).map((s) => { try { return JSON.parse(s); } catch { return null; } }).filter(Boolean);
+    const papan = papanKopi(dukAll, warga);
+    const sahabat = papan[0] || null;
+    const dukungan = dukAll
       .filter((x) => x && !x.hidden).slice(0, 12)
       .map(({ nama, pesan, unit, jumlah, t }) => ({ nama, pesan, unit: process.env.TRAKTEER_UNIT_NAME || 'Kopi Admin', jumlah, t }));
     const visible = warga.filter((w) => !w.hidden).sort((a, b) => a.spot - b.spot);
@@ -26,7 +30,9 @@ export async function GET() {
       jumlahWarga: visible.filter((w) => !w.mati).length,
       jumlahMati: visible.filter((w) => w.mati).length + makam.length,
       makam: makam.filter((w) => !w.hidden).map(publicMakam),
-      warga: visible.map(publicWarga),
+      warga: visible.map((w) => { const p = publicWarga(w); if (sahabat && sahabat.u === p.u && !p.mati) p.sahabat = sahabat.total; return p; }),
+      kopiBoard: papan.slice(0, 5).map(({ u, nama, total }) => ({ u, nama, total })),
+      dukunganUnit: process.env.TRAKTEER_UNIT_NAME || 'Kopi Admin',
       usulan: us,
       wajibFollow: process.env.REQUIRE_FOLLOW === '1',
       trakteer: process.env.TRAKTEER_URL || null,

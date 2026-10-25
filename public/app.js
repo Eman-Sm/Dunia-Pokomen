@@ -23,8 +23,10 @@
       spot: i, cerita: [stories[i % stories.length], ...(tierOf(i) ? [stories[(i + 3) % stories.length]] : [])].map((s) => `${n} ${s}.`),
       lahir: new Date(Date.now() - i * 3.6e6).toISOString(), sprite: null,
     }));
+    if (warga[3]) warga[3].sahabat = 5;
     return {
       demo: true, hari: 1, tiers: TIERS, jumlahWarga: warga.length, warga,
+      kopiBoard: warga[3] ? [{ u: warga[3].u, nama: warga[3].nama, total: 5 }, { u: warga[0].u, nama: warga[0].nama, total: 3 }] : [],
       usulan: [
         { id: 'a', u: 'kopi_156', text: 'Lumbung Makanan', likes: 1539, status: null },
         { id: 'b', u: 'cimol_128', text: 'Kubangan Lumpur', likes: 1330, status: null },
@@ -288,6 +290,11 @@
       ctx.imageSmoothingEnabled = false;
       const top = y - footY * sq - bob - lift;
       if (SK) { ctx.imageSmoothingEnabled = false; drawSkill(SK, w, x, y, top, A.face, cam.z); }
+      let crownTop = Infinity;
+      if (w.sahabat && alpha > .3) {
+        const hp = custom ? { x: sp.width / 2, y: 0 } : headPoint(sp), hx = x + shake + A.face * (hp.x - sp.width / 2) * s / Math.sqrt(sq);
+        crownTop = drawSahabatCrown(hx, y - bob - lift - (footY - hp.y * s) * sq, cam.z, now);
+      }
       if (A.emote && now - A.emoteT < 1600 && !slp) {
         const age = (now - A.emoteT) / 1600, fs = Math.round(8 + 3 * cam.z);
         ctx.font = `700 ${fs}px "Pixelify Sans", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
@@ -298,7 +305,7 @@
         ctx.globalAlpha = 1; ctx.textAlign = 'start';
       }
       const headTop = custom ? top : top + (sp.hd ? 3 : 6) * u * s; // first painted row of the 36px sprite
-      labels.push({ w, x, y: headTop - 3, big: w === selected || w === hover });
+      labels.push({ w, x, y: Math.min(headTop, crownTop) - 3, big: w === selected || w === hover });
      } catch (err) { console.warn('sprite gagal', w.u, err); }
     }
     drawSky(Wc, Hc, list);
@@ -419,12 +426,45 @@
     px(-7, -1, 14, 2, '#6b4a2a'); px(-6, -2, 2, 1, '#4f9a45'); px(4, -2, 2, 1, '#4f9a45'); px(5, -3, 1, 1, '#f08ab0');
     return y - 18 * z;
   }
+  // topmost opaque point of a sprite (where a crown sits), cached per sprite
+  function headPoint(sp) {
+    if (sp._head) return sp._head;
+    let res = { x: sp.width / 2, y: 0 };
+    try {
+      const W = sp.width, H = sp.height;
+      const c = sp.getContext ? sp : (() => { const k = document.createElement('canvas'); k.width = W; k.height = H; k.getContext('2d').drawImage(sp, 0, 0); return k; })();
+      const d = c.getContext('2d').getImageData(0, 0, W, H).data;
+      outer: for (let yy = 0; yy < H; yy++) {
+        let sx = 0, n = 0;
+        for (let xx = 0; xx < W; xx++) if (d[(yy * W + xx) * 4 + 3] > 40) { sx += xx; n++; }
+        if (n) { // average the first few rows so a single horn tip does not decide it
+          let sy = sx, m = n;
+          for (let k = 1; k <= Math.round(H * .08) && yy + k < H; k++) for (let xx = 0; xx < W; xx++) if (d[((yy + k) * W + xx) * 4 + 3] > 40) { sy += xx; m++; }
+          res = { x: sy / m, y: yy }; break outer;
+        }
+      }
+    } catch { /* tainted image: keep default */ }
+    sp._head = res; return res;
+  }
+  // special crown for the Sahabat Admin (top coffee supporter): rose-gold, blue gem, twinkle
+  function drawSahabatCrown(x, y, z, now) {
+    const u = Math.max(1, z * .9), bx = Math.round(x - 6 * u), by = Math.round(y - 9 * u - Math.sin(now / 500) * u);
+    const R = (dx, dy, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(bx + Math.round(dx * u), by + Math.round(dy * u), Math.ceil(w * u), Math.ceil(h * u)); };
+    R(-1, 2, 14, 7, '#2b1b17'); R(-1, -1, 3, 4, '#2b1b17'); R(4.5, -2, 3, 5, '#2b1b17'); R(10, -1, 3, 4, '#2b1b17');
+    R(0, 3, 12, 5, '#ffb3d1'); R(0, 0, 2, 3, '#ffb3d1'); R(5, -1, 2, 4, '#ffb3d1'); R(10, 0, 2, 3, '#ffb3d1');
+    R(0, 6, 12, 2, '#e07aa8'); R(0, 3, 12, 1, '#ffe08a'); R(1, 4, 1, 1, '#fff6d6');
+    R(5, 4, 2, 2, '#4fb6ff'); R(5, 4, 1, 1, '#d6f0ff'); R(2, 5, 1, 1, '#ffd23f'); R(9, 5, 1, 1, '#ffd23f');
+    R(0, -1, 2, 1, '#ffd23f'); R(5, -2, 2, 1, '#ffd23f'); R(10, -1, 2, 1, '#ffd23f');
+    const tw = (Math.sin(now / 260) + 1) / 2;
+    if (tw > .55) { ctx.globalAlpha = (tw - .55) / .45; R(13, -3, 1, 3, '#fffaee'); R(12, -2, 3, 1, '#fffaee'); ctx.globalAlpha = 1; }
+    return by - 3 * u;
+  }
   function allWarga() { return DATA ? DATA.warga.concat(DATA.makam || []) : []; }
   function drawUserTag({ w, x, y, text, font }, by, bw, bh) {
     const bx = Math.round(x - bw / 2); by = Math.round(by);
     if (by + bh < y - 2) { ctx.fillStyle = 'rgba(43,27,23,.7)'; ctx.fillRect(Math.round(x), by + bh, 1, Math.round(y - by - bh)); } // leader line
     ctx.fillStyle = '#2b1b17'; ctx.fillRect(bx - 1, by - 1, bw + 2, bh + 3);
-    ctx.fillStyle = w.mati ? '#c9cdd4' : w.gelar ? '#ffd23f' : w.tier >= 5 ? '#ffd23f' : w.tier >= 4 ? '#fff0b8' : '#fffaee'; ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = w.mati ? '#c9cdd4' : w.sahabat ? '#ffd6ea' : w.gelar ? '#ffd23f' : w.tier >= 5 ? '#ffd23f' : w.tier >= 4 ? '#fff0b8' : '#fffaee'; ctx.fillRect(bx, by, bw, bh);
     if (w.gelar) { ctx.fillStyle = '#ffd23f'; ctx.fillRect(Math.round(x) - 5, by - 6, 11, 4); ctx.fillRect(Math.round(x) - 5, by - 9, 2, 3); ctx.fillRect(Math.round(x) - 1, by - 10, 3, 4); ctx.fillRect(Math.round(x) + 4, by - 9, 2, 3); ctx.fillStyle = '#d9483b'; ctx.fillRect(Math.round(x), by - 5, 1, 2); }
     ctx.fillStyle = '#3b2416'; ctx.font = font; ctx.textBaseline = 'top';
     ctx.fillText(text, bx + (bh < 15 ? 3 : 5), by + 2);
@@ -557,8 +597,9 @@
       <div class="card-head"><span id="cardSprite"></span>
         <div><h3>${esc(w.nama)}</h3>
           <a class="handle" href="https://www.instagram.com/${encodeURIComponent(w.u)}/" target="_blank" rel="noopener">@${esc(w.u)}</a><br>
-          <span class="tier t${w.tier}">${esc(w.tierNama || TIERS[w.tier])}</span>${w.gelar ? `<span class="gelar">${esc(w.gelar)}</span>` : ''}</div></div>
+          <span class="tier t${w.tier}">${esc(w.tierNama || TIERS[w.tier])}</span>${w.gelar ? `<span class="gelar">${esc(w.gelar)}</span>` : ''}${w.sahabat ? '<span class="gelar sahabat">♛ Sahabat Admin</span>' : ''}</div></div>
       <ul class="hewan">${(w.hewan || []).map((h) => `<li>${esc(h)}</li>`).join('')}</ul>
+      ${w.sahabat ? `<p class="skill">☕ Pengirim kopi terbanyak: <b>${fmt(w.sahabat)} ${esc((DATA.dukunganUnit) || 'Kopi Admin')}</b></p>` : ''}
       ${w.skill ? `<p class="skill">✦ Skill: <b>${esc(w.skill)}</b></p>` : w.tier >= 3 ? '<p class="muted">Skill belum diisi. Pemiliknya bisa menulis <b>Skill: ...</b> di komentar.</p>' : ''}
       ${(w.cerita || []).length ? `<ul class="stories">${w.cerita.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>` : '<p class="muted">Belum ada cerita. Ceritakan kebiasaan uniknya di postingan berikutnya untuk berevolusi.</p>'}
       <p class="muted">Lahir ${esc(lahir)} · kavling #${w.spot + 1}</p>
@@ -687,6 +728,10 @@
     const jam = list.filter((x) => Date.now() - Date.parse(x.t) < 864e5).reduce((a, x) => a + (Number(x.jumlah) || 0), 0);
     const pct = Math.min(100, Math.round((jam / 8) * 100));
     $('melek').innerHTML = `<span>${jam >= 8 ? 'Admin melek semalaman! Warga aman.' : jam ? `Admin melek ${jam} dari 8 jam ronda malam ini` : 'Admin mulai ngantuk… zzz'}</span><div class="bar" aria-hidden="true"><i style="width:${pct}%"></i></div>`;
+    const lb = DATA.kopiBoard || [];
+    $('sahabatBoard').hidden = !lb.length;
+    $('sahabatBoard').innerHTML = lb.length ? `<h3>♛ Sahabat Admin</h3><p class="muted">Pengirim kopi terbanyak yang punya hewan di dunia memakai mahkota spesial. Hanya satu, dan bisa direbut kapan saja.</p><ol>${lb.map((x, i) => `<li${i ? '' : ' class="top"'}><button type="button" class="linklike" data-u="${esc(x.u)}">${i ? '' : '♛ '}<b>${esc(x.nama)}</b> <span class="muted">@${esc(x.u)}</span></button><span>${fmt(x.total)} ☕</span></li>`).join('')}</ol>` : '';
+    $('sahabatBoard').querySelectorAll('[data-u]').forEach((b) => b.onclick = () => { const w = DATA.warga.find((v) => v.u === b.dataset.u); if (w) select(w, true); });
     $('dukList').innerHTML = list.length
       ? list.map((x) => `<li><span class="dot dukung"></span><span><b>${esc(x.nama)}</b> mengirim ${fmt(x.jumlah)} ${esc(x.unit)} · melek +${fmt(x.jumlah)} jam${x.pesan ? `<br>“${esc(x.pesan)}”` : ''}<time datetime="${esc(x.t)}">${ago(x.t)}</time></span></li>`).join('')
       : '<li class="empty">Belum ada kopi malam ini. Admin mulai ngantuk, padahal netizen jahil masih berkeliaran.</li>';

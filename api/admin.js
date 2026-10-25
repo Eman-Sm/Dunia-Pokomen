@@ -5,6 +5,7 @@ import { CONFIG, newWarga, log, birth, requireFollow, askIfMissing, ensureTierSc
 import { cekUnfollowOtomatis, bandingkanFollowers, parseFollowers } from '../lib/unfollow.js';
 import { generateArt, quota as geminiQuota } from '../lib/gemini.js';
 import { listStoryReplies, syncStoryReplies } from '../lib/story.js';
+import { papanKopi, cocokkan } from '../lib/sahabat.js';
 import { syncLatest, ownUsername } from '../lib/sync.js';
 import { refreshToken, subscribeWebhooks, listMedia, me } from '../lib/ig.js';
 import { json, bearer, safeEqual, hariKe } from '../lib/http.js';
@@ -31,6 +32,7 @@ const actions = {
       pending: (pendingRaw || []).map((s) => JSON.parse(s)),
       usulan: usulan.sort((a, b) => b.likes - a.likes),
       dukungan: (dukRaw || []).map((s) => JSON.parse(s)),
+      kopiBoard: papanKopi((await redis('LRANGE', 'dukungan', 0, 199) || []).map((s) => JSON.parse(s)), warga),
       requireFollow: requireFollow(),
       menunggu: (await hgetallJSON('menunggu')).sort((a, b) => String(b.t).localeCompare(String(a.t))),
       trakteerLastRaw: trRaw || null,
@@ -187,6 +189,17 @@ const actions = {
     const x = { id, username: key(username), text, mediaId: null, likes: Number(likes) || 0, status: null, episode: null, t: new Date().toISOString() };
     await setJSON('usulan', id, x);
     return x;
+  },
+  async link_dukungan({ id, username }) {
+    const list = (await redis('LRANGE', 'dukungan', 0, 199)) || [];
+    const idx = list.findIndex((s) => JSON.parse(s).id === id);
+    if (idx < 0) throw new Error('Dukungan tidak ditemukan');
+    const x = JSON.parse(list[idx]);
+    const u = username === '-' ? '-' : key(username);
+    if (u && u !== '-' && !(await getJSON('warga', u))) throw new Error('@' + u + ' belum punya hewan di dunia');
+    x.username = u || null;
+    await redis('LSET', 'dukungan', idx, JSON.stringify(x));
+    return { id, username: x.username };
   },
   async set_dukungan({ id, hidden }) {
     const list = (await redis('LRANGE', 'dukungan', 0, 199)) || [];

@@ -1,7 +1,8 @@
 // Trakteer webhook: shows supporters on the website's thank-you board.
 // Set in Trakteer → Integrasi → Webhook:
 //   https://<domain>/api/trakteer?token=<TRAKTEER_WEBHOOK_TOKEN>
-// Support never changes anything in the game (no evolution, no perks).
+// Support gives no power or evolution. Only cosmetic: the top supporter who owns a citizen
+// becomes "Sahabat Admin" with a special crown (see lib/sahabat.js).
 import { redis } from '../lib/db.js';
 import { log } from '../lib/rules.js';
 import { json, safeEqual } from '../lib/http.js';
