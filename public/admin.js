@@ -69,9 +69,39 @@
     H.addEventListener('keydown', (e) => { const cur = $('adminSide').getBoundingClientRect().width; if (e.key === 'ArrowLeft') set(cur + 40); if (e.key === 'ArrowRight') set(cur - 40); });
   }
 
+  // ---------- story replies
+  let ST = null;
+  const wib = (t) => { try { return new Date(t).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch { return t; } };
+  function renderStory() {
+    if (!ST) return;
+    const f = $('stFilter').value, sel = $('stFilter');
+    const opts = ['<option value="">Semua story (' + ST.total + ')</option>'].concat(ST.perStory.map((p, i) => '<option value="' + esc(p.storyId || '?') + '">Story ' + (ST.perStory.length - i) + ' · ' + esc(wib(p.pertama)) + ' (' + p.jumlah + ')</option>'));
+    sel.innerHTML = opts.join(''); sel.value = f;
+    const rows = ST.balasan.filter((r) => !f || (r.storyId || '?') === f);
+    const akun = new Set(rows.map((r) => r.username || r.igsid)).size, warga = rows.filter((r) => r.warga).length;
+    $('stInfo').textContent = rows.length + ' balasan dari ' + akun + ' akun · ' + warga + ' dari warga Pokomen';
+    $('stT').innerHTML = rows.map((r) => '<tr><td>' + esc(wib(r.t)) + '</td><td>' + (r.username ? '@' + esc(r.username) : '<span class="muted">' + esc(r.igsid || '?') + '</span>') + '</td><td>' + (r.warga ? esc(r.warga.nama) : '<span class="muted">–</span>') + '</td><td>' + esc(r.teks || '(stiker/emoji)') + '</td><td>' + (r.jenis === 'mention' ? 'Mention' : 'Balasan') + (r.storyUrl ? ' · <a href="' + esc(r.storyUrl) + '" target="_blank" rel="noopener">story</a>' : '') + '</td></tr>').join('') || '<tr><td colspan="5" class="muted">Belum ada balasan story.</td></tr>';
+  }
+  async function loadStory() { try { ST = await api('story_list'); renderStory(); } catch (e) { $('stInfo').textContent = 'Gagal memuat: ' + e.message; } }
+  $('stFilter').onchange = renderStory;
+  $('stSync').onclick = async () => {
+    const b = $('stSync'); b.disabled = true; $('stInfo').textContent = 'Mengambil dari kotak masuk...';
+    try { const r = await api('story_sync', { max: 150 }); toast(r.baru + ' balasan baru dari ' + r.percakapan + ' percakapan'); await loadStory(); }
+    catch (e) { $('stInfo').textContent = 'Gagal: ' + e.message; toast('Gagal: ' + e.message); }
+    finally { b.disabled = false; }
+  };
+  $('stCsv').onclick = () => {
+    if (!ST) return;
+    const f = $('stFilter').value, q = (v) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+    const rows = ST.balasan.filter((r) => !f || (r.storyId || '?') === f);
+    const csv = ['waktu_wib,username,nama_warga,hewan,balasan,jenis,story_id'].concat(rows.map((r) => [wib(r.t), r.username || r.igsid, r.warga?.nama || '', (r.warga?.hewan || []).join(' + '), r.teks, r.jenis, r.storyId || ''].map(q).join(','))).join('\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })); a.download = 'balasan_story_pokomen.csv'; a.click();
+  };
+
   async function refresh() {
     S = await api('status');
     $('loginBox').hidden = true; $('panel').hidden = false;
+    if (!ST) loadStory();
     $('chipHari').textContent = 'HARI KE-' + S.hari;
     $('chipWarga').textContent = S.warga.filter((w) => !w.hidden && !w.mati).length + ' WARGA';
     const conn = [

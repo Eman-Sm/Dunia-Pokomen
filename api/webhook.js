@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import { processComment, handleDM } from '../lib/rules.js';
 import { ownUsername } from '../lib/sync.js';
 import { safeEqual } from '../lib/http.js';
+import { fromWebhook } from '../lib/story.js';
 
 export async function GET(request) {
   const p = new URL(request.url).searchParams;
@@ -34,7 +35,10 @@ export async function POST(request) {
       // DM from a viewer (ignore our own echoes)
       if (!m.sender?.id || m.message?.is_echo || m.sender.id === entry.id) continue;
       if (!m.message && !m.postback) continue;
-      try { results.push(await handleDM(m.sender.id)); } catch (e) { results.push('error:' + e.message); }
+      let story = null;
+      try { story = await fromWebhook(m); if (story) results.push('story:' + story); } catch (e) { results.push('story-error:' + e.message); }
+      // a story reply only continues a pending registration; it never triggers the "already born" auto-reply
+      try { results.push(await handleDM(m.sender.id, { quiet: !!story })); } catch (e) { results.push('error:' + e.message); }
     }
     for (const ch of entry.changes || []) {
       if (ch.field !== 'comments' && ch.field !== 'live_comments') continue;

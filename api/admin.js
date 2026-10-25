@@ -4,6 +4,7 @@ import { redis, getJSON, setJSON, hgetallJSON } from '../lib/db.js';
 import { CONFIG, newWarga, log, birth, requireFollow, askIfMissing, ensureTierSchema, matikan, hidupkan } from '../lib/rules.js';
 import { cekUnfollowOtomatis, bandingkanFollowers, parseFollowers } from '../lib/unfollow.js';
 import { generateArt, quota as geminiQuota } from '../lib/gemini.js';
+import { listStoryReplies, syncStoryReplies } from '../lib/story.js';
 import { syncLatest, ownUsername } from '../lib/sync.js';
 import { refreshToken, subscribeWebhooks, listMedia, me } from '../lib/ig.js';
 import { json, bearer, safeEqual, hariKe } from '../lib/http.js';
@@ -36,6 +37,11 @@ const actions = {
       trakteerLastRejected: trRej ? JSON.parse(trRej) : null,
       trakteerReady: !!(process.env.TRAKTEER_URL && process.env.TRAKTEER_WEBHOOK_TOKEN),
     };
+  },
+  async story_list() { return listStoryReplies(); },
+  async story_sync({ max = 100 }) {
+    let ownId = null; try { ownId = (await me()).user_id || null; } catch { /* ignore */ }
+    return syncStoryReplies({ maxConv: Math.min(300, Number(max) || 100), ownId: ownId ? String(ownId) : null });
   },
   async sync({ posts = 5 }) { return syncLatest(Math.min(25, Number(posts) || 5)); },
   async media() { return listMedia(10); },

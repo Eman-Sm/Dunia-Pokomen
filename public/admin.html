@@ -119,6 +119,18 @@
     </section>
 
     <section class="parchment">
+      <h2>Balasan Story</h2>
+      <p class="muted">Balasan story dan mention akun di story orang lain, dari DM Instagram. Yang baru masuk tersimpan otomatis. Jawaban stiker pertanyaan/polling tidak bisa diambil Instagram API.</p>
+      <div class="adm-row">
+        <button class="btn green" id="stSync" type="button">Ambil dari kotak masuk</button>
+        <button class="btn ghost" id="stCsv" type="button">Unduh CSV</button>
+        <label class="f">Story<select id="stFilter"><option value="">Semua story</option></select></label>
+      </div>
+      <p id="stInfo" class="muted"></p>
+      <div class="tablewrap"><table><thead><tr><th>Waktu</th><th>Akun</th><th>Warga</th><th>Balasan</th><th>Jenis</th></tr></thead><tbody id="stT"></tbody></table></div>
+    </section>
+
+    <section class="parchment">
       <h2>Dukungan Trakteer</h2>
       <p id="trInfo" class="muted"></p>
       <div class="tablewrap"><table><thead><tr><th>Pendukung</th><th>Traktiran</th><th>Pesan</th><th>Tampil</th></tr></thead><tbody id="dukT"></tbody></table></div>
@@ -150,6 +162,6 @@
 <script src="creature-hd.js?v=2026-10-25"></script>
 <script src="creature.js?v=2026-10-25"></script>
 <script src="card.js?v=2026-10-25-skill"></script>
-<script src="admin.js?v=2026-10-25-skill"></script>
+<script src="admin.js?v=story1"></script>
 </body>
 </html>
