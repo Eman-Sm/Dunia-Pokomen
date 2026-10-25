@@ -20,9 +20,9 @@ test('komentar tidak sesuai format dibalas dengan format yang benar, sekali per 
   assert.equal(replies.length, 1);
   assert.match(replies[0].msg, /^@andi /);
   assert.match(replies[0].msg, /Nama: .*\| Hewan: .*\| Cerita:/);
-  await processComment(c('2', 'andi', 'gimana caranya?'));
+  await processComment(c('2', 'andi', 'gimana cara daftarnya?'));
   assert.equal(replies.length, 1);
-  await processComment(c('3', 'andi', 'halo lagi', { mediaId: 'M2' }));
+  await processComment(c('3', 'andi', 'aku mau kucing naga', { mediaId: 'M2' }));
   assert.equal(replies.length, 2);
 });
 
@@ -39,4 +39,15 @@ test('yang tidak dibalas: emoji, tag teman, balasan, komentar lama, pendaftaran 
 test('format sebagian: nama tanpa hewan dibalas khusus', async () => {
   await processComment(c('20', 'cici', 'Nama: Mochi'));
   assert.match(replies.at(-1).msg, /Mochi hampir lahir/);
+});
+
+test('komentar interaksi tidak dibalas format', async () => {
+  const { niatKomentar } = await import('../lib/niat.js');
+  const n = replies.length;
+  for (const [i, t] of ['lucu banget pega nya', 'wkwk kasian ray', 'semangat min!', 'kapan hari ke-3?', 'Lulu cantik bgt', 'keren animasinya'].entries()) {
+    assert.equal(niatKomentar(t), 'interaksi', t);
+    assert.equal(await processComment(c('i' + i, 'fan' + i, t)), 'skip:interaksi');
+  }
+  assert.equal(replies.length, n);
+  for (const t of ['min aku mau daftar', 'gimana caranya biar punya hewan?', 'kucingku namanya Mochi', 'boleh ikut ga', 'naga + singa', 'pengen punya hewan juga', 'hewanku belum lahir min']) assert.equal(niatKomentar(t), 'daftar', t);
 });
