@@ -147,8 +147,16 @@
         else { a.x += dx / d * sp; a.y += dy / d * sp; a.walk += dt / 1000 * 9; if (Math.abs(dx) > .3) a.face = dx < 0 ? -1 : 1; }
       } else if (now > a.until) {
         if (Math.random() < .72) {
-          const R = 16 + Math.min(4, w.tier || 0) * 2, ang = rand(0, Math.PI * 2), r = rand(4, R);
-          a.tx = a.hx + Math.cos(ang) * r; a.ty = a.hy + Math.sin(ang) * r * .55; a.mode = 'walk';
+          // roam freely across the open clearing: pick a nearby walkable tile
+          const W = WORLD && WORLD.walk;
+          if (W && W.length) {
+            const R = 70 + Math.min(4, w.tier || 0) * 12;
+            let t = null;
+            for (let k = 0; k < 8 && !t; k++) { const c = W[Math.floor(Math.random() * W.length)]; if (Math.hypot(c[0] - a.x, (c[1] - a.y) * 2) < R) t = c; }
+            if (!t) t = [a.x + rand(-10, 10), a.y + rand(-5, 5)];
+            a.tx = t[0] + rand(-6, 6); a.ty = t[1] + rand(-3, 3);
+          } else { const ang = rand(0, Math.PI * 2), r = rand(4, 18); a.tx = a.hx + Math.cos(ang) * r; a.ty = a.hy + Math.sin(ang) * r * .55; }
+          a.mode = 'walk';
         } else { a.emote = EMO[Math.floor(Math.random() * EMO.length)]; a.emoteT = now; a.until = now + rand(1200, 3000); }
       }
     }
@@ -252,10 +260,10 @@
     return { dark, warm, nama };
   }
   const iso = (u, v) => [850 + (u - v) * 16, 804 + (u + v) * 8];
-  const LIGHTS = [[862, 894, 26], [836, 900, 18]]; // Balai Warga window & door lantern
-  [[1, 1], [1, 4], [4, 1], [9, 1], [9, 4], [1, 9], [4, 9], [9, 9]].forEach(([u, v]) => { const [x, y] = iso(u, v); LIGHTS.push([x, y + 2, 14]); }); // plot lanterns
+  const LIGHTS = [[862, 894, 26], [836, 900, 18]]; // Balai Warga window & door lantern (world.json may add more)
   function drawSky(Wc, Hc, list) {
     const { dark, warm } = langit(jamWIB());
+    const lights = (WORLD && WORLD.lights) || LIGHTS;
     if (dark <= 0.01 && warm <= 0.01) return;
     const mixc = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
     let c = mixc([255, 255, 255], [70, 82, 150], dark * .82);
@@ -267,7 +275,7 @@
       ctx.globalCompositeOperation = 'lighter';
       const a = (dark - .25) / .75;
       const flick = 0.92 + 0.08 * Math.sin(tick * 1.7);
-      for (const [x, y, r] of LIGHTS) {
+      for (const [x, y, r] of lights) {
         const [sx, sy] = toScreen(x, y); const R = r * cam.z;
         if (sx < -R || sy < -R || sx > Wc + R || sy > Hc + R) continue;
         const gr = ctx.createRadialGradient(sx, sy, 0, sx, sy, R);
@@ -624,7 +632,7 @@
     const sp = spriteFor(w);
     let artImg = null;
     if (w.art) artImg = await new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = w.art; });
-    await window.KartuWarga.draw($('kartuCanvas'), w, { worldImg: IMG, spot: spotOf(w), sprite: sp instanceof HTMLImageElement ? null : sp, artImg });
+    await window.KartuWarga.draw($('kartuCanvas'), w, { worldImg: IMG, spot: posOf(w), sprite: sp instanceof HTMLImageElement ? null : sp, artImg });
     $('kartuClose').focus();
   }
   function closeKartu() { $('kartuModal').hidden = true; kartuW = null; }
