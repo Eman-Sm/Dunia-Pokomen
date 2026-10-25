@@ -2,7 +2,8 @@
 // Same 36-unit layout as the pixel creature (feet on row 31), painted 4x finer with
 // shading, anime eyes and species features so each animal is easy to recognise.
 (function () {
-  const R = 4, F = 36, OL = '#2b1b17';
+  const F = 36, OL = '#2b1b17';
+  const RES = [4, 4, 4, 5, 6, 7]; // pixels per unit: Mega 4, Mythical 5, Legendary 6, God Mode 7
   const X = 18;                       // centre line
   const HY = 16.6, HRX = 6.5, HRY = 5.7; // head
   const BY = 24.4, BRX = 6.4, BRY = 5.4; // body
@@ -37,6 +38,8 @@
   };
 
   function paint(w, o) {
+    const R = RES[Math.max(0, Math.min(5, o.tier | 0))];
+    const L = o.tier | 0; // detail level
     const has = (k) => SP[k].test(o.all);
     const first = (k) => SP[k].test(o.hewan[0] || '');
     const tone = (k) => (first(k) ? o.body : o.acc);
@@ -55,10 +58,29 @@
     // ---------- drawing helpers on ctx
     const E = (ctx, cx, cy, rx, ry, fill, rot = 0) => { ctx.beginPath(); ctx.ellipse(cx, cy, Math.max(.1, rx), Math.max(.1, ry), rot, 0, Math.PI * 2); ctx.fillStyle = fill; ctx.fill(); };
     const shaded = (ctx, cx, cy, rx, ry, base, rot = 0) => {
+      if (L <= 1) { // Pseudo-evo: crisp two-tone cel shading
+        E(ctx, cx, cy, rx, ry, shade(base, .82), rot);
+        E(ctx, cx - rx * .08, cy - ry * .1, rx * .9, ry * .86, base, rot);
+        if (rx > 1.5) E(ctx, cx - rx * .38, cy - ry * .45, rx * .28, ry * .2, shade(base, 1.16), rot);
+        return;
+      }
       const gr = ctx.createRadialGradient(cx - rx * .38, cy - ry * .45, .2, cx, cy, Math.max(rx, ry) * 1.25);
       gr.addColorStop(0, shade(base, 1.22)); gr.addColorStop(.5, base); gr.addColorStop(1, shade(base, .74));
       E(ctx, cx, cy, rx, ry, gr, rot);
+      if (L >= 4 && rx > 1.5) E(ctx, cx - rx * .42, cy - ry * .5, rx * .22, ry * .14, 'rgba(255,255,255,.45)', rot - .5);
     };
+    const furry = () => !(has('dragon') || has('lizard') || has('snake') || has('fish') || has('shark') || has('whale') || has('dolphin') || has('turtle') || has('frog') || has('octopus') || has('axolotl') || has('robot') || has('eagle') || has('chicken') || has('duck') || has('penguin') || has('phoenix') || has('peacock') || god);
+    const fur = (ctx, cx, cy, rx, ry, base, n) => {
+      ctx.save(); ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.clip();
+      for (let i = 0; i < n; i++) {
+        const a = rnd(i + 31) * Math.PI * 2, r = .35 + rnd(i + 57) * .6, px = cx + Math.cos(a) * rx * r, py = cy + Math.sin(a) * ry * r;
+        const dx = Math.cos(a) * .9, dy = Math.sin(a) * .9 + .3;
+        line(ctx, [[px, py], [px + dx * .5 + .25, py + dy]], shade(base, py < cy ? .86 : .78), .22);
+        if (L >= 4) line(ctx, [[px - .3, py - .2], [px + dx * .4, py + dy * .8 - .2]], shade(base, 1.14), .15);
+      }
+      ctx.restore();
+    };
+    const rim = (ctx, cx, cy, rx, ry) => { ctx.beginPath(); ctx.ellipse(cx, cy, rx - .35, ry - .35, 0, Math.PI * 1.05, Math.PI * 1.55); ctx.strokeStyle = L >= 5 ? 'rgba(255,240,180,.8)' : 'rgba(255,255,255,.6)'; ctx.lineWidth = L >= 4 ? .45 : .35; ctx.stroke(); };
     const poly = (ctx, pts, fill, stroke, lw = .45) => {
       ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) ctx.lineTo(p[0], p[1]); ctx.closePath();
       if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke(); }
@@ -194,7 +216,8 @@
       for (const s of [-1, 1]) {
         shaded(g, X + s * 3.3, 28.9, 2.2, 1.9, footCol);
         if (hoof) E(g, X + s * 3.3, 30.3, 1.9, .8, '#4a3a2e');
-        else { line(g, [[X + s * 3.3 - .6, 30], [X + s * 3.3 - .6, 30.7]], shade(footCol, .7), .25); line(g, [[X + s * 3.3 + .6, 30], [X + s * 3.3 + .6, 30.7]], shade(footCol, .7), .25); }
+        else { line(g, [[X + s * 3.3 - .6, 30], [X + s * 3.3 - .6, 30.7]], shade(footCol, .7), .25); line(g, [[X + s * 3.3 + .6, 30], [X + s * 3.3 + .6, 30.7]], shade(footCol, .7), .25);
+          if (L >= 3) for (const d of [-1, 0, 1]) poly(g, [[X + s * 3.3 + d * 1.1 - .3, 30.5], [X + s * 3.3 + d * 1.1, 31.4], [X + s * 3.3 + d * 1.1 + .3, 30.5]], '#f4f0ea'); }
       }
     }
 
@@ -212,6 +235,11 @@
       if (has('sheep')) for (let k = 0; k < 9; k++) E(g, X - 5 + (k % 5) * 2.5, BY - 3.5 + Math.floor(k / 5) * 2.6, 1.4, 1.2, shade('#f4f0ea', 1 - (k % 2) * .05));
       if (has('robot') || god === 'mecha' || god === 'beast' || god === 'cyborg') { line(g, [[X - 6, BY], [X + 6, BY]], '#5c6678', .3); line(g, [[X, BY - 5], [X, BY + 5]], '#5c6678', .3); E(g, X - 3.5, BY + 2.5, .4, .4, '#ffd23f'); E(g, X + 3.5, BY + 2.5, .4, .4, '#ffd23f'); }
       g.restore();
+    }
+    if (!(has('snake') && first('snake'))) {
+      if (L >= 3 && furry()) fur(g, X, BY, BRX, BRY, body, L >= 4 ? 34 : 22);
+      if (L >= 2) rim(g, X, BY, BRX, BRY);
+      if (L >= 2) E(g, X, HY + 5.4, 4.8, 1.4, 'rgba(40,20,30,.18)'); // soft shadow under the head
     }
     // shell
     if (has('turtle')) {
@@ -275,6 +303,8 @@
     if (has('penguin') && first('penguin')) path(g, (c) => { c.moveTo(X, HY - 2); c.bezierCurveTo(X - 3, HY - 4, X - 6, HY, X - 4, HY + 4); c.lineTo(X + 4, HY + 4); c.bezierCurveTo(X + 6, HY, X + 3, HY - 4, X, HY - 2); }, '#f4f4f0');
     if (god === 'cyborg') { g.fillStyle = 'rgba(160,170,185,.95)'; g.fillRect(X, HY - 7, 7, 14); line(g, [[X, HY - 7], [X, HY + 7]], '#5c6678', .3); }
     g.restore();
+    if (L >= 3 && furry()) fur(g, X, HY - 1, HRX, HRY - 1.5, body, L >= 4 ? 26 : 16);
+    if (L >= 2) rim(g, X, HY, HRX, HRY);
 
     // =============== HORNS / ANTLERS / CREST
     if (has('unicorn')) {
@@ -340,6 +370,8 @@
       E(g, ex, ey + .25, 1.15, 1.45, ir);
       if (has('dragon') || has('lizard') || has('snake') || god === 'kaiju') E(g, ex, ey + .1, .3, 1.2, '#1e1426');
       E(g, ex - .45 * s * -1 - .35, ey - .75, .55, .55, '#ffffff'); E(g, ex + .45, ey + .75, .25, .25, '#ffffff');
+      if (L >= 3) { path(g, (c) => c.ellipse(ex, ey, 1.45, 1.85, 0, Math.PI * 1.1, Math.PI * 1.9), null, '#1e1426', .45); E(g, ex, ey + 1.15, .7, .25, 'rgba(255,255,255,.35)'); line(g, [[ex + s * 1.2, ey - 1.2], [ex + s * 1.9, ey - 1.8]], '#1e1426', .3); }
+      if (L >= 4) { const sx = ex + .1, sy = ey + .4; line(g, [[sx - .7, sy], [sx + .7, sy]], 'rgba(255,255,255,.75)', .18); line(g, [[sx, sy - .7], [sx, sy + .7]], 'rgba(255,255,255,.75)', .18); }
       if (tier >= 3) line(g, [[ex - s * 1.3, ey - 2.4], [ex + s * 1.2, ey - 2.1]], shade(body, .5), .35); // determined brow
       E(g, X + s * 4.6, HY + 1.9, 1.1, .6, 'rgba(246,140,150,.55)');
     }
@@ -378,6 +410,7 @@
     if (god === 'kristal') { for (let k = 0; k < 6; k++) line(g, [[X - 5 + k * 2, BY - 4], [X - 4 + k * 2, BY + 3]], 'rgba(255,255,255,.7)', .25); for (let k = 0; k < 4; k++) E(fx, X - 6 + rnd(k) * 12, 10 + rnd(k + 5) * 18, .35, 1.1, '#ffffff'); }
     if (god === 'mecha' || god === 'beast') for (const s of [-1, 1]) { g.fillStyle = '#5c6678'; g.fillRect(X + s * 7.2 - .8, BY - 1, 1.6, 4); E(back === null ? g : b, X + s * 7.2, BY + 4, .9, 1.6, 'rgba(95,200,255,.8)'); }
 
+    if (L >= 4) for (let i = 0; i < (L >= 5 ? 10 : 6); i++) { const px = X - 7 + rnd(i + 77) * 14, py = 12 + rnd(i + 91) * 18, r = .5 + rnd(i) * .5; line(fx, [[px - r, py], [px + r, py]], 'rgba(255,255,230,.9)', .16); line(fx, [[px, py - r], [px, py + r]], 'rgba(255,255,230,.9)', .16); }
     // =============== HALO (God Mode)
     if (tier >= 5) { fx.strokeStyle = '#ffd23f'; fx.lineWidth = .7; fx.beginPath(); fx.ellipse(X, HY - 9.5, 5, 1.5, 0, 0, Math.PI * 2); fx.stroke(); fx.strokeStyle = 'rgba(255,246,200,.8)'; fx.lineWidth = .3; fx.stroke(); }
 
@@ -388,7 +421,7 @@
     // outline = creature silhouette dilated
     const sil = document.createElement('canvas'); sil.width = sil.height = F * R;
     const s2 = sil.getContext('2d');
-    const d = 3;
+    const d = Math.max(2, Math.round(.75 * R));
     for (let a = 0; a < 16; a++) s2.drawImage(cc, Math.round(Math.cos(a / 16 * Math.PI * 2) * d), Math.round(Math.sin(a / 16 * Math.PI * 2) * d));
     s2.globalCompositeOperation = 'source-in'; s2.fillStyle = tier >= 5 ? '#5a3a00' : OL; s2.fillRect(0, 0, F * R, F * R);
     o2.drawImage(sil, 0, 0);

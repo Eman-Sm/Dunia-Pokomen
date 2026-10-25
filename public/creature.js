@@ -101,7 +101,7 @@
     // God Mode: swap the base graphics
     const god = tier >= 5 ? godKind(w.wujud) : null;
     if (god) { const G = GOD[god]; body = G.body || body; acc = G.acc || acc; acc2 = G.acc2 || acc2; belly = G.belly || belly; }
-    // Mega Evolution and up: high-detail painter (smoother, species features)
+    // Mega Evolution and up: finer painter; every higher tier adds resolution and detail
     if (tier >= 2 && window.CreatureHD) {
       // colour words in the comment ("Naga Ungu", "Ular Emas", "macan tutul hitam") are honoured in HD
       if (!god) {
