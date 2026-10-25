@@ -301,14 +301,15 @@ label.f { display: grid; gap: 3px; font-size: .82rem; font-weight: 800; }
 /* ---------- Ruang Admin: sidebar + live world ---------- */
 body.admin-shell { height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
 .admin-shell .topbar { flex: none; }
-.admin-layout { flex: 1; min-height: 0; display: grid; grid-template-columns: var(--side, 560px) 8px minmax(0, 1fr); }
-.admin-side { overflow-y: auto; overflow-x: hidden; padding: 14px 14px 40px; display: grid; align-content: start; gap: 14px; background: var(--parchment-2, #f3e2bf); border-right: 3px solid var(--outline); }
+.admin-layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 8px var(--side, 560px); }
+.adm-world { order: 0; } .adm-resize { order: 1; } .admin-side { order: 2; }
+.admin-side { overflow-y: auto; overflow-x: hidden; padding: 14px 14px 40px; display: grid; align-content: start; gap: 14px; background: var(--parchment-2, #f3e2bf); border-left: 3px solid var(--outline); scroll-behavior: smooth; }
 .admin-side .parchment { padding: 16px; }
 .admin-side h2 { font-size: 1.25rem; }
 .adm-panel { display: grid; gap: 14px; }
 .adm-tabs { position: sticky; top: -14px; z-index: 5; display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 0; background: var(--parchment-2, #f3e2bf); border-bottom: 3px solid var(--outline); }
 .adm-tabs button { font: 700 .82rem var(--font-display, monospace); padding: 6px 9px; border: 2px solid var(--outline); background: #fffaee; color: var(--outline); cursor: pointer; }
-.adm-tabs button[aria-selected="true"] { background: var(--gold, #ffd23f); }
+.adm-tabs button[aria-current="true"] { background: var(--gold, #ffd23f); }
 .adm-tabs button .n { display: inline-block; min-width: 18px; margin-left: 4px; padding: 0 4px; background: var(--berry, #d9483b); color: #fff; font-size: .72rem; }
 .adm-resize { cursor: col-resize; background: var(--wood, #8a5a34); border-inline: 2px solid var(--outline); }
 .adm-resize:hover, .adm-resize:focus-visible { background: var(--gold, #ffd23f); outline: none; }

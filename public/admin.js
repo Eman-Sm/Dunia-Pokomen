@@ -30,13 +30,26 @@
   const world = () => { try { return $('world').contentWindow.Pokomen; } catch { return null; } };
   const reloadWorld = () => { const P = world(); if (P) P.reload(); };
   function buildTabs() {
-    const nav = $('admTabs'); const secs = [...$('panel').querySelectorAll(':scope > section')];
-    let cur = 0; try { cur = Number(localStorage.getItem('pokomen_tab') || 0); } catch { /* ignore */ }
-    if (!(cur < secs.length)) cur = 0;
-    nav.innerHTML = secs.map((sec, i) => { sec.id = sec.id || 'sec' + i; const t = sec.querySelector('h2').textContent.replace(/ = .*/, ''); return `<button type="button" role="tab" data-i="${i}" aria-controls="${sec.id}">${esc(t)}<span class="n" hidden></span></button>`; }).join('');
-    const show = (i) => { secs.forEach((sec, k) => (sec.hidden = k !== i)); nav.querySelectorAll('button').forEach((b, k) => b.setAttribute('aria-selected', k === i)); try { localStorage.setItem('pokomen_tab', i); } catch { /* ignore */ } $('adminSide').scrollTop = 0; };
-    nav.querySelectorAll('button').forEach((b) => (b.onclick = () => show(Number(b.dataset.i))));
-    nav.hidden = false; show(cur);
+    // tabs are shortcuts: every section stays visible, a tab scrolls to its section
+    const nav = $('admTabs'), side = $('adminSide'); const secs = [...$('panel').querySelectorAll(':scope > section')];
+    nav.innerHTML = secs.map((sec, i) => { sec.id = sec.id || 'sec' + i; const t = sec.querySelector('h2').textContent.replace(/ = .*/, ''); return `<button type="button" data-i="${i}" aria-controls="${sec.id}">${esc(t)}<span class="n" hidden></span></button>`; }).join('');
+    const btns = [...nav.querySelectorAll('button')];
+    const mark = (i) => btns.forEach((b, k) => b.setAttribute('aria-current', k === i ? 'true' : 'false'));
+    let jumping = 0;
+    btns.forEach((b) => (b.onclick = () => {
+      const i = Number(b.dataset.i); mark(i); jumping = Date.now();
+      const top = secs[i].getBoundingClientRect().top - side.getBoundingClientRect().top + side.scrollTop - nav.offsetHeight - 8;
+      side.scrollTo({ top, behavior: 'smooth' });
+    }));
+    const onScroll = () => {
+      if (Date.now() - jumping < 700) return;
+      const lim = side.getBoundingClientRect().top + nav.offsetHeight + 40;
+      let cur = 0; secs.forEach((sec, i) => { if (sec.getBoundingClientRect().top <= lim) cur = i; });
+      if (side.scrollTop + side.clientHeight >= side.scrollHeight - 4) cur = secs.length - 1;
+      mark(cur);
+    };
+    side.addEventListener('scroll', onScroll, { passive: true });
+    nav.hidden = false; mark(0);
   }
   function badge(sectionHeading, n) {
     const b = [...$('admTabs').querySelectorAll('button')].find((x) => x.textContent.startsWith(sectionHeading)); if (!b) return;
@@ -50,10 +63,10 @@
     try { const v = Number(localStorage.getItem('pokomen_side')); if (v) set(v); } catch { /* ignore */ }
     H.addEventListener('pointerdown', (e) => {
       H.setPointerCapture(e.pointerId); $('world').style.pointerEvents = 'none';
-      const mv = (ev) => set(ev.clientX); const up = () => { H.removeEventListener('pointermove', mv); $('world').style.pointerEvents = ''; };
+      const mv = (ev) => set(window.innerWidth - ev.clientX); const up = () => { H.removeEventListener('pointermove', mv); $('world').style.pointerEvents = ''; };
       H.addEventListener('pointermove', mv); H.addEventListener('pointerup', up, { once: true });
     });
-    H.addEventListener('keydown', (e) => { const cur = $('adminSide').getBoundingClientRect().width; if (e.key === 'ArrowLeft') set(cur - 40); if (e.key === 'ArrowRight') set(cur + 40); });
+    H.addEventListener('keydown', (e) => { const cur = $('adminSide').getBoundingClientRect().width; if (e.key === 'ArrowLeft') set(cur + 40); if (e.key === 'ArrowRight') set(cur - 40); });
   }
 
   async function refresh() {
