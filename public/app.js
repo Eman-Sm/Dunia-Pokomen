@@ -171,6 +171,7 @@
   // ---------------------------------------------------------------- skills (Mythical Evolution and up)
   const SKILL_MS = 2300;
   const FULL = new URLSearchParams(location.search).has('full');
+  const namaTampil = (w) => w.kembar ? `${w.nama} ${(w.spot ?? 0) + 1}` : w.nama; // twin names carry the citizen number
   // "hewanku": who is looking at the world. From a personal link (?u=username) or chosen once, then remembered.
   let ME = null, searched = null;
   try {
@@ -335,7 +336,7 @@
     for (const L of cand) {
       const mine = L.w.u === ME;
       const uu = L.w.u.length > maxCh ? L.w.u.slice(0, maxCh - 1) + '…' : L.w.u;
-      L.text = (mine ? '★ ' : '') + (L.w.mati ? 'RIP ' : '') + ((FULL || mine) && cam.z >= 2.2 ? (L.w.nama || '') + ' · @' + uu : '@' + uu);
+      L.text = (mine ? '★ ' : '') + (L.w.mati ? 'RIP ' : '') + ((FULL || mine) && cam.z >= 2.2 ? namaTampil(L.w) + ' · @' + uu : '@' + uu);
       L.font = tagFont; L.mine = mine;
       const bh = compact ? 15 : 19, bw = ctx.measureText(L.text).width + bh * 1.25;
       let by = L.y - bh, ok = false;
@@ -504,7 +505,7 @@
     ctx.fillText(text, bx + bh * .85, by + bh / 2 + .5);
   }
   function drawLabel({ w, x, y, big }) {
-    const t = w.nama, sub = '@' + w.u + ' · ' + (w.tierNama || TIERS[w.tier]);
+    const t = namaTampil(w), sub = '@' + w.u + ' · ' + (w.tierNama || TIERS[w.tier]);
     const f1 = '800 15px Nunito, "Trebuchet MS", sans-serif', f2 = '600 11px Nunito, "Trebuchet MS", sans-serif';
     ctx.font = f1; const w1 = ctx.measureText(t).width; ctx.font = f2; const w2 = ctx.measureText(sub).width;
     const bw = Math.max(w1, w2) + 22, bh = 38, bx = x - bw / 2, by = y - bh - 4;
@@ -662,7 +663,7 @@
     card.innerHTML = `
       <button class="btn ghost sq close" type="button" aria-label="Tutup">×</button>
       <div class="card-head"><span id="cardSprite"></span>
-        <div><h3>${esc(w.nama)}</h3>
+        <div><h3>${esc(namaTampil(w))}</h3>
           <a class="handle" href="https://www.instagram.com/${encodeURIComponent(w.u)}/" target="_blank" rel="noopener">@${esc(w.u)}</a><br>
           <span class="tier t${w.tier}">${esc(w.tierNama || TIERS[w.tier])}</span>${w.gelar ? `<span class="gelar">${esc(w.gelar)}</span>` : ''}${w.sahabat ? '<span class="gelar sahabat">♛ Sohabat Admin</span>' : ''}</div></div>
       <ul class="hewan">${(w.hewan || []).map((h) => `<li>${esc(h)}</li>`).join('')}</ul>
@@ -689,7 +690,7 @@
     const q = $('searchInput').value.trim().toLowerCase().replace(/^@/, '');
     if (!q || !DATA) return;
     const W = allWarga();
-    const w = W.find((x) => x.u === q && !x.makam) || W.find((x) => x.nama.toLowerCase() === q)
+    const w = W.find((x) => x.u === q && !x.makam) || W.find((x) => namaTampil(x).toLowerCase() === q) || W.find((x) => x.nama.toLowerCase() === q)
       || W.find((x) => x.u.includes(q) || x.nama.toLowerCase().includes(q) || (x.hewan || []).join(' ').toLowerCase().includes(q));
     if (w) { searched = w; select(w); } else toast('Belum ada warga dengan nama itu. Sudah komen di postingan terbaru?');
   });

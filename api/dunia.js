@@ -4,6 +4,7 @@ import { publicWarga, publicMakam, CONFIG, ensureTierSchema } from '../lib/rules
 import { json, hariKe } from '../lib/http.js';
 import { hitungJikaBasi, getConfig, publicPemilu } from '../lib/pemilu.js';
 import { papanKopi, isTest } from '../lib/sahabat.js';
+import { namaKembar, normNama } from '../lib/hewan.js';
 
 export async function GET() {
   try {
@@ -14,6 +15,7 @@ export async function GET() {
     const dukAll = (dukRaw || []).map((s) => { try { return JSON.parse(s); } catch { return null; } }).filter(Boolean);
     const papan = papanKopi(dukAll, warga);
     const sahabat = papan[0] || null;
+    const kembar = namaKembar(warga);
     const dukungan = dukAll
       .filter((x) => x && !x.hidden && !isTest(x)).slice(0, 12)
       .map(({ nama, pesan, unit, jumlah, t }) => ({ nama, pesan, unit: process.env.TRAKTEER_UNIT_NAME || 'Kopi Admin', jumlah, t }));
@@ -30,7 +32,7 @@ export async function GET() {
       jumlahWarga: visible.filter((w) => !w.mati).length,
       jumlahMati: visible.filter((w) => w.mati).length + makam.length,
       makam: makam.filter((w) => !w.hidden).map(publicMakam),
-      warga: visible.map((w) => { const p = publicWarga(w); if (sahabat && sahabat.u === p.u && !p.mati) p.sahabat = sahabat.total; return p; }),
+      warga: visible.map((w) => { const p = publicWarga(w); if (kembar.has(normNama(w.nama))) p.kembar = true; if (sahabat && sahabat.u === p.u && !p.mati) p.sahabat = sahabat.total; return p; }),
       kopiBoard: papan.slice(0, 5).map(({ u, nama, total }) => ({ u, nama, total })),
       dukunganUnit: process.env.TRAKTEER_UNIT_NAME || 'Kopi Admin',
       usulan: us,
