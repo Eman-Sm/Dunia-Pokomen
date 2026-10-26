@@ -2,6 +2,12 @@
 
 Dibangun bertahap SETELAH pembagian wilayah (lihat RENCANA_WILAYAH.md). Unsur pay-to-win diminta pemilik akun.
 
+## 0. Cara menyebut hewan di komentar (berlaku untuk semua perintah)
+- Pakai NAMA HEWAN, bukan @username: `Tantang: Valtherion`, `Terima: Kinggon`, `Dukung: Lulu`, `Tebak: Valtherion`, `Pilih: Pega`.
+- Nama dicocokkan tanpa beda huruf besar/kecil dan spasi. @username tetap diterima sebagai cadangan.
+- Nama kembar (mis. dua "Raiko", dua "Cimo"): tambahkan nomor warga, mis. `Tantang: Raiko 47`. Bila tidak ditulis, bot membalas: "Ada 2 Raiko: Raiko 45 (@prayogaaliffiant) dan Raiko 47 (@26april2003.exe). Tulis lagi dengan nomornya ya!"
+- Kartu & label di peta menampilkan nomor warga untuk nama kembar.
+
 ## 1. Biji Kopi (mata uang di web)
 - 1 Kopi Admin (Trakteer) = 5 Biji Kopi (diputuskan 26 Okt), masuk otomatis ke akun hewan (cocokkan `@username` di pesan Trakteer; manual di Ruang Admin bila tak cocok).
 - Halaman "Dompetku": saldo + riwayat. Belanja di Toko Pokomen.

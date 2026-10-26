@@ -24,7 +24,7 @@ Disetujui pemilik akun 26 Okt 2026. Jangan dibangun sebelum video Hari ke-4 taya
 - Gelar: **"Ketua Koloni <nama wilayah>"** (contoh: Ketua Koloni Lembah Pelangi), lencana mahkota di peta & kartu.
 - **Ketua Koloni pertama (hasil pemilu Hari ke-4) otomatis menjadi Ketua Koloni untuk wilayah tempat hewannya tinggal**; wilayah itu tidak perlu voting. Wilayah lain memilih.
 - Calon mendaftar dengan komentar `Calon: <kampanye singkat>` (hanya mereka yang tampil sebagai calon).
-- Voting dengan komentar `Pilih: @username` di postingan. Identitas pemilih = akun pengomentar (sudah terverifikasi Instagram).
+- Voting dengan komentar `Pilih: <nama hewan>` (mis. `Pilih: Valtherion`; nama kembar + nomor warga, mis. `Pilih: Raiko 47`; @username tetap diterima) di postingan. Identitas pemilih = akun pengomentar (sudah terverifikasi Instagram).
   - Sah hanya bila calon satu wilayah dengan pemilih; memilih diri sendiri tidak dihitung; 1 akun = 1 suara (yang dihitung pilihan terakhir).
   - Suara tidak sah → bot membalas komentar: "@kamu, @calon itu warga Wilayah X, kamu di Wilayah Y. Lihat calon di wilayahmu di link bio ya!"
 - Web halaman awal: kotak **"Cek wilayahmu"** (@username, atau otomatis dari Hewanku / link pribadi ?u=) → wilayahmu + peta kecil + daftar calon di wilayahmu (tanpa dirimu) dengan tombol **"Salin suara"** (menyalin `Pilih: @calon` & membuka postingan). Klasemen live per wilayah.
