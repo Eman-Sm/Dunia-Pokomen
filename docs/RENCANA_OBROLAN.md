@@ -1,6 +1,6 @@
 # Rencana: Obrolan Warga di Web (dirancang 27 Okt 2026, belum dibangun)
 
-Diumumkan di video Hari ke-4 bersama rencana wilayah. Dibangun SETELAH Hari ke-4 tayang, bersamaan dengan wilayah (lihat RENCANA_WILAYAH.md).
+Diperkenalkan di video Hari ke-4. **Diaktifkan hanya SETELAH video Hari ke-4 tayang dan fiturnya sudah diperkenalkan** (keputusan 27 Okt), bersamaan dengan wilayah (lihat RENCANA_WILAYAH.md). Jangan dinyalakan sebelumnya.
 
 ## Dua ruang obrolan
 | Ruang | Siapa yang bisa menulis | Siapa yang bisa membaca |
@@ -26,7 +26,7 @@ Diumumkan di video Hari ke-4 bersama rencana wilayah. Dibangun SETELAH Hari ke-4
 ## Keamanan & moderasi (banyak warga kemungkinan remaja)
 - **Tidak ada pesan pribadi antar-warga.** Semua obrolan terbuka di ruang umum; tidak ada fitur kirim kontak.
 - Filter otomatis: kata kasar/SARA (daftar kata + variasi huruf), link/URL, nomor HP, @username luar, ajakan "pindah ke WA/DM". Pesan yang kena filter tidak terkirim (penulis diberi tahu).
-- Batas: 150 huruf per pesan, jeda 8 detik (slow mode), maks 60 pesan/hari per hewan, pesan sama berulang ditolak.
+- Batas (diputuskan 27 Okt): 200 huruf per pesan, jeda 3 detik antar-pesan, TANPA batas jumlah pesan harian; pesan sama berulang ditolak.
 - Tombol **Laporkan** di tiap pesan; 3 laporan dari akun berbeda → pesan disembunyikan otomatis menunggu Admin.
 - Ruang Admin, tab **Obrolan**: lihat semua ruang, hapus pesan, bisukan hewan (1 jam / 24 jam / permanen), daftar laporan, tambah kata terlarang, tombol darurat "kunci obrolan" (semua jadi hanya-baca).
 - Riwayat disimpan 7 hari (200 pesan terakhir per ruang), lalu dihapus.
