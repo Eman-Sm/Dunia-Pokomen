@@ -268,6 +268,8 @@
     });
   }
   $('wq').addEventListener('input', () => S && renderWarga());
+  // mouse wheel scrolls the one-row tab bar sideways
+  $('admTabs').addEventListener('wheel', (e) => { const t = $('admTabs'); if (t.scrollWidth > t.clientWidth && Math.abs(e.deltaY) > Math.abs(e.deltaX)) { t.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false });
   $('wStale').addEventListener('change', () => S && renderWarga());
 
   // ---------- match every citizen's world colours to its card art
