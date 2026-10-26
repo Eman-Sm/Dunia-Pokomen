@@ -454,3 +454,28 @@ body.embed main > .wrap:first-of-type { padding-top: 8px; }
   .map-tools #zoomHome .short { display: inline; }
   .topbar nav.tabs a { font-size: .85rem; padding: 3px 8px; }
 }
+
+/* ---------- full-screen map (peta.html → /?full=1) ---------- */
+body.fullmap { overflow: hidden; }
+body.fullmap > .topbar, body.fullmap .hero, body.fullmap main > section:not(#mapSec), body.fullmap footer, body.fullmap .ledger { display: none !important; }
+body.fullmap #mapSec { max-width: none; padding: 0; margin: 0; }
+body.fullmap .mapframe { padding: 6px; height: 100dvh; display: flex; flex-direction: column; box-sizing: border-box; }
+body.fullmap .map-tools { padding-bottom: 6px; }
+body.fullmap .mapbox { flex: 1; height: auto; min-height: 0; }
+#backBtn[hidden], #fullBtn[hidden] { display: none; }
+.map-tools #fullBtn .short { display: none; }
+@media (max-width: 640px) {
+  .map-tools { grid-template-columns: 1fr auto auto auto auto; }
+  .map-tools #fullBtn .long { display: none; } .map-tools #fullBtn .short { display: inline; }
+  body.fullmap .map-tools { grid-template-columns: auto 1fr auto auto auto; }
+}
+/* phones: toolbar as a wrapping row of compact buttons */
+.map-tools #backBtn .short { display: none; }
+@media (max-width: 640px) {
+  .map-tools, body.fullmap .map-tools { display: flex; flex-wrap: wrap; gap: 6px; }
+  .map-tools .search { flex: 1 1 100%; }
+  .map-tools .btn { padding: 5px 9px; font-size: .85rem; }
+  .map-tools .btn.sq { width: 34px; padding: 5px 0; }
+  .map-tools .chip.jam { order: 10; flex: 1 1 auto; text-align: center; font-size: .72rem; }
+  .map-tools #backBtn .long { display: none; } .map-tools #backBtn .short { display: inline; }
+}

@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&family=Pixelify+Sans:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=rapi1">
+<link rel="stylesheet" href="style.css?v=full1">
 </head>
 <body>
 <header class="topbar">
@@ -43,7 +43,7 @@
     <div class="bubble" id="bubble">Halo warga! Aku Admin semesta. Hewanmu sudah lahir belum?</div>
   </section>
 
-  <section class="wrap">
+  <section class="wrap" id="mapSec">
     <div class="mapframe wood">
       <div class="map-tools">
         <form class="search" id="searchForm" role="search">
@@ -53,6 +53,8 @@
         <button class="btn ghost sq" id="zoomIn" type="button" aria-label="Perbesar">+</button>
         <button class="btn ghost sq" id="zoomOut" type="button" aria-label="Perkecil">&minus;</button>
         <button class="btn ghost" id="zoomHome" type="button"><span class="long">Lihat semua warga</span><span class="short">Semua</span></button>
+        <a class="btn ghost" id="fullBtn" href="peta.html" target="_blank" rel="noopener" title="Buka peta penuh di tab baru"><span class="long">Peta penuh ↗</span><span class="short">⛶</span></a>
+        <a class="btn ghost" id="backBtn" href="./" hidden><span class="long">← Kembali</span><span class="short">←</span></a>
         <span class="chip jam" id="chipJam" title="Waktu Dunia Pokomen mengikuti WIB (GMT+7)">☀️ --:-- WIB</span>
       </div>
       <div class="mapbox" id="mapbox">
@@ -163,6 +165,6 @@ Wujud Dewa: Mecha Beast</div>
 <script src="creature-hd.js?v=2026-10-25"></script>
 <script src="creature.js?v=pal1"></script>
 <script src="card.js?v=sohabat"></script>
-<script src="app.js?v=rapi1"></script>
+<script src="app.js?v=full1"></script>
 </body>
 </html>

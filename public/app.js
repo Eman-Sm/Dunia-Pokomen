@@ -170,6 +170,7 @@
   }
   // ---------------------------------------------------------------- skills (Mythical Evolution and up)
   const SKILL_MS = 2300;
+  const FULL = new URLSearchParams(location.search).has('full');
   const SKILL_TEST = new URLSearchParams(location.search).has('skilltest'); // preview: skills fire every ~3 s
   const SKILL_KINDS = [
     ['api', /api|fire|sembur|bakar|panas|naga api|flame/], ['terbang', /terbang|fly|melayang|sayap|melesat ke udara/],
@@ -312,19 +313,20 @@
     // @username above every creature; nudge labels upward when they would overlap
     const placed = [];
     // fewer, clearer tags: none when zoomed far out, then the ones nearest the centre (max 36)
-    const minZ = Wc < 560 ? 2.6 : 2.1;
+    const minZ = FULL ? 0 : (Wc < 560 ? 2.6 : 2.1);
     let small = cam.z < minZ ? [] : labels.filter((L) => !L.big);
-    small = small.sort((a, b) => Math.hypot(a.x - Wc / 2, a.y - Hc / 2) - Math.hypot(b.x - Wc / 2, b.y - Hc / 2)).slice(0, 36).sort((a, b) => b.y - a.y);
+    small = small.sort((a, b) => Math.hypot(a.x - Wc / 2, a.y - Hc / 2) - Math.hypot(b.x - Wc / 2, b.y - Hc / 2)).slice(0, FULL ? 400 : 36).sort((a, b) => b.y - a.y);
     const compact = cam.z < 1.8 || Wc < 520;
     const tagFont = compact ? '800 10px Nunito, "Trebuchet MS", sans-serif' : '800 12px Nunito, "Trebuchet MS", sans-serif';
     const maxCh = compact ? 11 : 24;
     ctx.font = tagFont;
     for (const L of small) {
-      L.text = (L.w.mati ? 'RIP @' : '@') + (L.w.u.length > maxCh ? L.w.u.slice(0, maxCh - 1) + '…' : L.w.u);
+      const uu = L.w.u.length > maxCh ? L.w.u.slice(0, maxCh - 1) + '…' : L.w.u;
+      L.text = (L.w.mati ? 'RIP ' : '') + (FULL && cam.z >= 2.2 ? (L.w.nama || '') + ' · @' + uu : '@' + uu);
       L.font = tagFont;
       const bh = compact ? 15 : 19, bw = ctx.measureText(L.text).width + bh * 1.25;
       let by = L.y - bh;
-      for (let k = 0; k < 6; k++) {
+      for (let k = 0; k < (FULL ? 3 : 6); k++) {
         const r = { x: L.x - bw / 2, y: by, w: bw, h: bh };
         if (!placed.some((q) => r.x < q.x + q.w + 2 && r.x + r.w + 2 > q.x && r.y < q.y + q.h + 2 && r.y + r.h + 2 > q.y)) break;
         by -= bh + 3;
@@ -809,6 +811,10 @@
   function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 2600); }
 
   if (new URLSearchParams(location.search).has('admin')) document.body.classList.add('embed'); // inside Ruang Admin
+  if (FULL) {  // full-screen map in its own tab, with every citizen's identity above its head
+    document.body.classList.add('fullmap'); document.title = 'Peta Penuh · Dunia Pokomen';
+    $('fullBtn').hidden = true; $('backBtn').hidden = false;
+  }
   // used by Ruang Admin (same-origin iframe)
   window.Pokomen = {
     focus(u) { const w = allWarga().find((x) => x.u === String(u).toLowerCase() && !x.makam) || allWarga().find((x) => x.u === String(u).toLowerCase()); if (w) { $('peta').scrollIntoView({ behavior: 'smooth' }); select(w); } return !!w; },
