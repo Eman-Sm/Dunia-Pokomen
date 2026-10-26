@@ -117,7 +117,7 @@
     loadPemilu(); loadUnfollow(); loadGemini();
     if ($('admTabs').hidden) buildTabs();
     badge('Antrean komentar', S.pending.length); badge('Menunggu konfirmasi', S.menunggu.length);
-    const stale = S.warga.filter((w) => w.artVer && !w.mati && (w.artTier ?? 0) < w.tier).length; badge('Warga', stale);
+    const stale = S.warga.filter((w) => w.artVer && !w.mati && (w.artTier ?? 0) < Math.min(3, w.tier)).length; badge('Warga', stale);
     reloadWorld();
   }
 
@@ -177,7 +177,7 @@
   try { wTier = sessionStorage.getItem('pokomen_wtier') || 'all'; } catch { /* ignore */ }
   function renderWarga() {
     const q = $('wq').value.trim().toLowerCase();
-    const stale = (w) => w.artVer && !w.mati && (w.artTier ?? 0) < w.tier;
+    const stale = (w) => w.artVer && !w.mati && (w.artTier ?? 0) < Math.min(3, w.tier);
     const nStale = S.warga.filter(stale).length;
     $('wStaleN').textContent = nStale ? `(${nStale})` : '(0)';
     // tier chips: Semua, each tier with its count, and the dead
@@ -198,7 +198,7 @@
         <input type="text" data-f="skill" value="${esc(w.skill || '')}" placeholder="Skill (tampil dari Mythical)" style="margin-top:4px">
         <input type="text" data-f="wujud" value="${esc(w.wujud || '')}" placeholder="Wujud Dewa" style="margin-top:4px"></td>
       <td class="artcell">${w.artVer ? `<img src="api/art?u=${encodeURIComponent(w.username)}&v=${w.artVer}" alt="" width="96" height="64">` : '<span class="muted">belum ada</span>'}
-        ${stale(w) ? `<div class="stale">⚠ Gambar perlu diperbarui: dibuat saat ${esc(S.tiers[w.artTier ?? 0])}, sekarang ${esc(S.tiers[w.tier])}</div>` : ''}
+        ${stale(w) ? `<div class="stale">⚠ Gambar perlu diperbarui: dibuat saat ${esc(S.tiers[w.artTier ?? 0])}, sekarang ${esc(S.tiers[Math.min(3, w.tier)])}</div>` : ''}
         <div class="adm-row"><button class="btn green" type="button" data-gen>${w.artVer ? 'Buat ulang (Gemini)' : 'Buat dengan Gemini'}</button><button class="btn ghost" type="button" data-prompt>Salin prompt Gemini</button>
         <label class="btn ghost">Unggah gambar<input type="file" accept="image/*" data-art hidden></label>
         ${w.artVer ? '<button class="btn red" type="button" data-noart>Hapus</button>' : ''}</div>
@@ -334,7 +334,7 @@
     await refresh();
   }
   $('gemAll').onclick = () => genBatch($('gemAll'), S.warga.filter((w) => !w.artVer && !w.mati && !w.hidden), 'Buat gambar untuk semua yang belum punya');
-  $('gemStale').onclick = () => genBatch($('gemStale'), S.warga.filter((w) => w.artVer && !w.mati && !w.hidden && (w.artTier ?? 0) < w.tier), 'Perbarui gambar yang tertinggal');
+  $('gemStale').onclick = () => genBatch($('gemStale'), S.warga.filter((w) => w.artVer && !w.mati && !w.hidden && (w.artTier ?? 0) < Math.min(3, w.tier)), 'Perbarui gambar yang tertinggal');
 
   // ---------- unfollow = dead
   async function loadUnfollow() {
@@ -386,19 +386,35 @@
   const ELEM_EN = { Api: 'fire', Air: 'water', Angin: 'wind', Tanah: 'earth', Petir: 'lightning', Es: 'ice', Daun: 'nature/leaf', Cahaya: 'light', Kegelapan: 'darkness' };
   const EN = { kucing: 'cat', naga: 'dragon', ayam: 'chicken', rubah: 'fox', ikan: 'fish', kelinci: 'rabbit', rusa: 'deer', panda: 'panda', lebah: 'bee', babi: 'pig', burung: 'bird', katak: 'frog', kodok: 'frog', unicorn: 'unicorn', paus: 'whale', harimau: 'tiger', macan: 'tiger', kupu: 'butterfly', 'kupu-kupu': 'butterfly', serigala: 'wolf', elang: 'eagle', kura: 'turtle', 'kura-kura': 'turtle', penyu: 'sea turtle', gajah: 'elephant', domba: 'sheep', kelelawar: 'bat', monyet: 'monkey', hiu: 'shark', bebek: 'duck', siput: 'snail', phoenix: 'phoenix', gurita: 'octopus', singa: 'lion', merak: 'peacock', hamster: 'hamster', pinguin: 'penguin', anjing: 'dog', sapi: 'cow', kambing: 'goat', kuda: 'horse', tupai: 'squirrel', beruang: 'bear', ular: 'snake', buaya: 'crocodile', komodo: 'komodo dragon', jerapah: 'giraffe', lumba: 'dolphin', 'lumba-lumba': 'dolphin', gagak: 'crow', angsa: 'swan', semut: 'ant', laba: 'spider', 'laba-laba': 'spider', tikus: 'mouse', badak: 'rhinoceros', zebra: 'zebra', koala: 'koala' };
   const toEN = (h) => { const k = String(h).toLowerCase().trim(); return EN[k] ? `${EN[k]} (${h})` : h; };
+  // Mythical is the FINAL card-art stage: Legendary & God Mode keep the Mythical picture (only the card frame/effects change)
+  const ART_MAX_TIER = 3;
   function geminiPrompt(w) {
-    const tier = Math.max(0, Math.min(5, w.tier || 0));
+    const tier = Math.min(ART_MAX_TIER, Math.max(0, w.tier || 0));
     const el = tier >= 2 && w.elemen ? w.elemen : null;
     const story = (w.cerita || []).slice(-1)[0]?.text || '';
+    const hybrid = `It is a hybrid of ${(w.hewan || []).map(toEN).join(' and ')}, clearly showing recognizable features of each animal blended into one creature.`;
+    if (tier >= ART_MAX_TIER) {
+      return [
+        `Create a breathtaking, poster-quality anime key visual (Japanese anime, masterful cel shading, crisp clean line art, rich vibrant colors, extremely high detail) of the original fantasy creature "${w.nama}" in its FINAL MYTHICAL FORM — the most beautiful and powerful version of this creature, an image its owner will be proud to show everyone.`,
+        hybrid,
+        'Majestic and awe-inspiring yet still charming: fully grown, confident, noble and heroic, striking expressive eyes that glow with power, elegant flowing mane/feathers/fins where they fit the animals.',
+        'Wearing splendid ornate mythical armor fused with its body (crest or crown-like helm, layered shoulder plates, chest plate) with gold filigree, glowing runes and shining gems, plus a flowing cape or ribbons of light.',
+        story ? `Its story (written in Indonesian): "${story}". Weave this into the scene or small details.` : '',
+        w.skill ? `It is showing off its signature skill (written in Indonesian): "${w.skill}" — make the skill a spectacular visual centerpiece.` : '',
+        el ? `Element: ${ELEM_EN[el] || el} (${el}) — a dazzling swirl of this element surrounds it with sparkling particles and light trails.` : 'A dazzling swirl of magical light and sparkling particles surrounds it.',
+        'Iconic heroic pose, full body, dynamic low-angle composition, god rays and strong rim light, depth of field, sense of grand scale, festive and magical mood.',
+        `Background: ${el ? (ELEM_BG[el] || 'a magical landscape matching the ' + el + ' element') + ', grander and more spectacular than usual' : 'a spectacular magical landscape at golden hour with floating islands and glowing flowers'}.`,
+        'Family-friendly: no blood, no gore, no scary horror.',
+        'Landscape orientation, 3:2 aspect ratio. No text, no letters, no logo, no watermark, no card frame.',
+      ].filter(Boolean).join(' ');
+    }
     return [
       `Create an anime-style illustration (Japanese anime, cel-shaded, clean line art, vibrant colors, high detail) of an original cute fantasy creature named "${w.nama}".`,
-      `It is a hybrid of ${(w.hewan || []).map(toEN).join(' and ')}, clearly showing recognizable features of each animal blended into one creature.`,
+      hybrid,
       story ? `Personality and habit (written in Indonesian): "${story}". Show this habit in the pose or a small detail.` : 'Give it a cheerful, curious personality.',
       `Full body, centered, dynamic pose, big expressive eyes, friendly and family-friendly.`,
       `Evolution stage: ${TIER_FX[tier]}.`,
       el ? `Element: ${ELEM_EN[el] || el} (${el}) — show this element clearly in the aura and effects.` : '',
-      tier >= 4 && w.outfit ? `Custom outfit (written in Indonesian): "${w.outfit}".` : '',
-      tier >= 5 && w.wujud ? `New divine base form: ${(WUJUD_EN.find(([re]) => re.test(w.wujud)) || [0, w.wujud])[1]}, while keeping recognizable features of the original animals and its name "${w.nama}".` : '',
       `Background: ${el ? (ELEM_BG[el] || 'a magical landscape matching the ' + el + ' element') : 'a peaceful pixel-farm style meadow'}.`,
       `Landscape orientation, 3:2 aspect ratio. No text, no letters, no logo, no watermark, no card frame.`,
     ].filter(Boolean).join(' ');
