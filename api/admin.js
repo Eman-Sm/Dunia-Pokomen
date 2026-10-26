@@ -120,7 +120,7 @@ const actions = {
     if (dataUrl.length > 900000) throw new Error('Gambar terlalu besar setelah dikompres (maks ±650 KB)');
     await redis('SET', 'art:' + u, dataUrl);
     w.artVer = Date.now();
-    w.artTier = Math.min(3, w.tier); // stage the picture shows (Mythical is the final art stage)
+    w.artTier = w.tier; // remember the stage the picture shows
     w.pal = cleanPal(pal) || null; // world colours follow the card art
     await setJSON('warga', u, w);
     await log('info', `Kartu Warga ${w.nama} milik @${u} kini punya gambar anime!`, { u });
