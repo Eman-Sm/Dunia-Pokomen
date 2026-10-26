@@ -3,7 +3,7 @@
 Dibangun bertahap SETELAH pembagian wilayah (lihat RENCANA_WILAYAH.md). Unsur pay-to-win diminta pemilik akun.
 
 ## 1. Biji Kopi (mata uang di web)
-- 1 Kopi Admin (Trakteer) = 10 Biji Kopi, masuk otomatis ke akun hewan (cocokkan `@username` di pesan Trakteer; manual di Ruang Admin bila tak cocok).
+- 1 Kopi Admin (Trakteer) = 5 Biji Kopi (diputuskan 26 Okt), masuk otomatis ke akun hewan (cocokkan `@username` di pesan Trakteer; manual di Ruang Admin bila tak cocok).
 - Halaman "Dompetku": saldo + riwayat. Belanja di Toko Pokomen.
 - Keamanan: link pribadi rahasia per pemilik (`?u=<username>&k=<token>`), dikirim lewat DM saat kopi pertama masuk / saat DM "DOMPET". Tanpa token, saldo tidak bisa dipakai.
 - Juga didapat gratis: menang Duel Tebakan, bonus Juara Bertahan, Pemburu Juara.
@@ -17,18 +17,18 @@ Dibangun bertahap SETELAH pembagian wilayah (lihat RENCANA_WILAYAH.md). Unsur pa
 
 ## 3. Duel Tebakan
 - Penonton menebak pemenang: `Tebak: @username` sebelum duel dimulai.
-- Tebakan GRATIS (tidak bisa memasang Biji Kopi / uang). Tebakan benar → +3 Biji Kopi. Penonton tanpa hewan pun bisa ikut (saldo diklaim setelah punya hewan).
+- Tebakan GRATIS (tidak bisa memasang Biji Kopi / uang). Tebakan benar → +1 Biji Kopi. Penonton tanpa hewan pun bisa ikut (saldo diklaim setelah punya hewan).
 - Papan "Peramal Terbaik" mingguan.
 
 ## 4. Item pay-to-win (Toko Pokomen)
 | Item | Efek | Harga |
 |---|---|---|
-| Ramuan Kekuatan | +15% kekuatan, 1 duel | 10 Biji |
-| Jimat Pelindung | kalah tidak memutus rekor beruntun (1x) | 15 Biji |
-| Tiket Tantang Ulang | tantang lagi yang baru mengalahkanmu | 10 Biji |
-| Terompet Dukungan | dukungan penonton x2, 1 duel | 20 Biji |
-| Slot Duel Tambahan | +1 duel hari itu | 10 Biji |
-| Elixir Elemen | abaikan keunggulan elemen lawan, 1 duel | 15 Biji |
+| Ramuan Kekuatan | +15% kekuatan, 1 duel | 5 Biji |
+| Jimat Pelindung | kalah tidak memutus rekor beruntun (1x) | 8 Biji |
+| Tiket Tantang Ulang | tantang lagi yang baru mengalahkanmu | 5 Biji |
+| Terompet Dukungan | dukungan penonton x2, 1 duel | 10 Biji |
+| Slot Duel Tambahan | +1 duel hari itu | 5 Biji |
+| Elixir Elemen | abaikan keunggulan elemen lawan, 1 duel | 8 Biji |
 - Batas total bonus berbayar per duel: +30% (dapat disetel). Tanpa item acak berbayar (gacha/kotak hadiah).
 - Kosmetik dari ide toko sebelumnya ikut dijual (kembang api, teman kecil, aksesori, menamai tempat, dll).
 
@@ -54,8 +54,8 @@ Dibangun bertahap SETELAH pembagian wilayah (lihat RENCANA_WILAYAH.md). Unsur pa
 - Pemenang: bendera kemenangan di gapura + festival kecil.
 
 ## 10. Juara Bertahan (menang 3x berturut-turut)
-- Gelar "Juara Bertahan 🔥" + aura api di peta selama rekor berjalan; +10% kekuatan selama juara; bonus 20 Biji Kopi (bertambah tiap kelipatan 3).
-- "Pemburu Juara": yang mengalahkan Juara Bertahan +10 Biji Kopi.
+- Gelar "Juara Bertahan 🔥" + aura api di peta selama rekor berjalan; +10% kekuatan selama juara; bonus 10 Biji Kopi (bertambah tiap kelipatan 3).
+- "Pemburu Juara": yang mengalahkan Juara Bertahan +5 Biji Kopi.
 - Patung hewan juara di Arena selama rekor berjalan.
 - Hak menantang Ketua Koloni wilayahnya; menang = gelar Ketua diambil alih.
 - Wujud Arena: kartu & sprite "mode tempur" (armor bersinar) selama juara.
@@ -65,6 +65,6 @@ Dibangun bertahap SETELAH pembagian wilayah (lihat RENCANA_WILAYAH.md). Unsur pa
 Hari ke-4 wilayah → Hari ke-5 teaser arena & toko → Hari ke-6 Toko Pokomen + Biji Kopi + Latihan → Hari ke-7 Arena 1v1 + Duel Tebakan → minggu ke-2 Perang Wilayah, Kartu Emas, Batu Evolusi.
 
 ## Belum diputuskan
-- Harga 1 Kopi Admin di Trakteer & kurs Biji Kopi; harga Kartu Emas; harga Batu Evolusi.
+- Kurs: 1 Kopi = 5 Biji (sudah). Harga Kartu Emas & Batu Evolusi belum.
 - Batas bonus berbayar (+30%?).
 - Kopi yang sudah masuk (Icam 1, anonim 3) dihitung ke saldo?
