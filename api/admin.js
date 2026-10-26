@@ -7,7 +7,7 @@ import { generateArt, quota as geminiQuota } from '../lib/gemini.js';
 import { listStoryReplies, syncStoryReplies } from '../lib/story.js';
 import { papanKopi, cocokkan } from '../lib/sahabat.js';
 import { syncLatest, ownUsername } from '../lib/sync.js';
-import { refreshToken, subscribeWebhooks, listMedia, listComments, me } from '../lib/ig.js';
+import { refreshToken, subscribeWebhooks, listMedia, listComments, me, sendDM } from '../lib/ig.js';
 import { json, bearer, safeEqual, hariKe } from '../lib/http.js';
 import { getConfig as pemiluCfg, setConfig as pemiluSet, hitung as pemiluHitung, tetapkanKetua } from '../lib/pemilu.js';
 
@@ -51,6 +51,15 @@ const actions = {
       for (const c of cs) if (key(c.username) === u) out.push({ ...c, post: (m.caption || '').slice(0, 40), processed: !!(await redis('SISMEMBER', 'processed', c.id)) });
     }
     return { username: u, komentar: out };
+  },
+  async kirim_dm({ igsid, username, text }) {
+    // only works within 24 hours after the user's last message to the account (Instagram rule)
+    let id = String(igsid || '').trim();
+    if (!id && username) { const w = await getJSON('warga', key(username)); id = w?.igsid || ''; }
+    if (!id) throw new Error('ID Instagram (igsid) belum diketahui');
+    if (!text || String(text).length > 900) throw new Error('Isi pesan kosong / terlalu panjang');
+    await sendDM(id, String(text));
+    return { terkirim: true, igsid: id };
   },
   async story_list() { return listStoryReplies(); },
   async story_sync({ max = 100 }) {
