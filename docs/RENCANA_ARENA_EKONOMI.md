@@ -10,14 +10,14 @@ Dibangun bertahap SETELAH pembagian wilayah (lihat RENCANA_WILAYAH.md). Unsur pa
 
 ## 2. Arena Pokomen (duel 1 vs 1) — fasilitas di Pusat Koloni
 - `Tantang: @username` → yang ditantang `Terima: @username` dalam 24 jam (tidak dijawab = batal, tanpa hukuman).
-- Kekuatan = tingkat + statistik kartu (hasil Latihan) + keunggulan elemen + dukungan penonton (`Dukung: @username`, dibatasi) + item + keberuntungan ~20%.
+- Kekuatan = tingkat + statistik kartu (hasil Latihan) + dukungan penonton (`Dukung: @username`, dibatasi) + item + keberuntungan ~20%. TANPA keunggulan elemen (diputuskan 26 Okt).
 - Kalah tidak dihukum: tidak mati, tidak turun tingkat.
 - Replay animasi di web; duel terseru masuk video ("Duel Hari Ini"). Rekor Menang/Kalah di kartu, papan Juara Arena.
 - Batas: 1–2 duel/hari per hewan (+ Slot Duel Tambahan), tak boleh menantang lawan sama berulang.
 
 ## 3. Duel Tebakan
 - Penonton menebak pemenang: `Tebak: @username` sebelum duel dimulai.
-- Tebakan GRATIS (tidak bisa memasang Biji Kopi / uang). Tebakan benar → +1 Biji Kopi. Penonton tanpa hewan pun bisa ikut (saldo diklaim setelah punya hewan).
+- Tebakan GRATIS (tidak bisa memasang Biji Kopi / uang). Hadiah +1 Biji Kopi HANYA untuk 1 orang per duel: tebakan benar yang paling cepat (waktu komentar). Penonton tanpa hewan pun bisa ikut (saldo diklaim setelah punya hewan).
 - Papan "Peramal Terbaik" mingguan.
 
 ## 4. Item pay-to-win (Toko Pokomen)
@@ -28,15 +28,14 @@ Dibangun bertahap SETELAH pembagian wilayah (lihat RENCANA_WILAYAH.md). Unsur pa
 | Tiket Tantang Ulang | tantang lagi yang baru mengalahkanmu | 5 Biji |
 | Terompet Dukungan | dukungan penonton x2, 1 duel | 10 Biji |
 | Slot Duel Tambahan | +1 duel hari itu | 5 Biji |
-| Elixir Elemen | abaikan keunggulan elemen lawan, 1 duel | 8 Biji |
-- Batas total bonus berbayar per duel: +30% (dapat disetel). Tanpa item acak berbayar (gacha/kotak hadiah).
+- Batas total bonus berbayar per duel: +20% (diputuskan 26 Okt). Tanpa item acak berbayar (gacha/kotak hadiah).
 - Kosmetik dari ide toko sebelumnya ikut dijual (kembang api, teman kecil, aksesori, menamai tempat, dll).
 
-## 5. Langganan Kartu Emas (bulanan, mis. 5 Kopi Admin)
+## 5. Langganan Kartu Emas (bulanan, 10 Kopi Admin = 50 Biji Kopi)
 - Bonus harian Biji Kopi, bingkai kartu emas, nama berkilau di peta, +1 duel per hari, diskon toko.
 
 ## 6. Percepat Evolusi (khusus ke Legendary & God Mode)
-- "Batu Evolusi": naik 1 tingkat seketika, HANYA dari Mythical → Legendary dan Legendary → God Mode.
+- "Batu Evolusi": naik 1 tingkat seketika, HANYA dari Mythical → Legendary (7 Kopi Admin = 35 Biji) dan Legendary → God Mode (15 Kopi Admin = 75 Biji).
 - Tingkat Regular–Mythical tetap lewat cerita (adil untuk semua).
 - Pembayar tetap wajib mengisi Outfit (Legendary) / Wujud Dewa (God Mode).
 
@@ -54,8 +53,8 @@ Dibangun bertahap SETELAH pembagian wilayah (lihat RENCANA_WILAYAH.md). Unsur pa
 - Pemenang: bendera kemenangan di gapura + festival kecil.
 
 ## 10. Juara Bertahan (menang 3x berturut-turut)
-- Gelar "Juara Bertahan 🔥" + aura api di peta selama rekor berjalan; +10% kekuatan selama juara; bonus 10 Biji Kopi (bertambah tiap kelipatan 3).
-- "Pemburu Juara": yang mengalahkan Juara Bertahan +5 Biji Kopi.
+- Gelar "Juara Bertahan 🔥" + aura api di peta selama rekor berjalan; +10% kekuatan selama juara; bonus 10 Biji Kopi (tetap, tidak bertambah).
+- "Pemburu Juara": yang mengalahkan Juara Bertahan +7 Biji Kopi.
 - Patung hewan juara di Arena selama rekor berjalan.
 - Hak menantang Ketua Koloni wilayahnya; menang = gelar Ketua diambil alih.
 - Wujud Arena: kartu & sprite "mode tempur" (armor bersinar) selama juara.
@@ -64,7 +63,9 @@ Dibangun bertahap SETELAH pembagian wilayah (lihat RENCANA_WILAYAH.md). Unsur pa
 ## Urutan usulan
 Hari ke-4 wilayah → Hari ke-5 teaser arena & toko → Hari ke-6 Toko Pokomen + Biji Kopi + Latihan → Hari ke-7 Arena 1v1 + Duel Tebakan → minggu ke-2 Perang Wilayah, Kartu Emas, Batu Evolusi.
 
-## Belum diputuskan
-- Kurs: 1 Kopi = 5 Biji (sudah). Harga Kartu Emas & Batu Evolusi belum.
-- Batas bonus berbayar (+30%?).
-- Kopi yang sudah masuk (Icam 1, anonim 3) dihitung ke saldo?
+## Keputusan (26 Okt)
+- Harga Kopi Admin di Trakteer sudah benar; kurs 1 Kopi = 5 Biji.
+- Batas bonus berbayar per duel +20%.
+- Kopi yang sudah masuk (Icam 1, anonim 3) dijadikan saldo Biji Kopi bila pengirimnya sudah tercocokkan ke @username (Icam = 5 Biji; anonim menunggu username).
+- Kartu Emas 10 kopi/bulan; Batu Evolusi 7 kopi (→Legendary) & 15 kopi (→God Mode).
+- Tanpa keunggulan elemen; item Elixir Elemen dihapus.
