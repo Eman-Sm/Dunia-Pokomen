@@ -20,14 +20,17 @@ Disetujui pemilik akun 26 Okt 2026. Jangan dibangun sebelum video Hari ke-4 taya
 - Tidak dihuni hewan. Berisi fasilitas usulan warga yang dibangun Admin (pertama: Tempat Latihan; berikutnya Tempat Makan, Taman Bunga, ...).
 - Hewan dari semua wilayah sesekali berkunjung lalu pulang.
 
-## Ketua Wilayah (voting di halaman awal web)
-- Tiap wilayah memilih ketuanya sendiri lewat voting di website.
-- Pemilih hanya boleh memilih calon dari wilayahnya sendiri, dan tidak boleh memilih dirinya sendiri. 1 akun = 1 suara per wilayah.
-- Verifikasi identitas wajib (website tidak tahu siapa pengunjungnya): pemilih DM "VOTE" ke @duniapokomen → bot membalas kode sekali pakai (terikat ke akun pengirim via IGSID) → di web isi @username + kode → muncul calon dari wilayahnya saja (tanpa dirinya) → pilih.
-- Calon: semua warga hidup di wilayah itu (atau yang mendaftar `Kampanye: ...`), ditentukan saat eksekusi.
-- Hasil live di web; gelar "Ketua Wilayah <nama>" + lencana kecil di peta dan kartu. Ketua Koloni (global) tetap gelar tertinggi.
+## Ketua Koloni per wilayah (voting lewat komentar, dibantu web)
+- Gelar: **"Ketua Koloni <nama wilayah>"** (contoh: Ketua Koloni Lembah Pelangi), lencana mahkota di peta & kartu.
+- **Ketua Koloni pertama (hasil pemilu Hari ke-4) otomatis menjadi Ketua Koloni untuk wilayah tempat hewannya tinggal**; wilayah itu tidak perlu voting. Wilayah lain memilih.
+- Calon mendaftar dengan komentar `Calon: <kampanye singkat>` (hanya mereka yang tampil sebagai calon).
+- Voting dengan komentar `Pilih: @username` di postingan. Identitas pemilih = akun pengomentar (sudah terverifikasi Instagram).
+  - Sah hanya bila calon satu wilayah dengan pemilih; memilih diri sendiri tidak dihitung; 1 akun = 1 suara (yang dihitung pilihan terakhir).
+  - Suara tidak sah → bot membalas komentar: "@kamu, @calon itu warga Wilayah X, kamu di Wilayah Y. Lihat calon di wilayahmu di link bio ya!"
+- Web halaman awal: kotak **"Cek wilayahmu"** (@username, atau otomatis dari Hewanku / link pribadi ?u=) → wilayahmu + peta kecil + daftar calon di wilayahmu (tanpa dirimu) dengan tombol **"Salin suara"** (menyalin `Pilih: @calon` & membuka postingan). Klasemen live per wilayah.
+- Video Hari ke-4 menyorot tiap wilayah & beberapa penghuninya; story "Wilayahmu yang mana? Cek di link bio".
 
 ## Urutan
-1. Hari ke-4 (video): pengumuman Ketua Koloni, rencana wilayah + migrasi, Pusat Koloni & Tempat Latihan, ajakan `Wilayah: ...`, pengumuman pemilihan Ketua Wilayah lewat web.
-2. Setelah tayang: bangun lahan, wilayah, Pusat Koloni, sistem usulan nama, voting Ketua Wilayah.
-3. Hari ke-5: nama wilayah diumumkan, voting Ketua Wilayah dibuka/berjalan.
+1. Hari ke-4 (video): pengumuman Ketua Koloni, rencana wilayah + migrasi, Pusat Koloni & Tempat Latihan, ajakan `Wilayah: ...`, pengumuman pemilihan Ketua Koloni per wilayah (komentar `Calon:` / `Pilih: @...`, cek wilayah di web); Ketua Koloni pertama otomatis memimpin wilayahnya.
+2. Setelah tayang: bangun lahan, wilayah, Pusat Koloni, sistem usulan nama, voting Ketua Koloni per wilayah.
+3. Hari ke-5: nama wilayah diumumkan, voting Ketua Koloni per wilayah dibuka/berjalan.
