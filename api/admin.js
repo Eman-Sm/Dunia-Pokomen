@@ -82,12 +82,12 @@ const actions = {
     await redis('SET', 'hari_pertama', date);
     return { hari: hariKe(date) };
   },
-  async add_warga({ username, nama, hewan, cerita }) {
+  async add_warga({ username, nama, hewan, cerita, igsid }) {
     const u = key(username);
     if (!u || !nama) throw new Error('username dan nama wajib diisi');
     if (await getJSON('warga', u)) throw new Error('Warga @' + u + ' sudah ada');
     const spot = Number(await redis('INCR', 'spot_counter')) - 1;
-    const w = newWarga({ username: u, nama, hewan: parseHewan(hewan), cerita: cerita || null, spot, source: 'manual' });
+    const w = newWarga({ username: u, nama, hewan: parseHewan(hewan), cerita: cerita || null, spot, source: 'manual', igsid: igsid ? String(igsid) : null });
     await setJSON('warga', u, w);
     await log('lahir', `@${u} lahir sebagai ${w.nama} (${w.hewan.join(' + ')})`, { u });
     return w;

@@ -108,9 +108,8 @@
       ['Akun', S.account ? '@' + S.account.username : '<b style="color:var(--berry)">Belum tersambung</b>' + (S.igError ? ' — ' + esc(S.igError) : '')],
       ['Sumber token', esc(S.tokenSource)],
       ['Token terakhir diperbarui', esc(S.tokenRefreshed || '–')],
-      ['Sinkron terakhir', esc(S.lastSync || 'belum pernah')],
+      ['Sinkron terakhir', esc(S.lastSync ? new Date(S.lastSync).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }) + ' WIB' : 'belum pernah')],
       ['Hari pertama', esc(S.hariPertama || 'belum diatur')],
-      ['Tingkat', esc(S.tiers.join(' → '))],
     ];
     $('conn').innerHTML = conn.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
     if (S.hariPertama) $('hariPertama').value = S.hariPertama;
@@ -340,7 +339,7 @@
     try {
       const d = await api('unfollow_status');
       const l = d.last;
-      $('ufInfo').textContent = `${d.hidup} hewan hidup, ${d.mati} mati. ${d.punyaId} warga bisa dicek otomatis.` +
+      $('ufInfo').textContent = `${d.hidup ?? 0} hewan hidup, ${d.mati ?? 0} mati. ${d.punyaId ?? 0} warga bisa dicek otomatis.` +
         (l ? ` Cek terakhir ${new Date(l.t).toLocaleString('id-ID')}: ${l.dicek} dicek, ${l.unfollow.length} unfollow, ${l.tidakBisaDicek} tidak dijawab Instagram.` : '');
     } catch (e) { $('ufInfo').textContent = e.message; }
   }
@@ -469,7 +468,46 @@
   $('btnRefresh').onclick = (e) => run(e.target, 'refresh_token', {}, 'Token diperbarui');
   $('btnToken').onclick = (e) => run(e.target, 'set_token', { token: $('newToken').value }, 'Token disimpan');
   $('btnHari').onclick = (e) => run(e.target, 'set_hari_pertama', { date: $('hariPertama').value }, 'Tanggal disimpan');
-  $('addForm').addEventListener('submit', (e) => { e.preventDefault(); run(e.submitter, 'add_warga', { username: $('aU').value, nama: $('aN').value, hewan: $('aH').value, cerita: $('aC').value }, 'Warga dilahirkan').then(() => e.target.reset()); });
+  $('addForm').addEventListener('submit', (e) => { e.preventDefault(); run(e.submitter, 'add_warga', { username: $('aU').value, nama: $('aN').value, hewan: $('aH').value, cerita: $('aC').value, igsid: $('addForm').dataset.igsid || null }, 'Warga dilahirkan').then(() => { e.target.reset(); delete $('addForm').dataset.igsid; }); });
+
+  // ---------- Bantu Warga: find someone's comments, birth from them, send a DM
+  const lab = (txt, re) => { const m = re.exec(txt); return m ? m[1].replace(/\s+/g, ' ').trim() : ''; };
+  function guess(txt) {
+    const t = String(txt || '');
+    const nama = lab(t, /nama\s*[:=]\s*([^|\n]+?)(?=\s*(?:\||hewan\s*[:=]|cerita\s*[:=]|$))/i);
+    let hewan = lab(t, /hewan\s*[:=]\s*([^|\n]+?)(?=\s*(?:\||cerita\s*[:=]|nama\s*[:=]|$))/i).replace(/\(.*?\)/g, '').trim();
+    const cerita = lab(t, /cerita\s*[:=]\s*([^|\n]+)/i);
+    return { nama, hewan, cerita };
+  }
+  $('bwForm').addEventListener('submit', async (e) => {
+    e.preventDefault(); const b = e.submitter; b.disabled = true; $('bwOut').innerHTML = '<p class="muted">Mencari di postingan terbaru…</p>';
+    try {
+      const r = await api('cari_komentar', { username: $('bwU').value });
+      const w = S.warga.find((x) => x.username === r.username);
+      const head = w ? `<p class="bw-ok">✓ @${esc(r.username)} sudah punya hewan: <b>${esc(w.nama)}</b> (${esc(S.tiers[w.tier])})</p>` : `<p class="bw-warn">@${esc(r.username)} belum punya hewan di dunia.</p>`;
+      $('bwOut').innerHTML = head + (r.komentar.length ? r.komentar.map((c, i) => `<div class="bw-item"><div class="bw-meta">${esc(c.post)} · ${esc(new Date(c.timestamp).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }))}</div><div class="bw-text">${esc(c.text)}</div>
+        <div class="adm-row">${w ? '' : `<button class="btn green" type="button" data-bw="${i}">Isi form Lahirkan</button>`}<button class="btn ghost" type="button" data-dm="${i}">Pakai untuk DM</button></div></div>`).join('') : '<p class="muted">Tidak ada komentar dari akun ini di 5 postingan terbaru.</p>');
+      $('bwOut').querySelectorAll('[data-bw]').forEach((x) => x.onclick = () => {
+        const c = r.komentar[+x.dataset.bw]; const g = guess(c.text);
+        $('aU').value = r.username; $('aN').value = g.nama; $('aH').value = g.hewan; $('aC').value = g.cerita; $('addForm').dataset.igsid = c.userId || '';
+        $('addForm').scrollIntoView({ behavior: 'smooth', block: 'center' }); toast('Form Lahirkan sudah terisi. Periksa lalu klik Lahirkan.');
+      });
+      $('bwOut').querySelectorAll('[data-dm]').forEach((x) => x.onclick = () => {
+        const c = r.komentar[+x.dataset.dm]; $('dmU').value = '@' + r.username; $('dmId').value = c.userId || '';
+        $('dmText').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    } catch (err) { $('bwOut').innerHTML = '<p class="bw-warn">Gagal: ' + esc(err.message) + '</p>'; }
+    finally { b.disabled = false; }
+  });
+  $('dmU').addEventListener('input', () => { $('dmId').value = ''; });
+  $('dmTpl').onclick = () => {
+    const u = $('dmU').value.replace(/^@/, '').trim().toLowerCase(); const w = S && S.warga.find((x) => x.username === u);
+    $('dmText').value = `Halo kak! Hewanmu ${w ? w.nama.toUpperCase() : '...'} sudah resmi lahir di Dunia Pokomen 🎉\n\nCari dia di peta: dunia-pokomen.vercel.app (ketik @${u || 'username'} di kolom cari).\n\nTulis cerita tentang hewanmu di komentar postingan terbaru supaya naik tingkat ya!`;
+  };
+  $('dmSend').onclick = () => {
+    const text = $('dmText').value.trim(); if (!text) return toast('Pesan masih kosong');
+    run($('dmSend'), 'kirim_dm', { igsid: $('dmId').value || null, username: $('dmU').value, text }, 'DM terkirim');
+  };
   $('usForm').addEventListener('submit', (e) => { e.preventDefault(); run(e.submitter, 'add_usulan', { text: $('usText').value, likes: $('usLikes').value }, 'Usulan ditambahkan').then(() => e.target.reset()); });
   $('newsForm').addEventListener('submit', (e) => { e.preventDefault(); run(e.submitter, 'post_log', { text: $('newsText').value }, 'Kabar diumumkan').then(() => e.target.reset()); });
 

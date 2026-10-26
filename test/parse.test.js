@@ -52,3 +52,11 @@ test('skill dibaca dari komentar', async () => {
   assert.equal(parseComment('Jurus: terbang ke awan').skill, 'terbang ke awan');
   assert.equal(parseComment('Nama: Bolu | Hewan: Kucing + Naga | Skill: petir').skill, 'petir');
 });
+
+test('label tepat setelah tanda kurung tetap terbaca', async () => {
+  const { parseComment } = await import('../lib/parse.js');
+  const p = parseComment('Nama:acle | Hewan:axcelotol+ikan koki(kulitnya dikasi sisik)Cerita:suka berkerja keras');
+  assert.equal(p.nama, 'Acle');
+  assert.deepEqual(p.hewan, ['Axcelotol', 'Ikan Koki']);
+  assert.match(p.cerita, /berkerja keras/);
+});

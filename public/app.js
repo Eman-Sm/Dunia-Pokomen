@@ -311,7 +311,10 @@
     drawSky(Wc, Hc, list);
     // @username above every creature; nudge labels upward when they would overlap
     const placed = [];
-    const small = labels.filter((L) => !L.big).sort((a, b) => b.y - a.y);
+    // fewer, clearer tags: none when zoomed far out, then the ones nearest the centre (max 36)
+    const minZ = Wc < 560 ? 2.6 : 2.1;
+    let small = cam.z < minZ ? [] : labels.filter((L) => !L.big);
+    small = small.sort((a, b) => Math.hypot(a.x - Wc / 2, a.y - Hc / 2) - Math.hypot(b.x - Wc / 2, b.y - Hc / 2)).slice(0, 36).sort((a, b) => b.y - a.y);
     const compact = cam.z < 1.8 || Wc < 520;
     const tagFont = compact ? '800 10px Nunito, "Trebuchet MS", sans-serif' : '800 12px Nunito, "Trebuchet MS", sans-serif';
     const maxCh = compact ? 11 : 24;
@@ -415,6 +418,7 @@
     const el = $('chipJam'); if (el) el.textContent = `${ico} ${hh}:${mm} WIB · ${L.nama}`;
   }
   setInterval(() => { updateJam(); }, 20000);
+  setTimeout(() => { const h = document.getElementById('mapHint'); if (h) h.classList.add('fade'); }, 6000);
 
   // tombstone for a citizen that died because its owner unfollowed
   function drawGrave(x, y) {

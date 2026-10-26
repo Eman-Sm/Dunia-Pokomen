@@ -380,3 +380,77 @@ body.embed .hero { padding-top: 12px; }
 .worldlook { margin-top: 8px; padding: 6px 8px; border: 2px dashed var(--outline); background: #fffaee; font-size: .85rem; }
 .worldlook .sw { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--outline); vertical-align: middle; margin-right: 2px; }
 .worldlook .spr { vertical-align: middle; background: repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 0 0 / 10px 10px; }
+
+/* =========================================================
+   Tidy-up pass (26 Okt): calmer header, compact map tools,
+   one-row admin tabs, Bantu Warga
+   ========================================================= */
+/* admin tabs: one scrollable row instead of 4-5 wrapped rows */
+.adm-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; gap: 6px; padding: 10px 2px; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity; mask-image: linear-gradient(90deg, #000 92%, transparent); }
+.adm-tabs button { flex: none; scroll-snap-align: start; border-radius: 999px; padding: 6px 12px; }
+.adm-tabs::-webkit-scrollbar { height: 6px; }
+.adm-tabs::-webkit-scrollbar-thumb { background: var(--wood, #8a5a34); border-radius: 3px; }
+.admin-side .parchment h2 { margin-top: 0; }
+.admin-side .kv { grid-template-columns: max-content minmax(0, 1fr); column-gap: 18px; }
+.admin-side .formgrid { align-items: end; }
+.admin-side .formgrid .btn { align-self: end; }
+/* Bantu Warga */
+.bw-out { display: grid; gap: 8px; margin-top: 10px; }
+.bw-item { border: 2px solid var(--outline); background: #fffaee; padding: 8px 10px; }
+.bw-meta { font-size: .75rem; color: #7a5a40; font-weight: 700; margin-bottom: 4px; }
+.bw-text { font-size: .9rem; margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; }
+.bw-ok, .bw-warn { margin: 0; padding: 6px 10px; border: 2px solid var(--outline); font-weight: 700; }
+.bw-ok { background: #d9f2c9; } .bw-warn { background: #ffe7c2; }
+/* mobile admin: floating world button */
+@media (max-width: 900px) {
+  .adm-worldtoggle { border-radius: 999px; box-shadow: 0 6px 16px rgba(0,0,0,.35); padding: 10px 18px; }
+}
+
+/* public header: one tidy row; nav scrolls sideways on phones */
+.topbar .wrap { flex-wrap: nowrap; }
+.topbar nav.tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+.topbar nav.tabs::-webkit-scrollbar { display: none; }
+.topbar nav.tabs a { flex: none; }
+.chips { flex-wrap: nowrap; }
+@media (max-width: 860px) {
+  .topbar .wrap { flex-wrap: wrap; row-gap: 8px; }
+  .topbar nav.tabs { order: 3; flex: 1 1 100%; margin: 0 -4px; }
+  .chips { margin-left: auto; }
+}
+@media (max-width: 560px) {
+  .brand img { width: 40px; height: 40px; }
+  .brand .sub { display: none; }
+  .chips { gap: 6px; }
+  .chips .chip { font-size: .78rem; padding: 2px 7px 3px; }
+  .chips .btn.traktir { font-size: .8rem; padding: 4px 8px; }
+  .chip.demo { display: none; }
+  .hero { padding-block: 14px 6px; }
+  .hero h1 { font-size: 1.7rem; }
+  .hero p { font-size: .9rem; }
+}
+/* map tools: search on its own row on phones, compact buttons, clock rides on the map */
+@media (max-width: 640px) {
+  .map-tools { display: grid; grid-template-columns: 1fr auto auto auto; gap: 6px; }
+  .map-tools .search { grid-column: 1 / -1; }
+  .map-tools .chip.jam { grid-column: 1; grid-row: 2; justify-self: start; margin: 0; font-size: .78rem; }
+  #zoomHome .long { display: none; } #zoomHome .short { display: inline; }
+  .map-hint { font-size: .7rem; left: 8px; right: auto; max-width: calc(100% - 16px); }
+}
+.map-hint { transition: opacity .6s; }
+.map-hint.fade { opacity: 0; }
+/* inside Ruang Admin the hero text is noise */
+body.embed .hero { display: none; }
+body.embed main > .wrap:first-of-type { padding-top: 8px; }
+.brand { flex: none; }
+.brand .name { white-space: nowrap; }
+.map-tools #zoomHome .short { display: none; }
+@media (max-width: 1440px) {
+  .topbar .wrap { flex-wrap: wrap; row-gap: 6px; }
+  .topbar nav.tabs { order: 3; flex: 1 1 100%; }
+  .chips { margin-left: auto; }
+}
+@media (max-width: 640px) {
+  .map-tools #zoomHome .long { display: none; }
+  .map-tools #zoomHome .short { display: inline; }
+  .topbar nav.tabs a { font-size: .85rem; padding: 3px 8px; }
+}

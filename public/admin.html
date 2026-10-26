@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <link rel="icon" href="favicon.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&family=Pixelify+Sans:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=pal1">
+<link rel="stylesheet" href="style.css?v=rapi1">
 </head>
 <body class="admin-shell">
 <header class="topbar">
@@ -111,6 +111,19 @@
     </section>
 
     <section class="parchment">
+      <h2>Bantu Warga</h2>
+      <p class="muted">Ada yang bertanya "hewanku mana?" Cari komentarnya di postingan terbaru, lahirkan hewannya, lalu kabari lewat DM.</p>
+      <form class="adm-row" id="bwForm"><input type="text" id="bwU" placeholder="@username" style="max-width:240px" required><button class="btn" type="submit">Cari komentar</button></form>
+      <div id="bwOut" class="bw-out"></div>
+      <h3 class="display" style="margin:16px 0 6px">Kirim DM</h3>
+      <p class="muted">Instagram hanya mengizinkan balasan dalam 24 jam setelah orang itu terakhir mengirim DM ke akunmu.</p>
+      <div class="formgrid"><label class="f">Penerima<input type="text" id="dmU" placeholder="@username"></label></div>
+      <input type="hidden" id="dmId">
+      <textarea id="dmText" rows="4" placeholder="Tulis pesan..." style="margin-top:8px"></textarea>
+      <div class="adm-row" style="margin-top:8px"><button class="btn green" type="button" id="dmSend">Kirim DM</button><button class="btn ghost" type="button" id="dmTpl">Isi template "hewanmu sudah lahir"</button></div>
+    </section>
+
+    <section class="parchment">
       <h2>Usulan fasilitas</h2>
       <div class="tablewrap"><table><thead><tr><th>Usulan</th><th>Akun</th><th>Like</th><th>Status</th><th>Episode</th><th></th></tr></thead><tbody id="usulanT"></tbody></table></div>
       <form class="formgrid" id="usForm" style="margin-top:12px">
@@ -167,6 +180,6 @@
 <script src="creature.js?v=pal1"></script>
 <script src="artpal.js?v=pal1"></script>
 <script src="card.js?v=sohabat"></script>
-<script src="admin.js?v=pemilu3"></script>
+<script src="admin.js?v=rapi1"></script>
 </body>
 </html>
