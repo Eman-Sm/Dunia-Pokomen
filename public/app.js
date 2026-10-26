@@ -597,7 +597,7 @@
       <div class="card-head"><span id="cardSprite"></span>
         <div><h3>${esc(w.nama)}</h3>
           <a class="handle" href="https://www.instagram.com/${encodeURIComponent(w.u)}/" target="_blank" rel="noopener">@${esc(w.u)}</a><br>
-          <span class="tier t${w.tier}">${esc(w.tierNama || TIERS[w.tier])}</span>${w.gelar ? `<span class="gelar">${esc(w.gelar)}</span>` : ''}${w.sahabat ? '<span class="gelar sahabat">♛ Sahabat Admin</span>' : ''}</div></div>
+          <span class="tier t${w.tier}">${esc(w.tierNama || TIERS[w.tier])}</span>${w.gelar ? `<span class="gelar">${esc(w.gelar)}</span>` : ''}${w.sahabat ? '<span class="gelar sahabat">♛ Sohabat Admin</span>' : ''}</div></div>
       <ul class="hewan">${(w.hewan || []).map((h) => `<li>${esc(h)}</li>`).join('')}</ul>
       ${w.sahabat ? `<p class="skill">☕ Pengirim kopi terbanyak: <b>${fmt(w.sahabat)} ${esc((DATA.dukunganUnit) || 'Kopi Admin')}</b></p>` : ''}
       ${w.skill ? `<p class="skill">✦ Skill: <b>${esc(w.skill)}</b></p>` : w.tier >= 3 ? '<p class="muted">Skill belum diisi. Pemiliknya bisa menulis <b>Skill: ...</b> di komentar.</p>' : ''}
@@ -730,7 +730,7 @@
     $('melek').innerHTML = `<span>${jam >= 8 ? 'Admin melek semalaman! Warga aman.' : jam ? `Admin melek ${jam} dari 8 jam ronda malam ini` : 'Admin mulai ngantuk… zzz'}</span><div class="bar" aria-hidden="true"><i style="width:${pct}%"></i></div>`;
     const lb = DATA.kopiBoard || [];
     $('sahabatBoard').hidden = !lb.length;
-    $('sahabatBoard').innerHTML = lb.length ? `<h3>♛ Sahabat Admin</h3><p class="muted">Pengirim kopi terbanyak yang punya hewan di dunia memakai mahkota spesial. Hanya satu, dan bisa direbut kapan saja.</p><ol>${lb.map((x, i) => `<li${i ? '' : ' class="top"'}><button type="button" class="linklike" data-u="${esc(x.u)}">${i ? '' : '♛ '}<b>${esc(x.nama)}</b> <span class="muted">@${esc(x.u)}</span></button><span>${fmt(x.total)} ☕</span></li>`).join('')}</ol>` : '';
+    $('sahabatBoard').innerHTML = lb.length ? `<h3>♛ Sohabat Admin</h3><p class="muted">Pengirim kopi terbanyak yang punya hewan di dunia memakai mahkota spesial. Hanya satu, dan bisa direbut kapan saja.</p><ol>${lb.map((x, i) => `<li${i ? '' : ' class="top"'}><button type="button" class="linklike" data-u="${esc(x.u)}">${i ? '' : '♛ '}<b>${esc(x.nama)}</b> <span class="muted">@${esc(x.u)}</span></button><span>${fmt(x.total)} ☕</span></li>`).join('')}</ol>` : '';
     $('sahabatBoard').querySelectorAll('[data-u]').forEach((b) => b.onclick = () => { const w = DATA.warga.find((v) => v.u === b.dataset.u); if (w) select(w, true); });
     $('dukList').innerHTML = list.length
       ? list.map((x) => `<li><span class="dot dukung"></span><span><b>${esc(x.nama)}</b> mengirim ${fmt(x.jumlah)} ${esc(x.unit)} · melek +${fmt(x.jumlah)} jam${x.pesan ? `<br>“${esc(x.pesan)}”` : ''}<time datetime="${esc(x.t)}">${ago(x.t)}</time></span></li>`).join('')
