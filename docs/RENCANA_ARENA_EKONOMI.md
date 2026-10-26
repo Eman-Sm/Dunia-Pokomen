@@ -30,7 +30,7 @@ Dibangun bertahap SETELAH pembagian wilayah (lihat RENCANA_WILAYAH.md). Unsur pa
 | Terompet Dukungan | dukungan penonton x2, 1 duel | 10 Biji |
 | Slot Duel Tambahan | +1 duel hari itu | 5 Biji |
 | Segel Skill | skill lawan disegel: lawan tidak bisa mengeluarkan skill (bonus skill lawan hilang), 1 duel | 8 Biji |
-- Batas total bonus berbayar per duel: +20% (diputuskan 26 Okt). Tanpa item acak berbayar (gacha/kotak hadiah).
+- Batas total keunggulan berbayar per duel: +20% (diputuskan 26 Okt), TERMASUK Segel Skill (bonus skill lawan yang hilang dihitung ke dalam batas ini). Tanpa item acak berbayar (gacha/kotak hadiah).
 - Kosmetik dari ide toko sebelumnya ikut dijual (kembang api, teman kecil, aksesori, menamai tempat, dll).
 
 ## 5. Langganan Kartu Emas (bulanan, 10 Kopi Admin = 50 Biji Kopi)
