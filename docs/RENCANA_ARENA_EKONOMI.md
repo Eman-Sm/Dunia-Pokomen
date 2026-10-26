@@ -11,6 +11,7 @@ Dibangun bertahap SETELAH pembagian wilayah (lihat RENCANA_WILAYAH.md). Unsur pa
 ## 2. Arena Pokomen (duel 1 vs 1) — fasilitas di Pusat Koloni
 - `Tantang: @username` → yang ditantang `Terima: @username` dalam 24 jam (tidak dijawab = batal, tanpa hukuman).
 - Kekuatan = tingkat + statistik kartu (hasil Latihan) + dukungan penonton (`Dukung: @username`, dibatasi) + item + keberuntungan ~20%. TANPA keunggulan elemen (diputuskan 26 Okt).
+- Skill ikut bertarung: hewan yang punya skill (Mythical ke atas) mengeluarkan skill-nya di replay dan mendapat +10% kekuatan dari skill.
 - Kalah tidak dihukum: tidak mati, tidak turun tingkat.
 - Replay animasi di web; duel terseru masuk video ("Duel Hari Ini"). Rekor Menang/Kalah di kartu, papan Juara Arena.
 - Batas: 1–2 duel/hari per hewan (+ Slot Duel Tambahan), tak boleh menantang lawan sama berulang.
@@ -28,6 +29,7 @@ Dibangun bertahap SETELAH pembagian wilayah (lihat RENCANA_WILAYAH.md). Unsur pa
 | Tiket Tantang Ulang | tantang lagi yang baru mengalahkanmu | 5 Biji |
 | Terompet Dukungan | dukungan penonton x2, 1 duel | 10 Biji |
 | Slot Duel Tambahan | +1 duel hari itu | 5 Biji |
+| Segel Skill | skill lawan disegel: lawan tidak bisa mengeluarkan skill (bonus skill lawan hilang), 1 duel | 8 Biji |
 - Batas total bonus berbayar per duel: +20% (diputuskan 26 Okt). Tanpa item acak berbayar (gacha/kotak hadiah).
 - Kosmetik dari ide toko sebelumnya ikut dijual (kembang api, teman kecil, aksesori, menamai tempat, dll).
 
@@ -68,4 +70,4 @@ Hari ke-4 wilayah → Hari ke-5 teaser arena & toko → Hari ke-6 Toko Pokomen +
 - Batas bonus berbayar per duel +20%.
 - Kopi yang sudah masuk (Icam 1, anonim 3) dijadikan saldo Biji Kopi bila pengirimnya sudah tercocokkan ke @username (Icam = 5 Biji; anonim menunggu username).
 - Kartu Emas 10 kopi/bulan; Batu Evolusi 7 kopi (→Legendary) & 15 kopi (→God Mode).
-- Tanpa keunggulan elemen; item Elixir Elemen dihapus.
+- Tanpa keunggulan elemen; Elixir Elemen diganti Segel Skill (menghilangkan skill lawan selama 1 duel).
