@@ -7,7 +7,7 @@ import { generateArt, quota as geminiQuota } from '../lib/gemini.js';
 import { listStoryReplies, syncStoryReplies } from '../lib/story.js';
 import { papanKopi, cocokkan } from '../lib/sahabat.js';
 import { syncLatest, ownUsername } from '../lib/sync.js';
-import { refreshToken, subscribeWebhooks, listMedia, me } from '../lib/ig.js';
+import { refreshToken, subscribeWebhooks, listMedia, listComments, me } from '../lib/ig.js';
 import { json, bearer, safeEqual, hariKe } from '../lib/http.js';
 import { getConfig as pemiluCfg, setConfig as pemiluSet, hitung as pemiluHitung, tetapkanKetua } from '../lib/pemilu.js';
 
@@ -41,6 +41,16 @@ const actions = {
       trakteerLastRejected: trRej ? JSON.parse(trRej) : null,
       trakteerReady: !!(process.env.TRAKTEER_URL && process.env.TRAKTEER_WEBHOOK_TOKEN),
     };
+  },
+  async cari_komentar({ username, posts = 5 }) {
+    const u = key(username); if (!u) throw new Error('username kosong');
+    const media = await listMedia(Math.min(10, Number(posts) || 5));
+    const out = [];
+    for (const m of media) {
+      const cs = await listComments(m.id, 3000);
+      for (const c of cs) if (key(c.username) === u) out.push({ ...c, post: (m.caption || '').slice(0, 40), processed: !!(await redis('SISMEMBER', 'processed', c.id)) });
+    }
+    return { username: u, komentar: out };
   },
   async story_list() { return listStoryReplies(); },
   async story_sync({ max = 100 }) {
