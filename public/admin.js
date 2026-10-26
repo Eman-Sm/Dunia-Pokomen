@@ -502,7 +502,7 @@
   $('dmU').addEventListener('input', () => { $('dmId').value = ''; });
   $('dmTpl').onclick = () => {
     const u = $('dmU').value.replace(/^@/, '').trim().toLowerCase(); const w = S && S.warga.find((x) => x.username === u);
-    $('dmText').value = `Halo kak! Hewanmu ${w ? w.nama.toUpperCase() : '...'} sudah resmi lahir di Dunia Pokomen 🎉\n\nCari dia di peta: dunia-pokomen.vercel.app (ketik @${u || 'username'} di kolom cari).\n\nTulis cerita tentang hewanmu di komentar postingan terbaru supaya naik tingkat ya!`;
+    $('dmText').value = `Halo kak! Hewanmu ${w ? w.nama.toUpperCase() : '...'} sudah resmi lahir di Dunia Pokomen 🎉\n\nBuka link ini, hewanmu langsung ditandai di peta: https://dunia-pokomen.vercel.app/peta.html?u=${encodeURIComponent(u || '')}\n\nTulis cerita tentang hewanmu di komentar postingan terbaru supaya naik tingkat ya!`;
   };
   $('dmSend').onclick = () => {
     const text = $('dmText').value.trim(); if (!text) return toast('Pesan masih kosong');

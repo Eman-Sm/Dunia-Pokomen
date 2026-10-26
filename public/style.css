@@ -479,3 +479,13 @@ body.fullmap .mapbox { flex: 1; height: auto; min-height: 0; }
   .map-tools .chip.jam { order: 10; flex: 1 1 auto; text-align: center; font-size: .72rem; }
   .map-tools #backBtn .long { display: none; } .map-tools #backBtn .short { display: inline; }
 }
+/* "hewanku" bar above the map */
+.mebar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 2px 8px; padding: 6px 10px; background: #fff3c4; border: 2px solid var(--outline); font-size: .9rem; }
+.mebar[hidden] { display: none; }
+.mebar form { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; flex-wrap: wrap; margin: 0; }
+.mebar label { font-weight: 800; }
+.mebar input { width: auto; flex: 1 1 140px; padding: 4px 8px; font-size: 14px; }
+.mebar .btn { padding: 3px 10px; }
+.mebar .linklike { background: none; border: 0; font: inherit; font-weight: 800; color: #8a4a10; cursor: pointer; text-decoration: underline; padding: 0 2px; }
+.mebar #meClose { margin-left: auto; text-decoration: none; font-size: 1.1rem; }
+body.embed .mebar { display: none; }

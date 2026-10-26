@@ -74,7 +74,7 @@
     $('stepDM').hidden = !data.wajibFollow;
     fitted = false; refit();
     updateJam();
-    renderBook(); renderVotes(); renderNews(); renderLadder(); renderTierFilter(); renderDukungan(); renderPemilu();
+    renderBook(); renderVotes(); renderNews(); renderLadder(); renderTierFilter(); renderDukungan(); renderPemilu(); updateMeBar();
     const qk = new URLSearchParams(location.search).get('kartu');
     if (qk) { const w = DATA.warga.find((x) => x.u === qk.toLowerCase()); if (w) { select(w); openKartu(w); } }
     draw();
@@ -171,6 +171,14 @@
   // ---------------------------------------------------------------- skills (Mythical Evolution and up)
   const SKILL_MS = 2300;
   const FULL = new URLSearchParams(location.search).has('full');
+  // "hewanku": who is looking at the world. From a personal link (?u=username) or chosen once, then remembered.
+  let ME = null, searched = null;
+  try {
+    const qu = new URLSearchParams(location.search).get('u');
+    if (qu) { ME = qu.toLowerCase().replace(/^@/, '').trim(); localStorage.setItem('pokomen_me', ME); }
+    else ME = localStorage.getItem('pokomen_me');
+  } catch { /* storage blocked */ }
+  function setMe(u) { ME = u || null; try { if (ME) localStorage.setItem('pokomen_me', ME); else localStorage.removeItem('pokomen_me'); } catch { /* ignore */ } updateMeBar(); draw(); }
   const SKILL_TEST = new URLSearchParams(location.search).has('skilltest'); // preview: skills fire every ~3 s
   const SKILL_KINDS = [
     ['api', /api|fire|sembur|bakar|panas|naga api|flame/], ['terbang', /terbang|fly|melayang|sayap|melesat ke udara/],
@@ -310,30 +318,40 @@
      } catch (err) { console.warn('sprite gagal', w.u, err); }
     }
     drawSky(Wc, Hc, list);
-    // @username above every creature; nudge labels upward when they would overlap
+    // ---- labels: placed by priority; a label that would collide is hidden and becomes a small dot
     const placed = [];
-    // fewer, clearer tags: none when zoomed far out, then the ones nearest the centre (max 36)
-    const minZ = FULL ? 0 : (Wc < 560 ? 2.6 : 2.1);
-    let small = cam.z < minZ ? [] : labels.filter((L) => !L.big);
-    small = small.sort((a, b) => Math.hypot(a.x - Wc / 2, a.y - Hc / 2) - Math.hypot(b.x - Wc / 2, b.y - Hc / 2)).slice(0, FULL ? 400 : 36).sort((a, b) => b.y - a.y);
+    const hit = (r) => placed.some((q) => r.x < q.x + q.w + 3 && r.x + r.w + 3 > q.x && r.y < q.y + q.h + 3 && r.y + r.h + 3 > q.y);
+    const tagZ = FULL ? 0 : (Wc < 560 ? 2.6 : 2.1);
     const compact = cam.z < 1.8 || Wc < 520;
     const tagFont = compact ? '800 10px Nunito, "Trebuchet MS", sans-serif' : '800 12px Nunito, "Trebuchet MS", sans-serif';
     const maxCh = compact ? 11 : 24;
+    const prio = (w) => (w.u === ME ? 1e9 : 0) + (w === searched ? 1e8 : 0) + (w.gelar ? 1e7 : 0) + (w.sahabat ? 1e7 : 0)
+      + (w.tier || 0) * 1e5 + (Date.parse(w.lahir || 0) || 0) / 1e9;
+    const cand = labels.filter((L) => !L.big && (cam.z >= tagZ || L.w.u === ME || L.w === searched)).sort((p, q) => prio(q.w) - prio(p.w));
+    // the big card label of the selected / hovered creature claims its space first
+    for (const L of labels.filter((L) => L.big)) placed.push({ x: L.x - 90, y: L.y - 46, w: 180, h: 46 });
+    let shown = 0; const maxTags = FULL ? 400 : 36;
     ctx.font = tagFont;
-    for (const L of small) {
+    for (const L of cand) {
+      const mine = L.w.u === ME;
       const uu = L.w.u.length > maxCh ? L.w.u.slice(0, maxCh - 1) + '…' : L.w.u;
-      L.text = (L.w.mati ? 'RIP ' : '') + (FULL && cam.z >= 2.2 ? (L.w.nama || '') + ' · @' + uu : '@' + uu);
-      L.font = tagFont;
+      L.text = (mine ? '★ ' : '') + (L.w.mati ? 'RIP ' : '') + ((FULL || mine) && cam.z >= 2.2 ? (L.w.nama || '') + ' · @' + uu : '@' + uu);
+      L.font = tagFont; L.mine = mine;
       const bh = compact ? 15 : 19, bw = ctx.measureText(L.text).width + bh * 1.25;
-      let by = L.y - bh;
-      for (let k = 0; k < (FULL ? 3 : 6); k++) {
-        const r = { x: L.x - bw / 2, y: by, w: bw, h: bh };
-        if (!placed.some((q) => r.x < q.x + q.w + 2 && r.x + r.w + 2 > q.x && r.y < q.y + q.h + 2 && r.y + r.h + 2 > q.y)) break;
+      let by = L.y - bh, ok = false;
+      for (let k = 0; k < 2; k++) {  // try right above the head, then one step higher
+        if (!hit({ x: L.x - bw / 2, y: by, w: bw, h: bh })) { ok = true; break; }
         by -= bh + 3;
       }
-      placed.push({ x: L.x - bw / 2, y: by, w: bw, h: bh });
-      drawUserTag(L, by, bw, bh);
+      if (mine) ok = true;  // my own creature always shows its label
+      if (ok && (shown < maxTags || mine)) {
+        placed.push({ x: L.x - bw / 2, y: by, w: bw, h: bh }); drawUserTag(L, by, bw, bh); shown++;
+      } else if (cam.z >= 1.2) {
+        ctx.fillStyle = 'rgba(20,14,10,.55)'; ctx.beginPath(); ctx.arc(L.x, L.y - 4, 3.6, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = tagAccent(L.w); ctx.beginPath(); ctx.arc(L.x, L.y - 4, 2.4, 0, Math.PI * 2); ctx.fill();
+      }
     }
+    drawMinePointer(Wc, Hc);
     for (const L of labels.filter((L) => L.big)) drawLabel(L);
   }
   // ---------------------------------------------------------------- day & night (Jakarta time, WIB = UTC+7)
@@ -477,11 +495,12 @@
     if (by + bh < y - 2) { ctx.strokeStyle = 'rgba(20,14,10,.55)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, by + bh); ctx.lineTo(x, y); ctx.stroke(); }
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 1;
-    pill(bx, by, bw, bh, bh / 2); ctx.fillStyle = w.mati ? 'rgba(70,74,82,.88)' : 'rgba(26,20,30,.78)'; ctx.fill();
+    pill(bx, by, bw, bh, bh / 2); ctx.fillStyle = arguments[0].mine ? 'rgba(255,205,50,.97)' : w.mati ? 'rgba(70,74,82,.88)' : 'rgba(26,20,30,.78)'; ctx.fill();
     ctx.restore();
+    if (arguments[0].mine) { pill(bx, by, bw, bh, bh / 2); ctx.lineWidth = 2; ctx.strokeStyle = '#2b1b17'; ctx.stroke(); }
     ctx.fillStyle = tagAccent(w); ctx.beginPath(); ctx.arc(bx + bh / 2, by + bh / 2, bh * .2, 0, Math.PI * 2); ctx.fill();
     if (w.gelar) { ctx.fillStyle = '#ffd23f'; ctx.fillRect(Math.round(x) - 5, by - 6, 11, 4); ctx.fillRect(Math.round(x) - 5, by - 9, 2, 3); ctx.fillRect(Math.round(x) - 1, by - 10, 3, 4); ctx.fillRect(Math.round(x) + 4, by - 9, 2, 3); ctx.fillStyle = '#d9483b'; ctx.fillRect(Math.round(x), by - 5, 1, 2); }
-    ctx.font = font; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffffff';
+    ctx.font = font; ctx.textBaseline = 'middle'; ctx.fillStyle = arguments[0].mine ? '#2b1b17' : '#ffffff';
     ctx.fillText(text, bx + bh * .85, by + bh / 2 + .5);
   }
   function drawLabel({ w, x, y, big }) {
@@ -495,6 +514,42 @@
     ctx.fillStyle = 'rgba(255,252,244,.97)'; ctx.beginPath(); ctx.moveTo(x - 6, by + bh - 1); ctx.lineTo(x + 6, by + bh - 1); ctx.lineTo(x, by + bh + 6); ctx.closePath(); ctx.fill();
     ctx.textBaseline = 'top'; ctx.font = f1; ctx.fillStyle = '#2b1b17'; ctx.fillText(t, bx + 11, by + 4);
     ctx.font = f2; ctx.fillStyle = '#7a5a40'; ctx.fillText(sub, bx + 11, by + 22);
+  }
+
+  // arrow at the screen edge pointing to my creature when it is off-screen
+  function drawMinePointer(Wc, Hc) {
+    if (!ME || !DATA) return;
+    const w = DATA.warga.find((x) => x.u === ME); if (!w) return;
+    const [wx, wy] = posOf(w);
+    const sx = (wx - cam.x) * cam.z + Wc / 2, sy = (wy - 20 - cam.y) * cam.z + Hc / 2;
+    if (sx > 0 && sx < Wc && sy > 0 && sy < Hc) { mePtr = null; return; }
+    const cx = Wc / 2, cy = Hc / 2, dx = sx - cx, dy = sy - cy, m = 26;
+    const t = Math.min((Wc / 2 - m) / Math.abs(dx || 1e-6), (Hc / 2 - m) / Math.abs(dy || 1e-6));
+    const px = cx + dx * t, py = cy + dy * t, ang = Math.atan2(dy, dx);
+    ctx.save(); ctx.translate(px, py); ctx.rotate(ang);
+    ctx.fillStyle = '#ffd23f'; ctx.strokeStyle = '#2b1b17'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(-8, -11); ctx.lineTo(-3, 0); ctx.lineTo(-8, 11); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.restore();
+    const label = '★ ' + w.nama; ctx.font = '800 12px Nunito, sans-serif'; const tw = ctx.measureText(label).width + 16;
+    const lx = Math.max(6, Math.min(Wc - tw - 6, px - tw / 2 - Math.cos(ang) * 34)), ly = Math.max(6, Math.min(Hc - 26, py - 10 - Math.sin(ang) * 30));
+    pill(lx, ly, tw, 20, 10); ctx.fillStyle = 'rgba(255,205,50,.97)'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#2b1b17'; ctx.stroke();
+    ctx.fillStyle = '#2b1b17'; ctx.textBaseline = 'middle'; ctx.fillText(label, lx + 8, ly + 10.5);
+    mePtr = { x: Math.min(lx, px - 18), y: Math.min(ly, py - 18), w: Math.max(tw, 36) + 20, h: 46 };
+  }
+  let mePtr = null;
+  function updateMeBar() {
+    const bar = $('meBar'); if (!bar || !DATA) return;
+    const w = ME && DATA.warga.find((x) => x.u === ME);
+    if (w) {
+      bar.innerHTML = `<span>★ Hewanku: <b>${esc(w.nama)}</b> @${esc(w.u)}</span><button type="button" class="linklike" id="meGo">Lihat</button><button type="button" class="linklike" id="meOff">Bukan saya</button>`;
+      $('meGo').onclick = () => select(w); $('meOff').onclick = () => setMe(null);
+    } else {
+      bar.innerHTML = `<form id="meForm"><label for="meU">Hewanmu yang mana?</label><input id="meU" type="text" placeholder="@username Instagram" autocomplete="off"><button class="btn" type="submit">Tandai</button></form><button type="button" class="linklike" id="meClose" aria-label="Tutup">×</button>`;
+      $('meForm').onsubmit = (e) => { e.preventDefault(); const u = $('meU').value.toLowerCase().replace(/^@/, '').trim(); const ww = DATA.warga.find((x) => x.u === u); if (!ww) return toast('Belum ada hewan atas nama @' + u + '. Sudah komen di postingan terbaru?'); setMe(u); select(ww); };
+      $('meClose').onclick = () => { bar.hidden = true; try { sessionStorage.setItem('pokomen_mebar', '0'); } catch { /* ignore */ } };
+    }
+    let closed = false; try { closed = sessionStorage.getItem('pokomen_mebar') === '0'; } catch { /* ignore */ }
+    bar.hidden = !w && closed;
   }
 
   // pan / zoom / pick
@@ -534,8 +589,9 @@
     if (ptrs.size < 2) pinch = null;
     if (ptrs.size === 0) {
       if (!moved) {
-        const r = box.getBoundingClientRect();
-        const w = pick(e.clientX - r.left, e.clientY - r.top);
+        const r = box.getBoundingClientRect(); const cx_ = e.clientX - r.left, cy_ = e.clientY - r.top;
+        if (mePtr && cx_ >= mePtr.x && cx_ <= mePtr.x + mePtr.w && cy_ >= mePtr.y && cy_ <= mePtr.y + mePtr.h) { const mw = DATA.warga.find((x) => x.u === ME); if (mw) { select(mw); return; } }
+        const w = pick(cx_, cy_);
         if (w) select(w, false); else closeCard();
       }
       dragStart = null;
@@ -619,6 +675,10 @@
     else card.querySelector('#cardSprite').replaceWith(spriteNode(w, 88));
     card.querySelector('.close').onclick = closeCard;
     card.querySelector('#openKartu').onclick = () => openKartu(w);
+    const mb = document.createElement('button'); mb.type = 'button'; mb.className = 'btn ghost'; mb.style.marginLeft = '8px'; mb.style.marginTop = '10px';
+    mb.textContent = w.u === ME ? '★ Hewanku' : 'Ini hewanku';
+    mb.onclick = () => { setMe(w.u === ME ? null : w.u); mb.textContent = w.u === ME ? '★ Hewanku' : 'Ini hewanku'; };
+    card.querySelector('#openKartu').after(mb);
     card.hidden = false;
     if (fly) { const [x, y] = posOf(w); flyTo(x, y - 10, Math.max(cam.z, 4)); } else draw();
   }
@@ -631,7 +691,7 @@
     const W = allWarga();
     const w = W.find((x) => x.u === q && !x.makam) || W.find((x) => x.nama.toLowerCase() === q)
       || W.find((x) => x.u.includes(q) || x.nama.toLowerCase().includes(q) || (x.hewan || []).join(' ').toLowerCase().includes(q));
-    if (w) select(w); else toast('Belum ada warga dengan nama itu. Sudah komen di postingan terbaru?');
+    if (w) { searched = w; select(w); } else toast('Belum ada warga dengan nama itu. Sudah komen di postingan terbaru?');
   });
   $('zoomIn').onclick = () => flyTo(cam.x, cam.y, Math.min(7, cam.z * 1.6));
   $('zoomOut').onclick = () => flyTo(cam.x, cam.y, Math.max(minZ(), cam.z / 1.6));
