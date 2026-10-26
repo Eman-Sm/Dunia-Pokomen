@@ -313,13 +313,13 @@
     const placed = [];
     const small = labels.filter((L) => !L.big).sort((a, b) => b.y - a.y);
     const compact = cam.z < 1.8 || Wc < 520;
-    const tagFont = compact ? '700 9px "Pixelify Sans", monospace' : '700 11px "Pixelify Sans", monospace';
+    const tagFont = compact ? '800 10px Nunito, "Trebuchet MS", sans-serif' : '800 12px Nunito, "Trebuchet MS", sans-serif';
     const maxCh = compact ? 11 : 24;
     ctx.font = tagFont;
     for (const L of small) {
       L.text = (L.w.mati ? 'RIP @' : '@') + (L.w.u.length > maxCh ? L.w.u.slice(0, maxCh - 1) + '…' : L.w.u);
       L.font = tagFont;
-      const bw = ctx.measureText(L.text).width + (compact ? 6 : 10), bh = compact ? 12 : 15;
+      const bh = compact ? 15 : 19, bw = ctx.measureText(L.text).width + bh * 1.25;
       let by = L.y - bh;
       for (let k = 0; k < 6; k++) {
         const r = { x: L.x - bw / 2, y: by, w: bw, h: bh };
@@ -460,30 +460,35 @@
     return by - 3 * u;
   }
   function allWarga() { return DATA ? DATA.warga.concat(DATA.makam || []) : []; }
+  // smooth, high-contrast name tags (readable from far away): rounded pill, dark glass, white text
+  function pill(x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  const tagAccent = (w) => (w.mati ? '#9aa0aa' : w.sahabat ? '#ff8fbf' : w.gelar ? '#ffd23f' : ['#cfc6b8', '#8fd46a', '#5aa9ff', '#b48cff', '#ffcf4a', '#ff7a59'][Math.min(5, w.tier || 0)]);
   function drawUserTag({ w, x, y, text, font }, by, bw, bh) {
-    const bx = Math.round(x - bw / 2); by = Math.round(by);
-    if (by + bh < y - 2) { ctx.fillStyle = 'rgba(43,27,23,.7)'; ctx.fillRect(Math.round(x), by + bh, 1, Math.round(y - by - bh)); } // leader line
-    ctx.fillStyle = '#2b1b17'; ctx.fillRect(bx - 1, by - 1, bw + 2, bh + 3);
-    ctx.fillStyle = w.mati ? '#c9cdd4' : w.sahabat ? '#ffd6ea' : w.gelar ? '#ffd23f' : w.tier >= 5 ? '#ffd23f' : w.tier >= 4 ? '#fff0b8' : '#fffaee'; ctx.fillRect(bx, by, bw, bh);
+    const bx = x - bw / 2;
+    if (by + bh < y - 2) { ctx.strokeStyle = 'rgba(20,14,10,.55)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, by + bh); ctx.lineTo(x, y); ctx.stroke(); }
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 1;
+    pill(bx, by, bw, bh, bh / 2); ctx.fillStyle = w.mati ? 'rgba(70,74,82,.88)' : 'rgba(26,20,30,.78)'; ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = tagAccent(w); ctx.beginPath(); ctx.arc(bx + bh / 2, by + bh / 2, bh * .2, 0, Math.PI * 2); ctx.fill();
     if (w.gelar) { ctx.fillStyle = '#ffd23f'; ctx.fillRect(Math.round(x) - 5, by - 6, 11, 4); ctx.fillRect(Math.round(x) - 5, by - 9, 2, 3); ctx.fillRect(Math.round(x) - 1, by - 10, 3, 4); ctx.fillRect(Math.round(x) + 4, by - 9, 2, 3); ctx.fillStyle = '#d9483b'; ctx.fillRect(Math.round(x), by - 5, 1, 2); }
-    ctx.fillStyle = '#3b2416'; ctx.font = font; ctx.textBaseline = 'top';
-    ctx.fillText(text, bx + (bh < 15 ? 3 : 5), by + 2);
+    ctx.font = font; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffffff';
+    ctx.fillText(text, bx + bh * .85, by + bh / 2 + .5);
   }
   function drawLabel({ w, x, y, big }) {
-    ctx.font = big ? '600 14px "Pixelify Sans", monospace' : '600 11px "Pixelify Sans", monospace';
-    const t = big ? w.nama : w.nama;
-    const sub = big ? '@' + w.u + ' · ' + (w.tierNama || TIERS[w.tier]) : null;
-    const tw = Math.max(ctx.measureText(t).width, sub ? (ctx.font = '600 11px Nunito, sans-serif', ctx.measureText(sub).width) : 0);
-    const bw = tw + 12, bh = big ? 34 : 15;
-    const bx = Math.round(x - bw / 2), by = Math.round(big ? y - bh - 2 : y);
-    ctx.fillStyle = '#2b1b17'; ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 5);
-    ctx.fillStyle = big ? '#fffaee' : 'rgba(255,250,238,.92)'; ctx.fillRect(bx, by, bw, bh);
-    if (big) { ctx.fillStyle = '#d8572a'; ctx.fillRect(bx, by, 3, bh); }
-    ctx.fillStyle = big ? '#d8572a' : '#3b2416';
-    ctx.font = big ? '600 14px "Pixelify Sans", monospace' : '600 11px "Pixelify Sans", monospace';
-    ctx.textBaseline = 'top';
-    ctx.fillText(t, bx + 6, by + (big ? 3 : 1));
-    if (sub) { ctx.font = '600 11px Nunito, sans-serif'; ctx.fillStyle = '#7a5a40'; ctx.fillText(sub, bx + 6, by + 19); }
+    const t = w.nama, sub = '@' + w.u + ' · ' + (w.tierNama || TIERS[w.tier]);
+    const f1 = '800 15px Nunito, "Trebuchet MS", sans-serif', f2 = '600 11px Nunito, "Trebuchet MS", sans-serif';
+    ctx.font = f1; const w1 = ctx.measureText(t).width; ctx.font = f2; const w2 = ctx.measureText(sub).width;
+    const bw = Math.max(w1, w2) + 22, bh = 38, bx = x - bw / 2, by = y - bh - 4;
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2;
+    pill(bx, by, bw, bh, 12); ctx.fillStyle = 'rgba(255,252,244,.97)'; ctx.fill(); ctx.restore();
+    pill(bx, by, bw, bh, 12); ctx.lineWidth = 2; ctx.strokeStyle = tagAccent(w); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,252,244,.97)'; ctx.beginPath(); ctx.moveTo(x - 6, by + bh - 1); ctx.lineTo(x + 6, by + bh - 1); ctx.lineTo(x, by + bh + 6); ctx.closePath(); ctx.fill();
+    ctx.textBaseline = 'top'; ctx.font = f1; ctx.fillStyle = '#2b1b17'; ctx.fillText(t, bx + 11, by + 4);
+    ctx.font = f2; ctx.fillStyle = '#7a5a40'; ctx.fillText(sub, bx + 11, by + 22);
   }
 
   // pan / zoom / pick
