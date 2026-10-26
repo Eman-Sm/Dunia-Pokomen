@@ -706,7 +706,7 @@
     const list = $('klasemen'); list.innerHTML = '';
     if (!P.kandidat.length) list.innerHTML = P.menunggu
       ? `<li class="empty" style="display:block;cursor:default">Pemilihan dimulai saat postingan <b>Hari ke-3</b> tayang. Syarat calon: komen di <b>Hari ke-2</b> dan <b>Hari ke-3</b>. Hadir juga di Hari ke-1 untuk nilai tambah!</li>`
-      : '<li class="empty" style="display:block;cursor:default">Belum ada calon. Komen di postingan Hari ke-2 dan Hari ke-3 supaya masuk daftar calon!</li>';
+      : '<li class="empty" style="display:block;cursor:default">Belum ada calon. Pemilik yang berkomentar di postingan Hari ke-1, ke-2 dan ke-3 masuk daftar calon!</li>';
     P.kandidat.forEach((k, i) => {
       const w = DATA.warga.find((x) => x.u === k.u);
       const li = document.createElement('li'); if (i === 0) li.className = 'top';
@@ -716,7 +716,7 @@
       if (w) li.onclick = () => { select(w); $('peta').scrollIntoView({ behavior: 'smooth' }); };
       list.appendChild(li);
     });
-    $('pemiluNote').textContent = 'Peringkat: jumlah hari hadir di komentar, lalu total like jika seri. ' + (P.likesAvailable === false ? 'Jumlah like belum tersedia dari Instagram, peringkat sementara diurutkan dari komentar paling awal. ' : '')
+    $('pemiluNote').textContent = 'Calon: pemilik yang hadir berkomentar di Hari ke-1, 2 dan 3. Peringkat: total like di komentarnya. ' + (P.likesAvailable === false ? 'Jumlah like belum tersedia dari Instagram, peringkat sementara diurutkan dari komentar paling awal. ' : '')
       + (P.updatedAt ? `Diperbarui ${ago(P.updatedAt)} · ${fmt(P.jumlahCalon)} calon dari ${fmt(P.jumlahPeserta)} akun yang berkomentar.` : '');
   }
   function renderDukungan() {

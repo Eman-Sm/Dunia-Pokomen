@@ -143,7 +143,7 @@
   $('pmSave').onclick = (e) => {
     const posts = [...document.querySelectorAll('[data-media]:checked')].map((x) => x.dataset.media).reverse();
     const wajib = [...document.querySelectorAll('[data-wajib]:checked')].map((x) => x.dataset.wajib).filter((id) => posts.includes(id));
-    if (posts.length && wajib.length < 2) return toast('Pilih 2 postingan Wajib (misalnya Hari ke-2 dan Hari ke-3), dan ikut centang Dihitung');
+    if (posts.length && wajib.length < 3) return toast('Pilih 3 postingan Wajib (Hari ke-1, ke-2 dan ke-3), dan ikut centang Dihitung');
     const v = $('pmTutup').value;
     run(e.target, 'pemilu_set', { posts, wajib, tutup: v ? v + ':00+07:00' : null }, 'Pengaturan pemilihan disimpan');
   };
