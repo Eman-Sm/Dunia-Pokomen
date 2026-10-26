@@ -31,6 +31,6 @@ Disetujui pemilik akun 26 Okt 2026. Jangan dibangun sebelum video Hari ke-4 taya
 - Video Hari ke-4 menyorot tiap wilayah & beberapa penghuninya; story "Wilayahmu yang mana? Cek di link bio".
 
 ## Urutan
-1. Hari ke-4 (video): pengumuman Ketua Koloni, rencana wilayah + migrasi, Pusat Koloni & Tempat Latihan, ajakan `Wilayah: ...`, pengumuman pemilihan Ketua Koloni per wilayah (komentar `Calon:` / `Pilih: @...`, cek wilayah di web); Ketua Koloni pertama otomatis memimpin wilayahnya.
-2. Setelah tayang: bangun lahan, wilayah, Pusat Koloni, sistem usulan nama, voting Ketua Koloni per wilayah.
+1. Hari ke-4 (video): pengumuman Ketua Koloni, rencana wilayah + migrasi, Pusat Koloni & Tempat Latihan, ajakan `Wilayah: ...`, pengumuman pemilihan Ketua Koloni per wilayah (komentar `Calon:` / `Pilih: @...`, cek wilayah di web); Ketua Koloni pertama otomatis memimpin wilayahnya; teaser Obrolan Warga (RENCANA_OBROLAN.md).
+2. Setelah tayang: bangun lahan, wilayah, Pusat Koloni, sistem usulan nama, voting Ketua Koloni per wilayah, Obrolan Semua + Obrolan Wilayah.
 3. Hari ke-5: nama wilayah diumumkan, voting Ketua Koloni per wilayah dibuka/berjalan.
