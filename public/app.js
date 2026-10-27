@@ -830,7 +830,7 @@
       list.innerHTML = `<li class="empty" style="display:block;cursor:default">${x.ketua ? `Wilayah ${x.n} dipimpin <b>Ketua ${esc(x.ketua.nama)}</b> (@${esc(x.ketua.u)}), Ketua Koloni pertama. Wilayah ini tidak ikut memilih.` : `Wilayah ${x.n} belum ikut pemilihan kali ini.`}</li>`;
       if (k) list.firstChild.onclick = () => { select(k); $('peta').scrollIntoView({ behavior: 'smooth' }); };
     } else if (!x.calon.length) {
-      list.innerHTML = `<li class="empty" style="display:block;cursor:default">Belum ada calon di Wilayah ${x.n}. Warga wilayah ini bisa mendaftar dengan komentar <b>Calon: janjimu</b>!</li>`;
+      list.innerHTML = `<li class="empty" style="display:block;cursor:default">Belum ada calon di Wilayah ${x.n}. Warga wilayah ini bisa mendaftar dengan komentar “Calon: janjimu”!</li>`;
     }
     if (x.memilih) x.calon.forEach((k, i) => {
       const w = DATA.warga.find((v) => v.u === k.u);
@@ -857,7 +857,7 @@
       if (!w) { out.textContent = 'Hewan tidak ditemukan. Tulis @username Instagram-mu atau nama hewanmu.'; return; }
       const xw = W[w.wil];
       out.innerHTML = `<b>${esc(namaTampil(w))}</b> (warga no. ${(w.spot ?? 0) + 1}) tinggal di <b>Wilayah ${w.wil}</b>. ` + (xw && xw.memilih ? `Pilih salah satu calon di bawah, lalu tempel di komentar.` : xw && xw.ketua ? `Wilayahmu dipimpin Ketua ${esc(xw.ketua.nama)}.` : '');
-      pwSel = w.wil; setMe(w.u); renderPemiluW();
+      pwSel = w.wil; if (!ME) setMe(w.u); renderPemiluW(); $('pwCekOut').innerHTML = out.innerHTML;
     };
   }
   function renderDukungan() {
