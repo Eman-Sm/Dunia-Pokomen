@@ -948,6 +948,7 @@
   if (FULL) {  // full-screen map in its own tab, with every citizen's identity above its head
     document.body.classList.add('fullmap'); document.title = 'Peta Penuh · Dunia Pokomen';
     $('fullBtn').hidden = true; $('backBtn').hidden = false;
+    const hb = $('hdBtn'); if (hb) { hb.hidden = false; const mu = ME || ''; if (mu) hb.href = 'hd/?u=' + encodeURIComponent(mu); }
   }
   // used by Ruang Admin (same-origin iframe)
   window.Pokomen = {
