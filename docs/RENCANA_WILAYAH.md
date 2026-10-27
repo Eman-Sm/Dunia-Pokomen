@@ -34,3 +34,9 @@ Disetujui pemilik akun 26 Okt 2026. Jangan dibangun sebelum video Hari ke-4 taya
 1. Hari ke-4 (video): pengumuman Ketua Koloni, rencana wilayah + migrasi, Pusat Koloni & Tempat Latihan, ajakan `Wilayah: ...`, pengumuman pemilihan Ketua Koloni per wilayah (komentar `Calon:` / `Pilih: @...`, cek wilayah di web); Ketua Koloni pertama otomatis memimpin wilayahnya; teaser Obrolan Warga (RENCANA_OBROLAN.md).
 2. Setelah tayang: bangun lahan, wilayah, Pusat Koloni, sistem usulan nama, voting Ketua Koloni per wilayah, Obrolan Semua + Obrolan Wilayah.
 3. Hari ke-5: nama wilayah diumumkan, voting Ketua Koloni per wilayah dibuka/berjalan.
+
+## Jadwal pemilihan Ketua per wilayah (diputuskan 27 Okt)
+- Dibuka saat video Hari ke-4 tayang (default 27 Okt 17.00 WIB, `pw_cfg.buka`), ditutup **28 Okt 12.00 WIB**.
+- Wilayah 1 & 3 memilih; Wilayah 2 dipimpin otomatis oleh Ketua Koloni pertama, Hole (@vanzoka.7).
+- Sudah dibangun: lib/wilayah.js (Calon:/Pilih:, balasan bot, hitung suara, gelar otomatis "Ketua Koloni Wilayah N" saat ditutup), bagian "Pemilihan Ketua Koloni per Wilayah" + "Cek wilayahmu" di halaman awal, admin `pw_status` / `pw_set` / `pw_tetapkan`.
+- Belum: lahan/gapura wilayah di peta, usulan nama `Wilayah:`.
