@@ -80,6 +80,7 @@ Dibangun bertahap SETELAH pembagian wilayah (lihat RENCANA_WILAYAH.md). Unsur pa
 - Hadiah dunia nyata: shoutout story, video khusus, gambar kartu anime gratis.
 
 ## Urutan usulan
+(Daftar ide cuan tambahan setelah toko buka: docs/IDE_CUAN_SETELAH_TOKO.md — tunjukkan ke pemilik akun saat Toko Pokomen dibuka.)
 Hari ke-4 wilayah → Hari ke-5 teaser arena & toko → Hari ke-6 Toko Pokomen + Biji Kopi + Latihan → Hari ke-7 Arena 1v1 + Duel Tebakan → minggu ke-2 Perang Wilayah, Kartu Emas, Batu Evolusi.
 
 ## Keputusan (26 Okt)
