@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&family=Pixelify+Sans:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=wil2">
+<link rel="stylesheet" href="style.css?v=ob1">
 </head>
 <body>
 <header class="topbar">
@@ -63,6 +63,27 @@
         <div class="map-hint" id="mapHint">Seret untuk geser, scroll atau cubit untuk zoom</div>
         <article class="card" id="card" hidden aria-live="polite"></article>
       </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="obrolan" aria-labelledby="obTitle" style="padding-top:26px">
+    <div class="parchment ob">
+      <div class="ob-head">
+        <h2 id="obTitle">💬 Obrolan Warga</h2>
+        <span class="ob-who" id="obWho"></span>
+      </div>
+      <div class="ob-tabs" id="obTabs" role="tablist" aria-label="Ruang obrolan"></div>
+      <ol class="ob-list" id="obList" aria-live="polite"></ol>
+      <div id="obForm" hidden>
+        <div class="ob-emo" id="obEmo"></div>
+        <form class="ob-send" id="obSend" autocomplete="off">
+          <input id="obText" maxlength="200" placeholder="Tulis pesan… (maks. 200 huruf)" aria-label="Pesan">
+          <button class="btn" type="submit">Kirim</button>
+        </form>
+        <p class="muted ob-err" id="obErr" aria-live="polite"></p>
+      </div>
+      <p class="ob-join" id="obJoin">Mau ikut ngobrol? <b>DM kata OBROLAN</b> ke <a href="https://www.instagram.com/duniapokomen/" target="_blank" rel="noopener">@duniapokomen</a> untuk link pribadimu. Tanpa link, kamu tetap bisa membaca.</p>
+      <p class="muted ob-rule">Sopan ya! Tanpa link, nomor HP, atau ajakan pindah ke aplikasi lain. Pesan yang dilaporkan 3 warga disembunyikan.</p>
     </div>
   </section>
 
@@ -191,6 +212,7 @@ Wujud Dewa: Mecha Beast</div>
 <script src="creature-hd.js?v=2026-10-25"></script>
 <script src="creature.js?v=pal1"></script>
 <script src="card.js?v=sohabat"></script>
-<script src="app.js?v=wil4"></script>
+<script src="app.js?v=ob1"></script>
+<script src="obrolan.js?v=ob1"></script>
 </body>
 </html>

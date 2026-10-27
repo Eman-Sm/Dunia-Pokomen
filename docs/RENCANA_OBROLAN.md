@@ -1,4 +1,4 @@
-# Rencana: Obrolan Warga di Web (dirancang 27 Okt 2026, belum dibangun)
+# Obrolan Warga di Web (dirancang 27 Okt 2026, AKTIF sejak 27 Okt malam setelah video Hari ke-4)
 
 Diperkenalkan di video Hari ke-4. **Diaktifkan hanya SETELAH video Hari ke-4 tayang dan fiturnya sudah diperkenalkan** (keputusan 27 Okt), bersamaan dengan wilayah (lihat RENCANA_WILAYAH.md). Jangan dinyalakan sebelumnya.
 

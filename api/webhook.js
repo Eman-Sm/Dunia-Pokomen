@@ -38,7 +38,7 @@ export async function POST(request) {
       let story = null;
       try { story = await fromWebhook(m); if (story) results.push('story:' + story); } catch (e) { results.push('story-error:' + e.message); }
       // a story reply only continues a pending registration; it never triggers the "already born" auto-reply
-      try { results.push(await handleDM(m.sender.id, { quiet: !!story })); } catch (e) { results.push('error:' + e.message); }
+      try { results.push(await handleDM(m.sender.id, { quiet: !!story, text: m.message?.text || '' })); } catch (e) { results.push('error:' + e.message); }
     }
     for (const ch of entry.changes || []) {
       if (ch.field !== 'comments' && ch.field !== 'live_comments') continue;

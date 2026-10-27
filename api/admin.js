@@ -10,6 +10,7 @@ import { syncLatest, ownUsername } from '../lib/sync.js';
 import { refreshToken, subscribeWebhooks, listMedia, listComments, me, sendDM } from '../lib/ig.js';
 import { json, bearer, safeEqual, hariKe } from '../lib/http.js';
 import { katalog, pakaiItem, riwayatItem } from '../lib/item.js';
+import * as ob from '../lib/obrolan.js';
 import { getCfg as pwCfg, setCfg as pwSet, hasilWilayah, tetapkanPemenang } from '../lib/wilayah.js';
 import { getConfig as pemiluCfg, setConfig as pemiluSet, hitung as pemiluHitung, tetapkanKetua } from '../lib/pemilu.js';
 
@@ -216,6 +217,17 @@ const actions = {
   async pw_tetapkan({ force }) { return tetapkanPemenang({ force: !!force }); },
   async item_katalog() { return { katalog: katalog(), riwayat: await riwayatItem(50) }; },
   async pakai_item({ username, item, nilai, bukti }) { return pakaiItem({ username, item, nilai, bukti }); },
+  async ob_info() { return ob.adminInfo(); },
+  async ob_list({ ruang = 'semua' }) { return ob.adminList(ruang); },
+  async ob_hapus({ id, tampil }) { return ob.adminHapus(id, !!tampil); },
+  async ob_bisukan({ username, menit }) { return ob.adminBisukan(username, Number(menit) || 0); },
+  async ob_kunci({ on }) { return ob.adminKunci(!!on); },
+  async ob_kata({ tambah, hapus }) { return ob.adminKata(tambah, hapus); },
+  async ob_link({ username, baru }) {
+    const u = key(username); const w = await getJSON('warga', u); if (!w) throw new Error('warga tidak ditemukan');
+    const k = await ob.tokenFor(u, { baru: !!baru });
+    return { link: `https://${(process.env.SITE_URL || 'dunia-pokomen.vercel.app').replace(/^https?:\/\//, '')}/?u=${encodeURIComponent(u)}&k=${k}#obrolan` };
+  },
   async usul_wilayah_list() { return hgetallJSON('usul_wilayah'); },
   async usul_wilayah_status({ id, status }) {
     const x = await getJSON('usul_wilayah', String(id)); if (!x) throw new Error('usulan tidak ditemukan');

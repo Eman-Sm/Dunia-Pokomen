@@ -252,6 +252,7 @@
   const posOf = (w) => { if (w.mati) return spotOf(w); const a = actor(w); return [a.x, a.y]; };
 
   function draw() {
+    HEADS.clear();
     if (!IMG || !DATA) return;
     clampCam();
     const Wc = box.clientWidth, Hc = box.clientHeight;
@@ -315,6 +316,7 @@
         ctx.globalAlpha = 1; ctx.textAlign = 'start';
       }
       const headTop = custom ? top : top + (sp.hd ? 3 : 6) * u * s; // first painted row of the 36px sprite
+      HEADS.set(w.u, { x, y: Math.min(headTop, crownTop) });
       labels.push({ w, x, y: Math.min(headTop, crownTop) - 3, big: w === selected || w === hover });
      } catch (err) { console.warn('sprite gagal', w.u, err); }
     }
@@ -354,6 +356,7 @@
     }
     drawMinePointer(Wc, Hc);
     for (const L of labels.filter((L) => L.big)) drawLabel(L);
+    drawChatBubbles();
   }
   // ---------------------------------------------------------------- day & night (Jakarta time, WIB = UTC+7)
   const jamParam = Number(new URLSearchParams(location.search).get('jam'));
@@ -503,6 +506,30 @@
     if (w.gelar) { ctx.fillStyle = '#ffd23f'; ctx.fillRect(Math.round(x) - 5, by - 6, 11, 4); ctx.fillRect(Math.round(x) - 5, by - 9, 2, 3); ctx.fillRect(Math.round(x) - 1, by - 10, 3, 4); ctx.fillRect(Math.round(x) + 4, by - 9, 2, 3); ctx.fillStyle = '#d9483b'; ctx.fillRect(Math.round(x), by - 5, 1, 2); }
     ctx.font = font; ctx.textBaseline = 'middle'; ctx.fillStyle = arguments[0].mine ? '#2b1b17' : '#ffffff';
     ctx.fillText(text, bx + bh * .85, by + bh / 2 + .5);
+  }
+  // ---- Obrolan Warga: what a citizen wrote pops up above its head for a few seconds
+  const HEADS = new Map();
+  function drawChatBubbles() {
+    const list = (window.PokoChat && window.PokoChat.bubbles()) || [];
+    const now = Date.now();
+    for (const b of list) {
+      const h = HEADS.get(b.u); if (!h) continue;
+      const age = (now - b.at) / 1000; if (age > 7) continue;
+      const a = age < .2 ? age / .2 : age > 6.3 ? (7 - age) / .7 : 1;
+      let t = b.text; if (t.length > 42) t = t.slice(0, 41) + '…';
+      const fs = Math.round(Math.max(11, Math.min(15, 9 + cam.z * 1.6)));
+      ctx.font = `700 ${fs}px Nunito, "Trebuchet MS", sans-serif`;
+      const tw = ctx.measureText(t).width, bw = tw + 18, bh = fs + 12;
+      const bx = Math.round(h.x - bw / 2), by = Math.round(h.y - bh - 14 - (age < .2 ? (1 - age / .2) * 6 : 0));
+      ctx.save(); ctx.globalAlpha = Math.max(0, a);
+      ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2;
+      pill(bx, by, bw, bh, 9); ctx.fillStyle = '#fffcf4'; ctx.fill(); ctx.shadowColor = 'transparent';
+      ctx.lineWidth = 2; ctx.strokeStyle = '#2b1b17'; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(h.x - 5, by + bh - 1); ctx.lineTo(h.x + 5, by + bh - 1); ctx.lineTo(h.x - 1, by + bh + 8); ctx.closePath(); ctx.fillStyle = '#fffcf4'; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(h.x - 5, by + bh); ctx.lineTo(h.x - 1, by + bh + 8); ctx.lineTo(h.x + 5, by + bh); ctx.strokeStyle = '#2b1b17'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#2b1b17'; ctx.textBaseline = 'middle'; ctx.textAlign = 'center'; ctx.fillText(t, h.x, by + bh / 2 + .5); ctx.textAlign = 'start';
+      ctx.restore();
+    }
   }
   function drawLabel({ w, x, y, big }) {
     const t = namaTampil(w), sub = '@' + w.u + ' · ' + (w.tierNama || TIERS[w.tier]);
@@ -951,6 +978,8 @@
   }
   // used by Ruang Admin (same-origin iframe)
   window.Pokomen = {
+    data: () => DATA,
+    me: () => ME,
     focus(u) { const w = allWarga().find((x) => x.u === String(u).toLowerCase() && !x.makam) || allWarga().find((x) => x.u === String(u).toLowerCase()); if (w) { $('peta').scrollIntoView({ behavior: 'smooth' }); select(w); } return !!w; },
     async reload() { try { const r = await fetch('api/dunia?t=' + Date.now(), { cache: 'no-store' }); const d = await r.json(); if (!d.error) { DATA = d; renderBook(); renderVotes(); renderNews(); renderPemilu(); renderPemiluW(); $('chipWarga').textContent = fmt(d.jumlahWarga) + ' WARGA'; draw(); } } catch { /* ignore */ } },
   };

@@ -511,3 +511,30 @@ body.embed .mebar { display: none; }
 .pw-nama li.top { background: #fff0b8; }
 .pw-nama li b { font-family: var(--font-display); font-weight: 600; overflow-wrap: anywhere; }
 .pw-nama li .likes { font-family: var(--font-display); color: var(--berry); white-space: nowrap; }
+
+/* Obrolan Warga */
+.ob-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.ob-head h2 { margin: 0 0 8px; }
+.ob-who { color: var(--ink-soft); font-size: .9rem; }
+.ob-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.ob-tabs button { font-family: var(--font-display); background: #fff8e7; border: 2px solid var(--outline); padding: 4px 10px; cursor: pointer; }
+.ob-tabs button[aria-selected="true"] { background: var(--gold); }
+.ob-tabs button.mine { box-shadow: inset 0 -3px 0 var(--berry); }
+.ob-list { list-style: none; margin: 0; padding: 8px; height: 340px; overflow-y: auto; background: #fff8e7; border: 2px solid var(--outline); display: flex; flex-direction: column; gap: 6px; }
+.ob-list li { background: #fff; border: 2px solid #e6d6b8; padding: 5px 8px; position: relative; max-width: 92%; }
+.ob-list li.me { align-self: flex-end; background: #fff3c4; border-color: #e8c860; }
+.ob-list li.sys { align-self: center; background: #eef6ff; border-color: #bcd8f2; font-size: .85rem; text-align: center; }
+.ob-list li.sys time { margin-left: 6px; }
+.ob-list li.empty { align-self: center; border: 0; background: none; color: var(--ink-soft); }
+.ob-list p { margin: 2px 0 0; overflow-wrap: anywhere; }
+.ob-name { background: none; border: 0; padding: 0; font: inherit; font-family: var(--font-display); font-weight: 700; cursor: pointer; }
+.ob-wil { font-size: .7rem; background: #efe3c8; padding: 0 5px; margin-left: 4px; border-radius: 6px; }
+.ob-list time { font-size: .72rem; color: var(--ink-soft); margin-left: 6px; }
+.ob-flag { position: absolute; right: 4px; top: 2px; background: none; border: 0; color: #c0a080; cursor: pointer; font-size: .8rem; }
+.ob-emo { display: flex; gap: 6px; margin: 8px 0 6px; flex-wrap: wrap; }
+.ob-e { font-size: 1.15rem; background: #fff8e7; border: 2px solid var(--outline); width: 40px; height: 36px; cursor: pointer; }
+.ob-send { display: flex; gap: 8px; }
+.ob-send input { flex: 1; min-width: 0; }
+.ob-err { color: var(--berry) !important; min-height: 1.2em; margin: 4px 0 0; }
+.ob-join { background: #f3ecff; border: 2px dashed #b48cff; padding: 8px 10px; margin: 10px 0 0; }
+.ob-rule { font-size: .8rem; margin: 8px 0 0; }

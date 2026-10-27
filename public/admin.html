@@ -133,6 +133,27 @@
     </section>
 
     <section class="parchment">
+      <h2>Obrolan Warga</h2>
+      <p class="muted" id="obAdmInfo">Memuat…</p>
+      <div class="formgrid" style="align-items:end">
+        <label class="f">Ruang<select id="obAdmRuang"><option value="semua">Semua</option><option value="w1">Wilayah 1</option><option value="w2">Wilayah 2</option><option value="w3">Wilayah 3</option><option value="w4">Wilayah 4</option><option value="w5">Wilayah 5</option></select></label>
+        <button class="btn ghost" type="button" id="obAdmReload">Muat ulang</button>
+        <button class="btn" type="button" id="obAdmKunci">Kunci obrolan</button>
+      </div>
+      <div class="tablewrap" style="margin-top:10px;max-height:420px;overflow:auto"><table><thead><tr><th>Waktu</th><th>Hewan</th><th>Pesan</th><th>Lapor</th><th></th></tr></thead><tbody id="obAdmT"></tbody></table></div>
+      <form class="formgrid" id="obLinkForm" style="margin-top:12px">
+        <label class="f">Link pribadi untuk akun<input type="text" id="obLinkU" placeholder="@username" required></label>
+        <button class="btn ghost" type="submit">Buat / salin link</button>
+        <span class="muted" id="obLinkOut" style="overflow-wrap:anywhere"></span>
+      </form>
+      <form class="formgrid" id="obKataForm" style="margin-top:8px">
+        <label class="f">Tambah kata terlarang<input type="text" id="obKata" placeholder="kata"></label>
+        <button class="btn ghost" type="submit">Tambah</button>
+        <span class="muted" id="obKataList"></span>
+      </form>
+    </section>
+
+    <section class="parchment">
       <h2>Item Pengganti (Toko Pokomen)</h2>
       <p class="muted">Pakai setelah Kopi Admin dari pembeli masuk: Pengganti Nama 7 kopi, Pengganti Rupa / Elemen / Kekuatan 5 kopi. Tingkat evolusi & nomor warga tetap.</p>
       <form class="formgrid" id="itForm">
@@ -202,6 +223,6 @@
 <script src="creature.js?v=pal1"></script>
 <script src="artpal.js?v=pal1"></script>
 <script src="card.js?v=sohabat"></script>
-<script src="admin.js?v=item1"></script>
+<script src="admin.js?v=ob1"></script>
 </body>
 </html>

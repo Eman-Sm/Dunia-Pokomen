@@ -102,7 +102,7 @@
     S = await api('status');
     $('loginBox').hidden = true; $('panel').hidden = false;
     if (!ST) loadStory();
-    loadPw(); loadItem();
+    loadPw(); loadItem(); loadOb();
     $('chipHari').textContent = 'HARI KE-' + S.hari;
     $('chipWarga').textContent = S.warga.filter((w) => !w.hidden && !w.mati).length + ' WARGA';
     const conn = [
@@ -469,6 +469,30 @@
     } catch (e) { $('pwAdmInfo').textContent = 'Gagal memuat: ' + e.message; }
   }
   $('pwAdmReload') && ($('pwAdmReload').onclick = loadPw);
+
+  async function loadOb() {
+    try {
+      const [info, list] = await Promise.all([api('ob_info'), api('ob_list', { ruang: $('obAdmRuang').value })]);
+      const bisu = Object.entries(info.bisu || {}).filter(([, v]) => v < 0 || v > Date.now());
+      const lap = new Map((info.laporan || []).map((x) => [x.id, x.laporan]));
+      $('obAdmInfo').textContent = `${info.kunci ? 'TERKUNCI (hanya baca)' : 'Terbuka'} · dibisukan: ${bisu.length ? bisu.map(([u, v]) => '@' + u + (v < 0 ? ' (permanen)' : ' s/d ' + new Date(v).toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' }))).join(', ') : '-'} · laporan: ${(info.laporan || []).length}`;
+      $('obAdmKunci').textContent = info.kunci ? 'Buka kunci obrolan' : 'Kunci obrolan';
+      $('obAdmKunci').dataset.on = info.kunci ? '1' : '';
+      $('obKataList').textContent = (info.kata || []).length ? 'Tambahan: ' + info.kata.join(', ') : '';
+      $('obAdmT').innerHTML = list.length ? list.map((m) => `<tr data-id="${m.id}" style="${m.hidden ? 'opacity:.45' : ''}"><td>${esc(new Date(m.t).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'short', timeStyle: 'short' }))}</td>
+        <td>${m.sistem ? '<i>sistem</i>' : esc(m.nama) + '<br><small>@' + esc(m.u) + '</small>'}</td><td>${esc(m.text)}</td><td>${lap.get(m.id) || ''}</td>
+        <td style="white-space:nowrap"><button class="btn ghost" data-a="hapus" type="button">${m.hidden ? 'Tampilkan' : 'Sembunyikan'}</button>
+        ${m.sistem ? '' : `<select data-a="bisu" data-u="${esc(m.u)}"><option value="">Bisukan…</option><option value="60">1 jam</option><option value="1440">24 jam</option><option value="-1">Permanen</option><option value="0">Batalkan</option></select>`}</td></tr>`).join('')
+        : '<tr><td colspan="5" class="muted">Belum ada pesan.</td></tr>';
+      $('obAdmT').querySelectorAll('[data-a="hapus"]').forEach((b) => b.onclick = async () => { const tr = b.closest('tr'); await api('ob_hapus', { id: tr.dataset.id, tampil: b.textContent === 'Tampilkan' }); loadOb(); });
+      $('obAdmT').querySelectorAll('[data-a="bisu"]').forEach((sel) => sel.onchange = async () => { if (sel.value === '') return; await api('ob_bisukan', { username: sel.dataset.u, menit: Number(sel.value) }); toast('Disimpan'); loadOb(); });
+    } catch (e) { $('obAdmInfo').textContent = 'Gagal memuat: ' + e.message; }
+  }
+  $('obAdmReload') && ($('obAdmReload').onclick = loadOb);
+  $('obAdmRuang') && ($('obAdmRuang').onchange = loadOb);
+  $('obAdmKunci') && ($('obAdmKunci').onclick = async () => { await api('ob_kunci', { on: !$('obAdmKunci').dataset.on }); loadOb(); });
+  $('obLinkForm') && ($('obLinkForm').onsubmit = async (e) => { e.preventDefault(); try { const r = await api('ob_link', { username: $('obLinkU').value }); $('obLinkOut').textContent = r.link; try { await navigator.clipboard.writeText(r.link); toast('Link disalin'); } catch { /* ignore */ } } catch (er) { $('obLinkOut').textContent = er.message; } });
+  $('obKataForm') && ($('obKataForm').onsubmit = async (e) => { e.preventDefault(); await api('ob_kata', { tambah: $('obKata').value }); $('obKata').value = ''; loadOb(); });
 
   async function loadItem() {
     try {

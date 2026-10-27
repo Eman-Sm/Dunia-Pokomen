@@ -9,7 +9,7 @@ process.env.IG_USERNAME = process.env.IG_USERNAME || 'duniapokomen';
 process.env.TRAKTEER_WEBHOOK_TOKEN = process.env.TRAKTEER_WEBHOOK_TOKEN || 'dev';
 process.env.TRAKTEER_URL = process.env.TRAKTEER_URL || 'https://trakteer.id/';
 const { processComment } = await import('./lib/rules.js');
-const routes = { '/api/dunia': await import('./api/dunia.js'), '/api/admin': await import('./api/admin.js'), '/api/webhook': await import('./api/webhook.js'), '/api/trakteer': await import('./api/trakteer.js'), '/api/art': await import('./api/art.js') };
+const routes = { '/api/dunia': await import('./api/dunia.js'), '/api/admin': await import('./api/admin.js'), '/api/webhook': await import('./api/webhook.js'), '/api/trakteer': await import('./api/trakteer.js'), '/api/art': await import('./api/art.js'), '/api/obrolan': await import('./api/obrolan.js') };
 const seed = [
   ['budi', 'Namaku Bolu, Kucing + Naga. Dia suka menghangatkan air mandi warga', 'p1'],
   ['ani', 'Nama: Piyo | Hewan: Ayam + Naga | Cerita: suka tidur di atap Balai Warga', 'p1'],
@@ -21,6 +21,8 @@ const seed = [
 ];
 let n = 0;
 for (const [u, t, m] of seed) await processComment({ id: 'seed' + n++, username: u, text: t, mediaId: m, timestamp: new Date().toISOString(), likeCount: 5 });
+const ob = await import('./lib/obrolan.js');
+console.log('dev obrolan link: /?u=budi&k=' + await ob.tokenFor('budi'));
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.json': 'application/json' };
 http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
