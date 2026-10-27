@@ -3,7 +3,7 @@ import { redis, hgetallJSON } from '../lib/db.js';
 import { publicWarga, publicMakam, CONFIG, ensureTierSchema } from '../lib/rules.js';
 import { json, hariKe } from '../lib/http.js';
 import { hitungJikaBasi, getConfig, publicPemilu } from '../lib/pemilu.js';
-import { papanKopi, isTest } from '../lib/sahabat.js';
+import { papanKopi, isTest, lencanaKopi, BIJI_PER_KOPI } from '../lib/sahabat.js';
 import { namaKembar, normNama } from '../lib/hewan.js';
 import { hasilWilayah, publicHasil, tetapkanPemenang, wilayahOf, daftarUsulWilayah, segarkanLike } from '../lib/wilayah.js';
 
@@ -16,6 +16,7 @@ export async function GET() {
     const dukAll = (dukRaw || []).map((s) => { try { return JSON.parse(s); } catch { return null; } }).filter(Boolean);
     const papan = papanKopi(dukAll, warga);
     const sahabat = papan[0] || null;
+    const kopiBy = Object.fromEntries(papan.map((x) => [x.u, x]));
     const kembar = namaKembar(warga);
     const dukungan = dukAll
       .filter((x) => x && !x.hidden && !isTest(x)).slice(0, 12)
@@ -41,7 +42,7 @@ export async function GET() {
       jumlahWarga: visible.filter((w) => !w.mati).length,
       jumlahMati: visible.filter((w) => w.mati).length + makam.length,
       makam: makam.filter((w) => !w.hidden).map(publicMakam),
-      warga: visible.map((w) => { const p = publicWarga(w); p.wil = wilayahOf(w); if (kembar.has(normNama(w.nama))) p.kembar = true; if (sahabat && sahabat.u === p.u && !p.mati) p.sahabat = sahabat.total; return p; }),
+      warga: visible.map((w) => { const p = publicWarga(w); p.wil = wilayahOf(w); const pk = kopiBy[p.u]; if (pk && !p.mati) { p.kopi = pk.total; p.biji = pk.total * BIJI_PER_KOPI; p.lencana = lencanaKopi(pk.total)?.kode; if (Date.now() - Date.parse(pk.sejak) < 864e5) p.kopiBaru = 1; } if (kembar.has(normNama(w.nama))) p.kembar = true; if (sahabat && sahabat.u === p.u && !p.mati) p.sahabat = sahabat.total; return p; }),
       kopiBoard: papan.slice(0, 5).map(({ u, nama, total }) => ({ u, nama, total })),
       dukunganUnit: process.env.TRAKTEER_UNIT_NAME || 'Kopi Admin',
       usulan: us,

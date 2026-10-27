@@ -339,7 +339,7 @@
     for (const L of cand) {
       const mine = L.w.u === ME;
       const uu = L.w.u.length > maxCh ? L.w.u.slice(0, maxCh - 1) + '…' : L.w.u;
-      L.text = (mine ? '★ ' : '') + (L.w.mati ? 'RIP ' : '') + ((FULL || mine) && cam.z >= 2.2 ? namaTampil(L.w) + ' · @' + uu : '@' + uu);
+      L.text = (mine ? '★ ' : '') + (L.w.lencana ? '☕ ' : '') + (L.w.mati ? 'RIP ' : '') + ((FULL || mine) && cam.z >= 2.2 ? namaTampil(L.w) + ' · @' + uu : '@' + uu);
       L.font = tagFont; L.mine = mine;
       const bh = compact ? 15 : 19, bw = ctx.measureText(L.text).width + bh * 1.25;
       let by = L.y - bh, ok = false;
@@ -510,7 +510,22 @@
   }
   // ---- Obrolan Warga: what a citizen wrote pops up above its head for a few seconds
   const HEADS = new Map();
+  // supporters: warm coffee steam over the creature for 24 h after sending a coffee
+  function drawKopiAura() {
+    if (!DATA) return;
+    const t = performance.now() / 1000;
+    for (const w of DATA.warga) {
+      if (!w.kopiBaru) continue;
+      const h = HEADS.get(w.u); if (!h) continue;
+      for (let i = 0; i < 4; i++) {
+        const ph = (t * .45 + i / 4) % 1, r = (2 + ph * 4) * Math.max(1, cam.z * .6);
+        const x = h.x + Math.sin(t * 2 + i * 1.7) * 4 * cam.z * .5 + (i - 1.5) * 3 * cam.z * .4, y = h.y - 4 - ph * 18 * Math.max(1, cam.z * .5);
+        ctx.fillStyle = `rgba(255,236,200,${.55 * (1 - ph)})`; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  }
   function drawChatBubbles() {
+    drawKopiAura();
     const list = (window.PokoChat && window.PokoChat.bubbles()) || [];
     const now = Date.now();
     for (const b of list) {
@@ -695,7 +710,7 @@
           <a class="handle" href="https://www.instagram.com/${encodeURIComponent(w.u)}/" target="_blank" rel="noopener">@${esc(w.u)}</a><br>
           <span class="tier t${w.tier}">${esc(w.tierNama || TIERS[w.tier])}</span>${w.gelar ? `<span class="gelar">${esc(w.gelar)}</span>` : ''}${w.sahabat ? '<span class="gelar sahabat">♛ Sohabat Admin</span>' : ''}${w.wil ? `<span class="gelar wil">Wilayah ${w.wil}</span>` : ''}</div></div>
       <ul class="hewan">${(w.hewan || []).map((h) => `<li>${esc(h)}</li>`).join('')}</ul>
-      ${w.sahabat ? `<p class="skill">☕ Pengirim kopi terbanyak: <b>${fmt(w.sahabat)} ${esc((DATA.dukunganUnit) || 'Kopi Admin')}</b></p>` : ''}
+      ${w.kopi ? `<p class="skill kopi-${esc(w.lencana)}">☕ <b>${{ emas: 'Pendukung Emas', perak: 'Pendukung Perak', perunggu: 'Pendukung Perunggu' }[w.lencana] || 'Pendukung'}</b> · ${fmt(w.kopi)} ${esc((DATA.dukunganUnit) || 'Kopi Admin')}${w.sahabat ? ' · terbanyak!' : ''}<br><span class="muted">Dompet: <b>${fmt(w.biji)} Biji Kopi</b> (dipakai saat Toko Pokomen buka)</span></p>` : ''}
       ${w.skill ? `<p class="skill">✦ Skill: <b>${esc(w.skill)}</b></p>` : w.tier >= 3 ? '<p class="muted">Skill belum diisi. Pemiliknya bisa menulis <b>Skill: ...</b> di komentar.</p>' : ''}
       ${(w.cerita || []).length ? `<ul class="stories">${w.cerita.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>` : '<p class="muted">Belum ada cerita. Ceritakan kebiasaan uniknya di postingan berikutnya untuk berevolusi.</p>'}
       <p class="muted">Lahir ${esc(lahir)} · kavling #${w.spot + 1}</p>

@@ -3,6 +3,9 @@
 //   https://<domain>/api/trakteer?token=<TRAKTEER_WEBHOOK_TOKEN>
 // Support gives no power or evolution. Only cosmetic: the top supporter who owns a citizen
 // becomes "Sahabat Admin" with a special crown (see lib/sahabat.js).
+import { cocokkan, BIJI_PER_KOPI } from '../lib/sahabat.js';
+import { hgetallJSON } from '../lib/db.js';
+import { sistem as obSistem } from '../lib/obrolan.js';
 import { redis } from '../lib/db.js';
 import { log } from '../lib/rules.js';
 import { isTest } from '../lib/sahabat.js';
@@ -48,7 +51,21 @@ export async function POST(request) {
   if (body.is_test || d.is_test || isTest(item)) { item.test = true; item.hidden = true; }
   await redis('LPUSH', 'dukungan', JSON.stringify(item));
   await redis('LTRIM', 'dukungan', 0, 199);
-  if (!item.test) await log('dukung', `${item.nama} mengirim ${item.jumlah} ${item.unit}. Admin melek +${item.jumlah} jam jaga ronda!`);
+  if (!item.test) {
+    // reward: find the giver's creature (name / @username in the name or message)
+    let w = null;
+    try {
+      const warga = (await hgetallJSON('warga')).filter((x) => !x.mati && !x.hidden);
+      const byU = Object.fromEntries(warga.map((x) => [String(x.username || x.u).toLowerCase(), x]));
+      const u = cocokkan(item, byU); w = u ? byU[u] : null;
+    } catch { w = null; }
+    const biji = item.jumlah * BIJI_PER_KOPI;
+    const teks = w
+      ? `☕ ${item.nama} mengirim ${item.jumlah} ${item.unit} untuk ${w.nama}! +${biji} Biji Kopi masuk ke dompet ${w.nama} dan aura kopi menyala 24 jam. Admin melek +${item.jumlah} jam!`
+      : `☕ ${item.nama} mengirim ${item.jumlah} ${item.unit}. Admin melek +${item.jumlah} jam jaga ronda! (Tulis nama hewanmu di pesan Trakteer supaya hadiahnya masuk.)`;
+    await log('dukung', teks);
+    try { await obSistem(teks); } catch { /* ignore */ }
+  }
   return json({ ok: true });
 }
 

@@ -538,3 +538,7 @@ body.embed .mebar { display: none; }
 .ob-err { color: var(--berry) !important; min-height: 1.2em; margin: 4px 0 0; }
 .ob-join { background: #f3ecff; border: 2px dashed #b48cff; padding: 8px 10px; margin: 10px 0 0; }
 .ob-rule { font-size: .8rem; margin: 8px 0 0; }
+
+.kopi-hadiah { background: #fff3dc; border: 2px solid #c8915a; padding: 8px 12px; margin: 10px 0; }
+.kopi-hadiah ul { margin: 6px 0; padding-left: 4px; list-style: none; display: grid; gap: 4px; }
+.skill.kopi-emas { background: #fff3c4; } .skill.kopi-perak { background: #eef1f5; } .skill.kopi-perunggu { background: #f6e6d6; }
