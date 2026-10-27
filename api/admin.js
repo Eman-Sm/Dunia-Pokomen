@@ -218,6 +218,12 @@ const actions = {
   async item_katalog() { return { katalog: katalog(), riwayat: await riwayatItem(50) }; },
   async pakai_item({ username, item, nilai, bukti }) { return pakaiItem({ username, item, nilai, bukti }); },
   async ob_info() { return ob.adminInfo(); },
+  async pengumuman({ text, kabar = true, obrolan = true }) {
+    const t = String(text || '').trim().slice(0, 200); if (!t) throw new Error('teks kosong');
+    if (kabar) await log('bangun', t);
+    if (obrolan) await ob.sistem('📢 ' + t);
+    return { ok: true };
+  },
   async ob_list({ ruang = 'semua' }) { return ob.adminList(ruang); },
   async ob_hapus({ id, tampil }) { return ob.adminHapus(id, !!tampil); },
   async ob_bisukan({ username, menit }) { return ob.adminBisukan(username, Number(menit) || 0); },

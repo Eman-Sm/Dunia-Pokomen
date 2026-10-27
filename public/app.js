@@ -157,9 +157,10 @@
           // roam freely across the open clearing: pick a nearby walkable tile
           const W = WORLD && WORLD.walk;
           if (W && W.length) {
-            const R = 70 + Math.min(4, w.tier || 0) * 12;
+            // stay around home (each citizen lives in its own wilayah)
+            const R = 60 + Math.min(4, w.tier || 0) * 10;
             let t = null;
-            for (let k = 0; k < 8 && !t; k++) { const c = W[Math.floor(Math.random() * W.length)]; if (Math.hypot(c[0] - a.x, (c[1] - a.y) * 2) < R) t = c; }
+            for (let k = 0; k < 12 && !t; k++) { const c = W[Math.floor(Math.random() * W.length)]; if (Math.hypot(c[0] - a.hx, (c[1] - a.hy) * 2) < R) t = c; }
             if (!t) t = [a.x + rand(-10, 10), a.y + rand(-5, 5)];
             a.tx = t[0] + rand(-6, 6); a.ty = t[1] + rand(-3, 3);
           } else { const ang = rand(0, Math.PI * 2), r = rand(4, 18); a.tx = a.hx + Math.cos(ang) * r; a.ty = a.hy + Math.sin(ang) * r * .55; }
@@ -985,7 +986,7 @@
   };
 
   // bump when the map changes so browsers do not keep the old cached image
-  const WORLD_VER = '2026-10-25-lahan-timur';
+  const WORLD_VER = '2026-10-27-wilayah';
   // ---------------------------------------------------------------- boot
   window.addEventListener('resize', resize);
   // ~30 fps animation loop (tick keeps the old 420 ms rhythm for lights and fireflies)
