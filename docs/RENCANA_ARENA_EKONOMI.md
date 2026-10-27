@@ -9,6 +9,7 @@ Dibangun bertahap SETELAH pembagian wilayah (lihat RENCANA_WILAYAH.md). Unsur pa
 - Kartu & label di peta menampilkan nomor warga untuk nama kembar.
 
 ## 1. Biji Kopi (mata uang di web)
+- SUDAH AKTIF (27 Okt): saldo dihitung otomatis dari kopi yang tercocokkan (1 kopi = 5 Biji), tampil di kartu; lencana Pendukung Perunggu 1+/Perak 5+/Emas 10+ (kartu, label peta, Obrolan); aura kopi 24 jam; ucapan di Kabar Desa + Obrolan. Belanja menyusul saat Toko buka.
 - 1 Kopi Admin (Trakteer) = 5 Biji Kopi (diputuskan 26 Okt), masuk otomatis ke akun hewan (cocokkan `@username` di pesan Trakteer; manual di Ruang Admin bila tak cocok).
 - Halaman "Dompetku": saldo + riwayat. Belanja di Toko Pokomen.
 - Keamanan: link pribadi rahasia per pemilik (`?u=<username>&k=<token>`), dikirim lewat DM saat kopi pertama masuk / saat DM "DOMPET". Tanpa token, saldo tidak bisa dipakai.
