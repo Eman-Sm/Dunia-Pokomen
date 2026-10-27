@@ -36,5 +36,6 @@ test('wajib follow: komentar → DM → cek follow → lahir', async () => {
   assert.equal(await getJSON('menunggu', 'ani'), null);
   assert.match(sent.at(-1).message.text, /Selamat/);
   // a second DM after birth
-  assert.equal(await handleDM('IGSID-ani'), 'sudah-lahir');
+  assert.match(await handleDM('IGSID-ani'), /^sudah-lahir/);
+  assert.equal(await handleDM('IGSID-ani'), 'sudah-lahir:diam'); // only told once
 });
