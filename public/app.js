@@ -849,6 +849,10 @@
       list.appendChild(li);
     });
     $('pwNote').textContent = P.closed ? 'Pemilihan sudah ditutup.' : `Ditutup ${new Date(P.tutup).toLocaleString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })} WIB. Suara terakhir yang dihitung. Nama kembar ditulis dengan nomor warganya, mis. "Pilih: Raiko 47".`;
+    const nm = (DATA.usulNamaWilayah || {})[x.n] || [];
+    $('pwNamaTitle').textContent = `Usulan nama Wilayah ${x.n}`;
+    $('pwNama').innerHTML = nm.length ? nm.map((v, i) => `<li${i ? '' : ' class="top"'}><span><b>${esc(v.nama)}</b> <span class="muted">@${esc(v.u)}</span>${v.status === 'resmi' ? ' <span class="gelar">Resmi</span>' : ''}</span><span class="likes">♥ ${fmt(v.likes)}</span></li>`).join('')
+      : `<li class="muted">Belum ada usulan nama untuk Wilayah ${x.n}.</li>`;
     const form = $('pwCek');
     form.onsubmit = (e) => {
       e.preventDefault();

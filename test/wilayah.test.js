@@ -49,3 +49,18 @@ test('pemilihan ketua per wilayah', async () => {
   const r = await tetapkanPemenang({ force: true });
   assert.deepEqual(r.map((x) => x.pemenang), ['a2', 'c1']);
 });
+
+test('usulan nama wilayah', async () => {
+  const { daftarUsulWilayah } = await import('../lib/wilayah.js');
+  assert.equal(parseComment('Wilayah: Lembah Pelangi').wilayahNama, 'Lembah Pelangi');
+  assert.equal(parseComment('wilayah: aku mau yang keren dong').wilayahNama, null);
+  const k = (u, text, likeCount, cid) => processComment({ id: cid, username: u, text, mediaId: 'p4', timestamp: '2026-10-27T12:00:00.000Z', likeCount });
+  assert.equal(await k('val', 'Wilayah: Lembah Pelangi', 3, 'w1'), 'wil:usul');
+  assert.equal(await k('val', 'Wilayah: Lembah Pelangi', 9, 'w1'), 'wil:likes');
+  assert.equal(await k('val', 'Wilayah: lembah pelangi', 1, 'w2'), 'wil:dobel');
+  assert.equal(await k('c1', 'Wilayah: Hutan Kabut', 2, 'w3'), 'wil:usul');
+  assert.equal(await k('orang', 'Wilayah: Kota Baru', 2, 'w4'), 'wil:bukan-warga');
+  const d = await daftarUsulWilayah();
+  assert.equal(d[1][0].nama, 'Lembah Pelangi'); assert.equal(d[1][0].likes, 9);
+  assert.equal(d[3][0].nama, 'Hutan Kabut');
+});

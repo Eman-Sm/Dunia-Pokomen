@@ -102,6 +102,7 @@
     S = await api('status');
     $('loginBox').hidden = true; $('panel').hidden = false;
     if (!ST) loadStory();
+    loadPw();
     $('chipHari').textContent = 'HARI KE-' + S.hari;
     $('chipWarga').textContent = S.warga.filter((w) => !w.hidden && !w.mati).length + ' WARGA';
     const conn = [
@@ -448,6 +449,26 @@
       img.src = URL.createObjectURL(file);
     });
   }
+
+  async function loadPw() {
+    try {
+      const [st, nw] = await Promise.all([api('pw_status'), api('usul_wilayah_list')]);
+      const h = st.hasil, cfg = st.cfg;
+      const f = (t) => new Date(t).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' });
+      $('pwAdmInfo').textContent = `Dibuka ${f(cfg.buka)} WIB · ditutup ${f(cfg.tutup)} WIB · ${h.closed ? (h.ditetapkan ? 'pemenang sudah diberi gelar' : 'ditutup, gelar diberikan otomatis') : 'berjalan'}`;
+      $('pwAdmT').innerHTML = Object.values(h.wilayah).map((x) => `<tr><td>Wilayah ${x.n} (${x.warga} hewan)</td><td>${x.memilih ? (x.calon.length ? x.calon.map((k) => `${esc(k.nama)} @${esc(k.u)} <b>${k.suara}</b>`).join(' · ') : '<span class="muted">belum ada calon</span>') : `Dipimpin ${esc(x.ketua?.nama || '-')} (tidak memilih)`}</td></tr>`).join('');
+      const rows = (nw || []).sort((a, b) => a.wilayah - b.wilayah || b.likes - a.likes);
+      $('nwT').innerHTML = rows.length ? rows.map((x) => `<tr data-id="${esc(x.id)}"><td>${x.wilayah}</td><td>${esc(x.nama)}</td><td>@${esc(x.u)}</td><td>${x.likes || 0}</td>
+        <td><select data-f="status"><option value="">Voting</option><option value="resmi" ${x.status === 'resmi' ? 'selected' : ''}>Resmi</option><option value="ditolak" ${x.status === 'ditolak' ? 'selected' : ''}>Ditolak</option></select></td>
+        <td><button class="btn ghost" data-save type="button">Simpan</button></td></tr>`).join('') : '<tr><td colspan="6" class="muted">Belum ada usulan nama.</td></tr>';
+      $('nwT').querySelectorAll('[data-save]').forEach((b) => b.onclick = async () => {
+        const tr = b.closest('tr');
+        await run(b, 'usul_wilayah_status', { id: tr.dataset.id, status: tr.querySelector('[data-f]').value }, 'Status nama disimpan');
+        loadPw();
+      });
+    } catch (e) { $('pwAdmInfo').textContent = 'Gagal memuat: ' + e.message; }
+  }
+  $('pwAdmReload') && ($('pwAdmReload').onclick = loadPw);
 
   function renderUsulan() {
     $('usulanT').innerHTML = S.usulan.length ? S.usulan.map((x) => `<tr data-id="${esc(x.id)}">

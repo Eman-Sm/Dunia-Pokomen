@@ -505,3 +505,9 @@ body.embed .mebar { display: none; }
 .klasemen .pw-salin { font-size: .78rem; padding: 2px 8px; margin-left: 8px; }
 .klasemen .pw-act { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 4px; }
 .gelar.wil { background: #dff1ff; }
+.pw-sub { margin: 18px 0 4px; font-family: var(--font-display); }
+.pw-nama { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.pw-nama li { display: flex; justify-content: space-between; gap: 10px; background: #fff8e7; border: 2px solid var(--outline); padding: 6px 10px; }
+.pw-nama li.top { background: #fff0b8; }
+.pw-nama li b { font-family: var(--font-display); font-weight: 600; overflow-wrap: anywhere; }
+.pw-nama li .likes { font-family: var(--font-display); color: var(--berry); white-space: nowrap; }

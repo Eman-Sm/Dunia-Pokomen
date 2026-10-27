@@ -213,6 +213,11 @@ const actions = {
     return pwSet(patch);
   },
   async pw_tetapkan({ force }) { return tetapkanPemenang({ force: !!force }); },
+  async usul_wilayah_list() { return hgetallJSON('usul_wilayah'); },
+  async usul_wilayah_status({ id, status }) {
+    const x = await getJSON('usul_wilayah', String(id)); if (!x) throw new Error('usulan tidak ditemukan');
+    x.status = ['ditolak', 'resmi'].includes(status) ? status : null; await setJSON('usul_wilayah', x.id, x); return x;
+  },
   async approve_menunggu({ username }) {
     const x = await getJSON('menunggu', key(username));
     if (!x) throw new Error('Tidak ada di daftar tunggu');

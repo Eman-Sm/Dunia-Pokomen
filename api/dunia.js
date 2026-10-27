@@ -5,7 +5,7 @@ import { json, hariKe } from '../lib/http.js';
 import { hitungJikaBasi, getConfig, publicPemilu } from '../lib/pemilu.js';
 import { papanKopi, isTest } from '../lib/sahabat.js';
 import { namaKembar, normNama } from '../lib/hewan.js';
-import { hasilWilayah, publicHasil, tetapkanPemenang, wilayahOf } from '../lib/wilayah.js';
+import { hasilWilayah, publicHasil, tetapkanPemenang, wilayahOf, daftarUsulWilayah } from '../lib/wilayah.js';
 
 export async function GET() {
   try {
@@ -27,6 +27,8 @@ export async function GET() {
       pw = await hasilWilayah();
       if (pw.closed && !pw.ditetapkan && (await redis('SET', 'pw_tetap_lock', '1', 'NX', 'EX', '120')) === 'OK') { await tetapkanPemenang(); pw = await hasilWilayah(); }
     } catch { pw = null; }
+    let namaWil = {};
+    try { namaWil = await daftarUsulWilayah(); } catch { /* ignore */ }
     const us = usulan.filter((x) => x.status !== 'ditolak')
       .sort((a, b) => (b.status === 'dibangun') - (a.status === 'dibangun') || b.likes - a.likes)
       .slice(0, 50)
@@ -47,6 +49,7 @@ export async function GET() {
       dukungan,
       pemilu: publicPemilu(pemiluHasil, pemiluCfg),
       pemiluWilayah: pw ? publicHasil(pw) : null,
+      usulNamaWilayah: namaWil,
       log: (logRaw || []).map((s) => { try { return JSON.parse(s); } catch { return null; } }).filter((x) => x && !(x.type === 'dukung' && /^\s*\[.*test.*\]/i.test(x.text || ''))),
     }, 200, { 'Cache-Control': 's-maxage=20, stale-while-revalidate=60' });
   } catch (e) {
