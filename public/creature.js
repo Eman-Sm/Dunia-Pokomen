@@ -46,7 +46,7 @@
 
   const cache = new Map();
 
-  const EL_COL = { api: '#ff5a2a', air: '#3fa0ff', angin: '#9fe8ff', tanah: '#b07a3e', petir: '#ffe23a', es: '#bff2ff', daun: '#5fd04a', cahaya: '#fff2a8', kegelapan: '#7a3fb0', bintang: '#c27ae0' };
+  const EL_COL = { api: '#ff5a2a', air: '#3fa0ff', angin: '#9fe8ff', tanah: '#b07a3e', petir: '#ffe23a', es: '#bff2ff', daun: '#5fd04a', cahaya: '#fff2a8', kegelapan: '#7a3fb0', bintang: '#c27ae0', kristal: '#a8f0ff' };
   function elementColor(e) { const k = String(e || '').toLowerCase().trim(); return EL_COL[k] || FALLBACK[hash(k) % FALLBACK.length]; }
   const OUT_COL = [[/merah|red/, '#d9483b'], [/biru|blue/, '#3f6fd0'], [/hijau|green/, '#3fae5a'], [/kuning|yellow/, '#f2c230'], [/ungu|purple|violet/, '#7a3fb0'], [/hitam|black/, '#2b2b35'], [/putih|white/, '#f4f4f0'], [/emas|gold/, '#e3b04b'], [/perak|silver/, '#b8c0cc'], [/pink|merah muda/, '#f48cb0'], [/oranye|orange|jingga/, '#f08a24'], [/coklat|cokelat|brown/, '#8a5a34']];
   function outfitColor(o) { const t = String(o || '').toLowerCase(); for (const [re, c] of OUT_COL) if (re.test(t)) return c; return '#7a3fb0'; }

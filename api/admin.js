@@ -7,7 +7,7 @@ import { generateArt, quota as geminiQuota } from '../lib/gemini.js';
 import { listStoryReplies, syncStoryReplies } from '../lib/story.js';
 import { papanKopi, cocokkan } from '../lib/sahabat.js';
 import { syncLatest, ownUsername } from '../lib/sync.js';
-import { refreshToken, subscribeWebhooks, listMedia, listComments, me, sendDM } from '../lib/ig.js';
+import { refreshToken, subscribeWebhooks, listMedia, listComments, me, sendDM, replyToComment } from '../lib/ig.js';
 import { json, bearer, safeEqual, hariKe } from '../lib/http.js';
 import { katalog, pakaiItem, riwayatItem } from '../lib/item.js';
 import * as ob from '../lib/obrolan.js';
@@ -54,6 +54,19 @@ const actions = {
       for (const c of cs) if (key(c.username) === u) out.push({ ...c, post: (m.caption || '').slice(0, 40), processed: !!(await redis('SISMEMBER', 'processed', c.id)) });
     }
     return { username: u, komentar: out };
+  },
+  async komentar_post({ posts = 1, q = '' }) {
+    const media = await listMedia(Math.min(5, Number(posts) || 1));
+    const re = q ? new RegExp(q, 'i') : null; const out = [];
+    for (const m of media) {
+      const cs = await listComments(m.id, 3000);
+      for (const c of cs) if (!re || re.test(c.text || '')) out.push({ id: c.id, u: c.username, text: (c.text || '').slice(0, 300), t: c.timestamp, parentId: c.parentId || null, post: (m.caption || '').slice(0, 20) });
+    }
+    return out;
+  },
+  async balas_komentar({ commentId, text }) {
+    if (!commentId || !text) throw new Error('commentId & text wajib');
+    await replyToComment(String(commentId), String(text).slice(0, 900)); return { ok: true };
   },
   async kirim_dm({ igsid, username, text }) {
     // only works within 24 hours after the user's last message to the account (Instagram rule)
