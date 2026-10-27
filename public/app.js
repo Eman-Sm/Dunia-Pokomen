@@ -800,8 +800,8 @@
   }
   function renderPemiluW() {
     const P = DATA.pemiluWilayah;
-    $('pemiluW').hidden = !P;
-    if (!P) return;
+    $('pemiluW').hidden = !P || (P.buka && Date.now() < Date.parse(P.buka) && !/[?&]pw=1/.test(location.search));
+    if ($('pemiluW').hidden) return;
     const W = P.wilayah || {};
     const me = ME ? DATA.warga.find((w) => w.u === ME && !w.mati) : null;
     if (pwSel == null || !W[pwSel]) pwSel = me && W[me.wil] ? me.wil : (Object.values(W).find((x) => x.memilih) || Object.values(W)[0] || {}).n;
