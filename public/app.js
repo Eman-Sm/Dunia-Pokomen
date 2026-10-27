@@ -864,7 +864,7 @@
       const w = DATA.warga.find((v) => v.u === k.u);
       const li = document.createElement('li'); if (i === 0 && k.suara) li.className = 'top';
       const self = me && me.u === k.u;
-      li.innerHTML = `<span class="rank">${i + 1}</span><span class="s"></span><span style="min-width:0"><b>${esc(k.nama)} · @${esc(k.u)}</b>${k.janji ? `<span class="slogan">“${esc(k.janji)}”</span>` : ''}</span><span class="pw-act"><span class="likes">${fmt(k.suara)} suara</span>${P.closed || self ? '' : `<button class="btn ghost pw-salin" type="button">Salin suara</button>`}</span>`;
+      li.innerHTML = `<span class="rank">${i + 1}</span><span class="s"></span><span style="min-width:0"><b>${esc(k.nama)} · @${esc(k.u)}</b>${k.janji ? `<span class="slogan">“${esc(k.janji)}”</span>` : ''}</span><span class="pw-act"><span class="likes" title="${fmt(k.suara)} suara + ${fmt(k.likes || 0)} like">${fmt(k.suara)} suara · ♥ ${fmt(k.likes || 0)}</span>${P.closed || self ? '' : `<button class="btn ghost pw-salin" type="button">Salin suara</button>`}</span>`;
       const sp = li.querySelector('.s'); if (w) sp.replaceWith(spriteNode(w, 44)); else sp.textContent = '';
       const btn = li.querySelector('.pw-salin');
       if (btn) btn.onclick = async (e) => {
@@ -876,7 +876,7 @@
       if (w) li.onclick = () => { select(w); $('peta').scrollIntoView({ behavior: 'smooth' }); };
       list.appendChild(li);
     });
-    $('pwNote').textContent = P.closed ? 'Pemilihan sudah ditutup.' : `Ditutup ${new Date(P.tutup).toLocaleString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })} WIB. Suara terakhir yang dihitung. Nama kembar ditulis dengan nomor warganya, mis. "Pilih: Raiko 47".`;
+    $('pwNote').textContent = P.closed ? 'Pemilihan sudah ditutup.' : `Ditutup ${new Date(P.tutup).toLocaleString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })} WIB. Nilai = suara sah + like di komentar calon pada postingan terbaru. Suara terakhir yang dihitung. Nama kembar ditulis dengan nomor warganya, mis. "Pilih: Raiko 47".` + (P.likesAt ? ` Like diperbarui ${ago(P.likesAt)}.` : '');
     const nm = (DATA.usulNamaWilayah || {})[x.n] || [];
     $('pwNamaTitle').textContent = `Usulan nama Wilayah ${x.n}`;
     $('pwNama').innerHTML = nm.length ? nm.map((v, i) => `<li${i ? '' : ' class="top"'}><span><b>${esc(v.nama)}</b> <span class="muted">@${esc(v.u)}</span>${v.status === 'resmi' ? ' <span class="gelar">Resmi</span>' : ''}</span><span class="likes">♥ ${fmt(v.likes)}</span></li>`).join('')

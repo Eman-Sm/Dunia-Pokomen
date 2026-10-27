@@ -11,7 +11,7 @@ import { refreshToken, subscribeWebhooks, listMedia, listComments, me, sendDM, r
 import { json, bearer, safeEqual, hariKe } from '../lib/http.js';
 import { katalog, pakaiItem, riwayatItem } from '../lib/item.js';
 import * as ob from '../lib/obrolan.js';
-import { getCfg as pwCfg, setCfg as pwSet, hasilWilayah, tetapkanPemenang } from '../lib/wilayah.js';
+import { getCfg as pwCfg, setCfg as pwSet, hasilWilayah, tetapkanPemenang, segarkanLike } from '../lib/wilayah.js';
 import { getConfig as pemiluCfg, setConfig as pemiluSet, hitung as pemiluHitung, tetapkanKetua } from '../lib/pemilu.js';
 
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -227,7 +227,8 @@ const actions = {
     if (ketuaOtomatis && typeof ketuaOtomatis === 'object') patch.ketuaOtomatis = ketuaOtomatis;
     return pwSet(patch);
   },
-  async pw_tetapkan({ force }) { return tetapkanPemenang({ force: !!force }); },
+  async pw_tetapkan({ force }) { await segarkanLike(0, { force: true }); return tetapkanPemenang({ force: !!force }); },
+  async pw_like() { return segarkanLike(0, { force: true }); },
   async item_katalog() { return { katalog: katalog(), riwayat: await riwayatItem(50) }; },
   async pakai_item({ username, item, nilai, bukti }) { return pakaiItem({ username, item, nilai, bukti }); },
   async ob_info() { return ob.adminInfo(); },

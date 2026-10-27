@@ -5,7 +5,7 @@ import { json, hariKe } from '../lib/http.js';
 import { hitungJikaBasi, getConfig, publicPemilu } from '../lib/pemilu.js';
 import { papanKopi, isTest } from '../lib/sahabat.js';
 import { namaKembar, normNama } from '../lib/hewan.js';
-import { hasilWilayah, publicHasil, tetapkanPemenang, wilayahOf, daftarUsulWilayah } from '../lib/wilayah.js';
+import { hasilWilayah, publicHasil, tetapkanPemenang, wilayahOf, daftarUsulWilayah, segarkanLike } from '../lib/wilayah.js';
 
 export async function GET() {
   try {
@@ -24,6 +24,7 @@ export async function GET() {
     const [pemiluHasil, pemiluCfg] = await Promise.all([hitungJikaBasi(20), getConfig()]);
     let pw = null;
     try {
+      await segarkanLike(10);
       pw = await hasilWilayah();
       if (pw.closed && !pw.ditetapkan && (await redis('SET', 'pw_tetap_lock', '1', 'NX', 'EX', '120')) === 'OK') { await tetapkanPemenang(); pw = await hasilWilayah(); }
     } catch { pw = null; }

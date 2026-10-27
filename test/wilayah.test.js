@@ -64,3 +64,10 @@ test('usulan nama wilayah', async () => {
   assert.equal(d[1][0].nama, 'Lembah Pelangi'); assert.equal(d[1][0].likes, 9);
   assert.equal(d[3][0].nama, 'Hutan Kabut');
 });
+
+test('nilai = suara + like', async () => {
+  const { setJSON } = await import('../lib/db.js');
+  await redis('SET', 'pw_likes', JSON.stringify({ updatedAt: new Date().toISOString(), per: { val: 10 } }));
+  const h = await hasilWilayah();
+  assert.equal(h.wilayah[1].calon[0].u, 'val'); assert.equal(h.wilayah[1].calon[0].skor, 10 + h.wilayah[1].calon[0].suara);
+});

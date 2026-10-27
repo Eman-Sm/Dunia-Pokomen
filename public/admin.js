@@ -456,7 +456,7 @@
       const h = st.hasil, cfg = st.cfg;
       const f = (t) => new Date(t).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' });
       $('pwAdmInfo').textContent = `Dibuka ${f(cfg.buka)} WIB · ditutup ${f(cfg.tutup)} WIB · ${h.closed ? (h.ditetapkan ? 'pemenang sudah diberi gelar' : 'ditutup, gelar diberikan otomatis') : 'berjalan'}`;
-      $('pwAdmT').innerHTML = Object.values(h.wilayah).map((x) => `<tr><td>Wilayah ${x.n} (${x.warga} hewan)</td><td>${x.memilih ? (x.calon.length ? x.calon.map((k) => `${esc(k.nama)} @${esc(k.u)} <b>${k.suara}</b>`).join(' · ') : '<span class="muted">belum ada calon</span>') : `Dipimpin ${esc(x.ketua?.nama || '-')} (tidak memilih)`}</td></tr>`).join('');
+      $('pwAdmT').innerHTML = Object.values(h.wilayah).map((x) => `<tr><td>Wilayah ${x.n} (${x.warga} hewan)</td><td>${x.memilih ? (x.calon.length ? x.calon.map((k) => `${esc(k.nama)} @${esc(k.u)} <b>${k.suara}</b> suara + <b>${k.likes || 0}</b>♥ = ${k.skor || 0}`).join(' · ') : '<span class="muted">belum ada calon</span>') : `Dipimpin ${esc(x.ketua?.nama || '-')} (tidak memilih)`}</td></tr>`).join('');
       const rows = (nw || []).sort((a, b) => a.wilayah - b.wilayah || b.likes - a.likes);
       $('nwT').innerHTML = rows.length ? rows.map((x) => `<tr data-id="${esc(x.id)}"><td>${x.wilayah}</td><td>${esc(x.nama)}</td><td>@${esc(x.u)}</td><td>${x.likes || 0}</td>
         <td><select data-f="status"><option value="">Voting</option><option value="resmi" ${x.status === 'resmi' ? 'selected' : ''}>Resmi</option><option value="ditolak" ${x.status === 'ditolak' ? 'selected' : ''}>Ditolak</option></select></td>
