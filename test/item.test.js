@@ -1,0 +1,22 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+process.env.POKOMEN_MEMORY_DB = '1';
+const { newWarga } = await import('../lib/rules.js');
+const { setJSON, getJSON, redis } = await import('../lib/db.js');
+const { pakaiItem, katalog, riwayatItem } = await import('../lib/item.js');
+await redis('SET', 'tier_schema', '6');
+test('item pengganti', async () => {
+  assert.deepEqual(katalog().map((x) => [x.id, x.kopi, x.biji]), [['nama', 7, 35], ['rupa', 5, 25], ['elemen', 5, 25], ['kekuatan', 5, 25]]);
+  await setJSON('warga', 'allzv_y6z', newWarga({ username: 'allzv_y6z', nama: 'axsel', hewan: ['Penguin', 'Axolot'], spot: 90 }));
+  const r = await pakaiItem({ username: 'allzv_y6z', item: 'nama', nilai: 'Natahan', bukti: 'trakteer albab' });
+  assert.equal(r.baru, 'Natahan'); assert.equal(r.kopi, 7);
+  const w = await getJSON('warga', 'allzv_y6z');
+  assert.equal(w.nama, 'Natahan'); assert.deepEqual(w.namaLama, ['axsel']); assert.equal(w.spot, 90);
+  await pakaiItem({ username: 'allzv_y6z', item: 'rupa', nilai: 'Naga + Rubah' });
+  assert.deepEqual((await getJSON('warga', 'allzv_y6z')).hewan, ['Naga', 'Rubah']);
+  const e = await pakaiItem({ username: 'allzv_y6z', item: 'elemen', nilai: 'es' });
+  assert.equal(e.baru, 'Es'); assert.equal(e.aktif, false);
+  await assert.rejects(pakaiItem({ username: 'allzv_y6z', item: 'nama', nilai: 'aku mau ganti dong' }));
+  await assert.rejects(pakaiItem({ username: 'tidakada', item: 'nama', nilai: 'Bolu' }));
+  assert.equal((await riwayatItem()).length, 3);
+});

@@ -102,7 +102,7 @@
     S = await api('status');
     $('loginBox').hidden = true; $('panel').hidden = false;
     if (!ST) loadStory();
-    loadPw();
+    loadPw(); loadItem();
     $('chipHari').textContent = 'HARI KE-' + S.hari;
     $('chipWarga').textContent = S.warga.filter((w) => !w.hidden && !w.mati).length + ' WARGA';
     const conn = [
@@ -469,6 +469,24 @@
     } catch (e) { $('pwAdmInfo').textContent = 'Gagal memuat: ' + e.message; }
   }
   $('pwAdmReload') && ($('pwAdmReload').onclick = loadPw);
+
+  async function loadItem() {
+    try {
+      const { riwayat } = await api('item_katalog');
+      const v = (x) => esc(Array.isArray(x) ? x.join(' + ') : (x ?? '–'));
+      $('itT').innerHTML = riwayat.length ? riwayat.map((r) => `<tr><td>${esc(new Date(r.t).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'short', timeStyle: 'short' }))}</td><td>@${esc(r.u)}</td><td>${esc(r.label)} (${r.kopi} kopi)</td><td>${v(r.lama)} → <b>${v(r.baru)}</b></td><td>${esc(r.bukti || '')}</td></tr>`).join('')
+        : '<tr><td colspan="5" class="muted">Belum ada item dipakai.</td></tr>';
+    } catch (e) { $('itT').innerHTML = `<tr><td colspan="5">${esc(e.message)}</td></tr>`; }
+  }
+  $('itForm') && ($('itForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const b = e.submitter || $('itForm').querySelector('button');
+    const label = $('itItem').selectedOptions[0].textContent;
+    if (!confirm(`Pakai ${label} untuk @${$('itU').value.replace(/^@/, '')} → "${$('itVal').value}"?`)) return;
+    const r = await run(b, 'pakai_item', { username: $('itU').value, item: $('itItem').value, nilai: $('itVal').value, bukti: $('itBukti').value }, 'Item dipakai');
+    if (r && r.catatan) alert(r.catatan);
+    loadItem();
+  });
 
   function renderUsulan() {
     $('usulanT').innerHTML = S.usulan.length ? S.usulan.map((x) => `<tr data-id="${esc(x.id)}">

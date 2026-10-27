@@ -133,6 +133,19 @@
     </section>
 
     <section class="parchment">
+      <h2>Item Pengganti (Toko Pokomen)</h2>
+      <p class="muted">Pakai setelah Kopi Admin dari pembeli masuk: Pengganti Nama 7 kopi, Pengganti Rupa / Elemen / Kekuatan 5 kopi. Tingkat evolusi & nomor warga tetap.</p>
+      <form class="formgrid" id="itForm">
+        <label class="f">Akun pemilik<input type="text" id="itU" placeholder="@username" required></label>
+        <label class="f">Item<select id="itItem"><option value="nama">Pengganti Nama (7 kopi)</option><option value="rupa">Pengganti Rupa (5 kopi)</option><option value="elemen">Pengganti Elemen (5 kopi)</option><option value="kekuatan">Pengganti Kekuatan (5 kopi)</option></select></label>
+        <label class="f">Nilai baru<input type="text" id="itVal" placeholder="Natahan / Penguin + Naga / Es / menyemburkan api" required></label>
+        <label class="f">Bukti (nama di Trakteer)<input type="text" id="itBukti" placeholder="opsional"></label>
+        <button class="btn" type="submit">Pakai item</button>
+      </form>
+      <div class="tablewrap" style="margin-top:10px"><table><thead><tr><th>Waktu</th><th>Akun</th><th>Item</th><th>Lama → Baru</th><th>Bukti</th></tr></thead><tbody id="itT"></tbody></table></div>
+    </section>
+
+    <section class="parchment">
       <h2>Usulan fasilitas</h2>
       <div class="tablewrap"><table><thead><tr><th>Usulan</th><th>Akun</th><th>Like</th><th>Status</th><th>Episode</th><th></th></tr></thead><tbody id="usulanT"></tbody></table></div>
       <form class="formgrid" id="usForm" style="margin-top:12px">
@@ -189,6 +202,6 @@
 <script src="creature.js?v=pal1"></script>
 <script src="artpal.js?v=pal1"></script>
 <script src="card.js?v=sohabat"></script>
-<script src="admin.js?v=wil1"></script>
+<script src="admin.js?v=item1"></script>
 </body>
 </html>

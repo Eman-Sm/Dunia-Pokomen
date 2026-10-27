@@ -39,6 +39,17 @@ Dibangun bertahap SETELAH pembagian wilayah (lihat RENCANA_WILAYAH.md). Unsur pa
 - Batas total keunggulan berbayar per duel: +20% (diputuskan 26 Okt), TERMASUK Segel Skill (bonus skill lawan yang hilang dihitung ke dalam batas ini). Tanpa item acak berbayar (gacha/kotak hadiah).
 - Kosmetik dari ide toko sebelumnya ikut dijual (kembang api, teman kecil, aksesori, menamai tempat, dll).
 
+## 4b. Item Pengganti (diputuskan 27 Okt; sistem sudah dibangun, belum diumumkan)
+| Item | Efek | Harga |
+|---|---|---|
+| Pengganti Nama | ganti nama hewan; tingkat, nomor warga & riwayat tetap | 7 Kopi (35 Biji) |
+| Pengganti Rupa | ganti gabungan hewan (wujud dasar) | 5 Kopi (25 Biji) |
+| Pengganti Elemen | ganti elemen (tampil mulai Mega Evolution) | 5 Kopi (25 Biji) |
+| Pengganti Kekuatan | ganti skill (tampil mulai Mythical) | 5 Kopi (25 Biji) |
+- Pemicu: warga minta "hapus hewanku, lahirkan yang baru" (mis. @allzv_y6z: axsel → Natahan). Hewan tidak dihapus; cukup diganti, tingkat tetap.
+- Sekarang: Admin memakaikan item di Ruang Admin → "Item Pengganti" setelah kopi masuk (lib/item.js, riwayat `item_log`). Nanti: otomatis di Toko Pokomen dengan Biji Kopi.
+- Gambar kartu anime ditandai perlu dibuat ulang setelah ganti nama/rupa.
+
 ## 5. Langganan Kartu Emas (bulanan, 10 Kopi Admin = 50 Biji Kopi)
 - Bonus harian Biji Kopi, bingkai kartu emas, nama berkilau di peta, +1 duel per hari, diskon toko.
 

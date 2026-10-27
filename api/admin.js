@@ -9,6 +9,7 @@ import { papanKopi, cocokkan } from '../lib/sahabat.js';
 import { syncLatest, ownUsername } from '../lib/sync.js';
 import { refreshToken, subscribeWebhooks, listMedia, listComments, me, sendDM } from '../lib/ig.js';
 import { json, bearer, safeEqual, hariKe } from '../lib/http.js';
+import { katalog, pakaiItem, riwayatItem } from '../lib/item.js';
 import { getCfg as pwCfg, setCfg as pwSet, hasilWilayah, tetapkanPemenang } from '../lib/wilayah.js';
 import { getConfig as pemiluCfg, setConfig as pemiluSet, hitung as pemiluHitung, tetapkanKetua } from '../lib/pemilu.js';
 
@@ -213,6 +214,8 @@ const actions = {
     return pwSet(patch);
   },
   async pw_tetapkan({ force }) { return tetapkanPemenang({ force: !!force }); },
+  async item_katalog() { return { katalog: katalog(), riwayat: await riwayatItem(50) }; },
+  async pakai_item({ username, item, nilai, bukti }) { return pakaiItem({ username, item, nilai, bukti }); },
   async usul_wilayah_list() { return hgetallJSON('usul_wilayah'); },
   async usul_wilayah_status({ id, status }) {
     const x = await getJSON('usul_wilayah', String(id)); if (!x) throw new Error('usulan tidak ditemukan');
