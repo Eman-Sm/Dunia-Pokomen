@@ -9,6 +9,7 @@ import { papanKopi, cocokkan } from '../lib/sahabat.js';
 import { syncLatest, ownUsername } from '../lib/sync.js';
 import { refreshToken, subscribeWebhooks, listMedia, listComments, me, sendDM } from '../lib/ig.js';
 import { json, bearer, safeEqual, hariKe } from '../lib/http.js';
+import { getCfg as pwCfg, setCfg as pwSet, hasilWilayah, tetapkanPemenang } from '../lib/wilayah.js';
 import { getConfig as pemiluCfg, setConfig as pemiluSet, hitung as pemiluHitung, tetapkanKetua } from '../lib/pemilu.js';
 
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -202,6 +203,16 @@ const actions = {
   },
   async pemilu_hitung() { return pemiluHitung({ force: true }); },
   async tetapkan_ketua({ username }) { return tetapkanKetua(username); },
+  async pw_status() { return { cfg: await pwCfg(), hasil: await hasilWilayah() }; },
+  async pw_set({ tutup, buka, wilayah, ketuaOtomatis }) {
+    const patch = {};
+    if (tutup) patch.tutup = new Date(tutup).toISOString();
+    if (buka) patch.buka = new Date(buka).toISOString();
+    if (Array.isArray(wilayah)) patch.wilayah = wilayah.map(Number).filter(Boolean);
+    if (ketuaOtomatis && typeof ketuaOtomatis === 'object') patch.ketuaOtomatis = ketuaOtomatis;
+    return pwSet(patch);
+  },
+  async pw_tetapkan({ force }) { return tetapkanPemenang({ force: !!force }); },
   async approve_menunggu({ username }) {
     const x = await getJSON('menunggu', key(username));
     if (!x) throw new Error('Tidak ada di daftar tunggu');

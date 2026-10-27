@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&family=Pixelify+Sans:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=label3">
+<link rel="stylesheet" href="style.css?v=wil1">
 </head>
 <body>
 <header class="topbar">
@@ -63,6 +63,28 @@
         <div class="map-hint" id="mapHint">Seret untuk geser, scroll atau cubit untuk zoom</div>
         <article class="card" id="card" hidden aria-live="polite"></article>
       </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="pemiluW" hidden aria-labelledby="pwTitle" style="padding-top:26px">
+    <div class="parchment pemilu">
+      <div class="pemilu-head">
+        <div>
+          <h2 id="pwTitle">Pemilihan Ketua Koloni per Wilayah</h2>
+          <p>Setiap wilayah berisi 50 hewan sesuai nomor warga. Daftar jadi calon dengan komentar <code>Calon: janjimu</code>. Memilih dengan komentar <code>Pilih: nama hewan</code> di postingan terbaru. Kamu hanya bisa memilih calon <b>dari wilayahmu sendiri</b>, dan tidak bisa memilih dirimu sendiri.</p>
+        </div>
+        <div class="pemilu-clock" id="pwClock"></div>
+      </div>
+      <form class="pw-cek" id="pwCek" autocomplete="off">
+        <label for="pwCekIn"><b>Cek wilayahmu</b></label>
+        <input id="pwCekIn" type="search" placeholder="@username atau nama hewanmu">
+        <button class="btn" type="submit">Cek</button>
+        <span id="pwCekOut" class="pw-cek-out" aria-live="polite"></span>
+      </form>
+      <div class="pw-tabs" id="pwTabs" role="tablist" aria-label="Pilih wilayah"></div>
+      <p class="muted" id="pwInfo"></p>
+      <ol class="klasemen" id="pwList"></ol>
+      <p class="muted" id="pwNote"></p>
     </div>
   </section>
 
@@ -166,6 +188,6 @@ Wujud Dewa: Mecha Beast</div>
 <script src="creature-hd.js?v=2026-10-25"></script>
 <script src="creature.js?v=pal1"></script>
 <script src="card.js?v=sohabat"></script>
-<script src="app.js?v=nama1"></script>
+<script src="app.js?v=wil1"></script>
 </body>
 </html>

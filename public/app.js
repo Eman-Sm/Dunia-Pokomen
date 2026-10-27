@@ -74,7 +74,7 @@
     $('stepDM').hidden = !data.wajibFollow;
     fitted = false; refit();
     updateJam();
-    renderBook(); renderVotes(); renderNews(); renderLadder(); renderTierFilter(); renderDukungan(); renderPemilu(); updateMeBar();
+    renderBook(); renderVotes(); renderNews(); renderLadder(); renderTierFilter(); renderDukungan(); renderPemilu(); renderPemiluW(); updateMeBar();
     const qk = new URLSearchParams(location.search).get('kartu');
     if (qk) { const w = DATA.warga.find((x) => x.u === qk.toLowerCase()); if (w) { select(w); openKartu(w); } }
     draw();
@@ -665,7 +665,7 @@
       <div class="card-head"><span id="cardSprite"></span>
         <div><h3>${esc(namaTampil(w))}</h3>
           <a class="handle" href="https://www.instagram.com/${encodeURIComponent(w.u)}/" target="_blank" rel="noopener">@${esc(w.u)}</a><br>
-          <span class="tier t${w.tier}">${esc(w.tierNama || TIERS[w.tier])}</span>${w.gelar ? `<span class="gelar">${esc(w.gelar)}</span>` : ''}${w.sahabat ? '<span class="gelar sahabat">♛ Sohabat Admin</span>' : ''}</div></div>
+          <span class="tier t${w.tier}">${esc(w.tierNama || TIERS[w.tier])}</span>${w.gelar ? `<span class="gelar">${esc(w.gelar)}</span>` : ''}${w.sahabat ? '<span class="gelar sahabat">♛ Sohabat Admin</span>' : ''}${w.wil ? `<span class="gelar wil">Wilayah ${w.wil}</span>` : ''}</div></div>
       <ul class="hewan">${(w.hewan || []).map((h) => `<li>${esc(h)}</li>`).join('')}</ul>
       ${w.sahabat ? `<p class="skill">☕ Pengirim kopi terbanyak: <b>${fmt(w.sahabat)} ${esc((DATA.dukunganUnit) || 'Kopi Admin')}</b></p>` : ''}
       ${w.skill ? `<p class="skill">✦ Skill: <b>${esc(w.skill)}</b></p>` : w.tier >= 3 ? '<p class="muted">Skill belum diisi. Pemiliknya bisa menulis <b>Skill: ...</b> di komentar.</p>' : ''}
@@ -791,6 +791,75 @@
     $('pemiluNote').textContent = 'Calon: pemilik yang hadir berkomentar di Hari ke-1, 2 dan 3. Peringkat: total like di komentarnya. ' + (P.likesAvailable === false ? 'Jumlah like belum tersedia dari Instagram, peringkat sementara diurutkan dari komentar paling awal. ' : '')
       + (P.updatedAt ? `Diperbarui ${ago(P.updatedAt)} · ${fmt(P.jumlahCalon)} calon dari ${fmt(P.jumlahPeserta)} akun yang berkomentar.` : '');
   }
+  let pwSel = null;
+  function cariWarga(q) {
+    q = String(q || '').trim(); if (!q) return null;
+    const lc = q.toLowerCase().replace(/^@/, '');
+    const hidup = DATA.warga.filter((w) => !w.mati);
+    return hidup.find((w) => w.u === lc) || hidup.find((w) => namaTampil(w).toLowerCase() === lc) || hidup.find((w) => w.nama.toLowerCase() === lc) || null;
+  }
+  function renderPemiluW() {
+    const P = DATA.pemiluWilayah;
+    $('pemiluW').hidden = !P;
+    if (!P) return;
+    const W = P.wilayah || {};
+    const me = ME ? DATA.warga.find((w) => w.u === ME && !w.mati) : null;
+    if (pwSel == null || !W[pwSel]) pwSel = me && W[me.wil] ? me.wil : (Object.values(W).find((x) => x.memilih) || Object.values(W)[0] || {}).n;
+    const clock = $('pwClock');
+    const tick = () => {
+      const ms = Date.parse(P.tutup) - Date.now();
+      if (ms <= 0) { clock.innerHTML = `<small>STATUS</small>${P.ditetapkan ? 'Ketua terpilih!' : 'Ditutup, menunggu hasil'}`; return; }
+      const h = Math.floor(ms / 3.6e6), m = Math.floor(ms / 6e4) % 60, sec = Math.floor(ms / 1e3) % 60;
+      clock.innerHTML = `<small>DITUTUP DALAM</small>${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+    };
+    tick(); clearInterval(renderPemiluW.t); renderPemiluW.t = setInterval(tick, 1000);
+    const tabs = $('pwTabs'); tabs.innerHTML = '';
+    Object.values(W).forEach((x) => {
+      const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', String(x.n === pwSel));
+      b.innerHTML = `Wilayah ${x.n}${me && me.wil === x.n ? ' <span class="mine">★</span>' : ''}`;
+      b.onclick = () => { pwSel = x.n; renderPemiluW(); };
+      tabs.appendChild(b);
+    });
+    const x = W[pwSel] || { calon: [] };
+    const dari = (x.n - 1) * (P.ukuran || 50) + 1;
+    $('pwInfo').innerHTML = `Wilayah ${x.n}: warga nomor ${dari}–${dari + (P.ukuran || 50) - 1} · ${fmt(x.warga)} hewan` + (x.memilih ? ` · ${fmt(x.suara)} suara sah` : '');
+    const list = $('pwList'); list.innerHTML = '';
+    if (!x.memilih) {
+      const k = x.ketua && DATA.warga.find((w) => w.u === x.ketua.u);
+      list.innerHTML = `<li class="empty" style="display:block;cursor:default">${x.ketua ? `Wilayah ${x.n} dipimpin <b>Ketua ${esc(x.ketua.nama)}</b> (@${esc(x.ketua.u)}), Ketua Koloni pertama. Wilayah ini tidak ikut memilih.` : `Wilayah ${x.n} belum ikut pemilihan kali ini.`}</li>`;
+      if (k) list.firstChild.onclick = () => { select(k); $('peta').scrollIntoView({ behavior: 'smooth' }); };
+    } else if (!x.calon.length) {
+      list.innerHTML = `<li class="empty" style="display:block;cursor:default">Belum ada calon di Wilayah ${x.n}. Warga wilayah ini bisa mendaftar dengan komentar <b>Calon: janjimu</b>!</li>`;
+    }
+    if (x.memilih) x.calon.forEach((k, i) => {
+      const w = DATA.warga.find((v) => v.u === k.u);
+      const li = document.createElement('li'); if (i === 0 && k.suara) li.className = 'top';
+      const self = me && me.u === k.u;
+      li.innerHTML = `<span class="rank">${i + 1}</span><span class="s"></span><span style="min-width:0"><b>${esc(k.nama)} · @${esc(k.u)}</b>${k.janji ? `<span class="slogan">“${esc(k.janji)}”</span>` : ''}</span><span class="pw-act"><span class="likes">${fmt(k.suara)} suara</span>${P.closed || self ? '' : `<button class="btn ghost pw-salin" type="button">Salin suara</button>`}</span>`;
+      const sp = li.querySelector('.s'); if (w) sp.replaceWith(spriteNode(w, 44)); else sp.textContent = '';
+      const btn = li.querySelector('.pw-salin');
+      if (btn) btn.onclick = async (e) => {
+        e.stopPropagation();
+        const t = 'Pilih: ' + k.nama;
+        try { await navigator.clipboard.writeText(t); btn.textContent = 'Tersalin! Tempel di komentar'; } catch { btn.textContent = t; }
+        setTimeout(() => { btn.textContent = 'Salin suara'; }, 2600);
+      };
+      if (w) li.onclick = () => { select(w); $('peta').scrollIntoView({ behavior: 'smooth' }); };
+      list.appendChild(li);
+    });
+    $('pwNote').textContent = P.closed ? 'Pemilihan sudah ditutup.' : `Ditutup ${new Date(P.tutup).toLocaleString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })} WIB. Suara terakhir yang dihitung. Nama kembar ditulis dengan nomor warganya, mis. "Pilih: Raiko 47".`;
+    const form = $('pwCek');
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      const w = cariWarga($('pwCekIn').value);
+      const out = $('pwCekOut');
+      if (!w) { out.textContent = 'Hewan tidak ditemukan. Tulis @username Instagram-mu atau nama hewanmu.'; return; }
+      const xw = W[w.wil];
+      out.innerHTML = `<b>${esc(namaTampil(w))}</b> (warga no. ${(w.spot ?? 0) + 1}) tinggal di <b>Wilayah ${w.wil}</b>. ` + (xw && xw.memilih ? `Pilih salah satu calon di bawah, lalu tempel di komentar.` : xw && xw.ketua ? `Wilayahmu dipimpin Ketua ${esc(xw.ketua.nama)}.` : '');
+      pwSel = w.wil; setMe(w.u); renderPemiluW();
+    };
+  }
   function renderDukungan() {
     const url = DATA.trakteer;
     const list = DATA.dukungan || [];
@@ -879,7 +948,7 @@
   // used by Ruang Admin (same-origin iframe)
   window.Pokomen = {
     focus(u) { const w = allWarga().find((x) => x.u === String(u).toLowerCase() && !x.makam) || allWarga().find((x) => x.u === String(u).toLowerCase()); if (w) { $('peta').scrollIntoView({ behavior: 'smooth' }); select(w); } return !!w; },
-    async reload() { try { const r = await fetch('api/dunia?t=' + Date.now(), { cache: 'no-store' }); const d = await r.json(); if (!d.error) { DATA = d; renderBook(); renderVotes(); renderNews(); renderPemilu(); $('chipWarga').textContent = fmt(d.jumlahWarga) + ' WARGA'; draw(); } } catch { /* ignore */ } },
+    async reload() { try { const r = await fetch('api/dunia?t=' + Date.now(), { cache: 'no-store' }); const d = await r.json(); if (!d.error) { DATA = d; renderBook(); renderVotes(); renderNews(); renderPemilu(); renderPemiluW(); $('chipWarga').textContent = fmt(d.jumlahWarga) + ' WARGA'; draw(); } } catch { /* ignore */ } },
   };
 
   // bump when the map changes so browsers do not keep the old cached image

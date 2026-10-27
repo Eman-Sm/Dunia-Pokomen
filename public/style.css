@@ -492,3 +492,16 @@ body.embed .mebar { display: none; }
 /* admin tab bar: fully visible when stuck (was clipped by top:-14px), room for the scrollbar */
 .adm-tabs { top: 0; margin-top: -14px; padding: 12px 4px 14px; align-items: center; overflow-y: hidden; flex: none; min-height: 62px; box-sizing: border-box; mask-image: none; }
 .adm-tabs button { line-height: 1.2; white-space: nowrap; }
+
+/* pemilihan ketua per wilayah */
+.pw-cek { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
+.pw-cek input { flex: 1 1 200px; min-width: 0; }
+.pw-cek-out { flex: 1 1 100%; color: var(--ink-soft); }
+.pw-cek-out b { color: var(--ink); }
+.pw-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.pw-tabs button { font-family: var(--font-display); background: #fff8e7; border: 2px solid var(--outline); padding: 4px 12px; cursor: pointer; }
+.pw-tabs button[aria-selected="true"] { background: var(--gold); }
+.pw-tabs button .mine { color: var(--berry); }
+.klasemen .pw-salin { font-size: .78rem; padding: 2px 8px; margin-left: 8px; }
+.klasemen .pw-act { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 4px; }
+.gelar.wil { background: #dff1ff; }
