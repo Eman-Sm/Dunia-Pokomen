@@ -511,4 +511,3 @@ body.embed .mebar { display: none; }
 .pw-nama li.top { background: #fff0b8; }
 .pw-nama li b { font-family: var(--font-display); font-weight: 600; overflow-wrap: anywhere; }
 .pw-nama li .likes { font-family: var(--font-display); color: var(--berry); white-space: nowrap; }
-.btn.hdbtn { background: #2d2160; color: #ffd23f; }
