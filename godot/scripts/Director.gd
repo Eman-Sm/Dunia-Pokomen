@@ -70,7 +70,7 @@ func step(t: float) -> void:
 	for e in S.get("evolve", []):
 		var cr = main.creatures.get(e[1])
 		if cr and t >= e[0] and _swapped.get(e[1]) == false:
-			cr.set_sprite(main.D.sprites[e[1]]); cr.flash_t = PokoMain.clock; _swapped[e[1]] = true
+			cr.set_sprite(main.D.sprites[e[1]]); cr.flash_t = PokoMain.clock; _swapped[e[1]] = true; main.beam(cr)
 	for e in S.get("birth", []):
 		var cr = main.creatures.get(e[1])
 		if cr and t >= e[0] and not cr.visible: cr.visible = true; cr.spawn_t = PokoMain.clock; cr.flash_t = PokoMain.clock
@@ -80,6 +80,9 @@ func step(t: float) -> void:
 			var on: bool = t >= s[0] and t < s[1]
 			if on and not cr.scripted: cr.scripted = true; cr.position = cr.home; cr.mode = "idle"
 			elif not on and cr.scripted and t >= s[1]: cr.scripted = false
+	for b in S.get("beam", []):
+		var cr = main.creatures.get(b[1])
+		if cr and t >= b[0] and not _swapped.has("beam%s" % b[0]): _swapped["beam%s" % b[0]] = true; main.beam(cr)
 	for r in S.get("regions", []):
 		var key = r[2]
 		var a := clampf((t - r[0]) / 0.6, 0, 1) * (1.0 - clampf((t - r[1]) / 0.6, 0, 1))

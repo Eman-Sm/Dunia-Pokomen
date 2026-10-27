@@ -65,3 +65,42 @@ static func dot() -> Texture2D:
 	if _cache.has("dot"): return _cache.dot
 	var im := _img(1, 1); im.set_pixel(0, 0, Color(1, 1, 1, 1))
 	var t := ImageTexture.create_from_image(im); _cache.dot = t; return t
+
+# speech-bubble emotes: 0 heart, 1 thumbs-up, 2 note, 3 apple, 4 sparkle
+static func emote(kind: int) -> Texture2D:
+	var key := "emo%d" % kind
+	if _cache.has(key): return _cache[key]
+	var im := _img(14, 14); var wcol := Color8(255, 252, 244); var ol := Color8(43, 27, 23)
+	im.fill_rect(Rect2i(1, 1, 12, 9), wcol); im.fill_rect(Rect2i(2, 0, 10, 11), wcol); im.fill_rect(Rect2i(4, 11, 3, 1), wcol); im.set_pixel(4, 12, wcol)
+	match kind:
+		0:
+			var r := Color8(232, 70, 80)
+			for p in [Vector2i(4,3),Vector2i(5,3),Vector2i(8,3),Vector2i(9,3),Vector2i(3,4),Vector2i(4,4),Vector2i(5,4),Vector2i(6,4),Vector2i(7,4),Vector2i(8,4),Vector2i(9,4),Vector2i(10,4),Vector2i(4,5),Vector2i(5,5),Vector2i(6,5),Vector2i(7,5),Vector2i(8,5),Vector2i(9,5),Vector2i(5,6),Vector2i(6,6),Vector2i(7,6),Vector2i(8,6),Vector2i(6,7),Vector2i(7,7)]: im.set_pixel(p.x, p.y, r)
+		1:
+			var y := Color8(240, 190, 120)
+			im.fill_rect(Rect2i(4, 5, 5, 4), y); im.fill_rect(Rect2i(6, 2, 2, 3), y); im.fill_rect(Rect2i(2, 5, 2, 4), Color8(63, 127, 208))
+		2:
+			var n := Color8(110, 64, 170)
+			im.fill_rect(Rect2i(8, 2, 1, 6), n); im.fill_rect(Rect2i(5, 6, 3, 3), n); im.fill_rect(Rect2i(8, 2, 3, 1), n)
+		3:
+			im.fill_rect(Rect2i(4, 4, 6, 5), Color8(220, 60, 60)); im.fill_rect(Rect2i(5, 3, 4, 7), Color8(220, 60, 60)); im.set_pixel(7, 2, Color8(110, 70, 40)); im.set_pixel(8, 1, Color8(90, 170, 70)); im.set_pixel(6, 4, Color8(255, 160, 160))
+		4:
+			var g := Color8(255, 205, 50)
+			im.fill_rect(Rect2i(6, 2, 2, 7), g); im.fill_rect(Rect2i(3, 5, 8, 2), g)
+	var t := ImageTexture.create_from_image(_outline(im)); _cache[key] = t; return t
+
+# golden light beam (pixel bands, additive)
+static func beam() -> Texture2D:
+	if _cache.has("beam"): return _cache.beam
+	var w := 24; var h := 224
+	var im := _img(w, h)
+	for y in h:
+		var fade := clampf(float(y) / h, 0.0, 1.0)
+		for x in w:
+			var d := absf(x - w / 2.0 + 0.5) / (w / 2.0)
+			var a := 0.0
+			if d < 0.3: a = 0.85
+			elif d < 0.6: a = 0.5
+			elif d < 0.85: a = 0.22 if (x + y) % 2 == 0 else 0.1
+			im.set_pixel(x, y, Color(1.0, 0.92, 0.45, a * fade))
+	var t := ImageTexture.create_from_image(im); _cache.beam = t; return t

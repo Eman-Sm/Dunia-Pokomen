@@ -57,7 +57,19 @@ func _ready() -> void:
 	if mode == "video":
 		director = Director.new(); director.load(args.shots); add_child(director)
 		pass  # output size comes from --resolution WxH on the command line
+	if mode != "video":
+		get_tree().root.size_changed.connect(_fit_pixels); _fit_pixels()
 	if mode != "web": _build()
+
+# pixel-perfect full-window: pick a whole-number pixel size, low-res viewport fills the window exactly
+func _fit_pixels() -> void:
+	var root := get_tree().root
+	var win := Vector2(root.size)
+	if win.x < 2 or win.y < 2: return
+	var s := maxf(1.0, floorf(minf(win.x, win.y) / 300.0))
+	root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_IGNORE
+	root.content_scale_stretch = Window.CONTENT_SCALE_STRETCH_FRACTIONAL
+	root.content_scale_size = Vector2i((win / s).floor())
 
 func _build() -> void:
 	if mode == "web":
@@ -76,10 +88,20 @@ func _build() -> void:
 	add_child(ws)
 	regions = Node2D.new(); regions.set_script(load("res://scripts/Regions.gd")); add_child(regions)
 	actors = Node2D.new(); actors.y_sort_enabled = true; add_child(actors)
+	# trees, houses, fences... (feet-anchored so citizens walk behind and in front of them)
+	var tex_cache := {}
+	for o in D.world.get("objects", []):
+		var k := str(o[0])
+		if not tex_cache.has(k): tex_cache[k] = load("res://data/hd/obj/%s.png" % k)
+		var t: Texture2D = tex_cache[k]
+		if t == null: continue
+		var sp := Sprite2D.new(); sp.texture = t; sp.centered = false
+		sp.offset = Vector2(-floorf(t.get_width() / 2.0), -t.get_height()); sp.position = Vector2(o[1], o[2])
+		actors.add_child(sp)
 	# drifting cloud shadows
 	for i in 5:
 		var c := Sprite2D.new(); c.texture = Art.radial(); c.modulate = Color(0.05, 0.08, 0.15, 0.10)
-		c.scale = Vector2(4.5 + i, 2.4 + i * 0.4); c.position = Vector2(300 + i * 330, 500 + (i * 197) % 700); add_child(c); clouds.append(c)
+		c.scale = Vector2(5.5 + i, 3.0 + i * 0.4); c.position = Vector2(200 + i * 420, 300 + (i * 337) % 1400); add_child(c); clouds.append(c)
 	modulate_node = CanvasModulate.new(); add_child(modulate_node)
 	# glow + labels are drawn on a layer that follows the camera but is NOT darkened at night
 	var gl := CanvasLayer.new(); gl.layer = 1; gl.follow_viewport_enabled = true; add_child(gl)
@@ -93,7 +115,9 @@ func _build() -> void:
 		s.scale = Vector2.ONE * float(L[2]) / 40.0; s.modulate = Color(1, 0.75, 0.4, 0); glow.add_child(s); lamp_nodes.append(s)
 	fireflies = CPUParticles2D.new(); fireflies.amount = 70; fireflies.lifetime = 4.0; fireflies.texture = Art.dot()
 	fireflies.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE; fireflies.emission_rect_extents = Vector2(330, 280)
-	fireflies.position = Vector2(850, 900); fireflies.gravity = Vector2.ZERO; fireflies.initial_velocity_min = 2; fireflies.initial_velocity_max = 6
+	var wc: Array = D.world.get("center", [960, 1000])
+	fireflies.emission_rect_extents = Vector2(700, 520); fireflies.amount = 140
+	fireflies.position = Vector2(wc[0], wc[1] - 100); fireflies.gravity = Vector2.ZERO; fireflies.initial_velocity_min = 2; fireflies.initial_velocity_max = 6
 	fireflies.spread = 180; fireflies.color = Color(0.9, 1, 0.55); fireflies.scale_amount_min = 0.6; fireflies.scale_amount_max = 1.0
 	var fg := Gradient.new(); fg.set_color(0, Color(1, 1, 1, 0)); fg.add_point(0.5, Color(1, 1, 1, 1)); fg.set_color(fg.get_point_count() - 1, Color(1, 1, 1, 0)); fireflies.color_ramp = fg
 	var fm := CanvasItemMaterial.new(); fm.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD; fireflies.material = fm
@@ -103,10 +127,11 @@ func _build() -> void:
 		if w.get("mati"): continue
 		_add_creature(w)
 	regions.setup(self)
+	_seat_ketua()
 	# --- camera
 	cam = Camera2D.new(); add_child(cam); cam.make_current()
-	var c: Array = D.world.get("center", [850, 900])
-	target_pos = Vector2(c[0] + 120, c[1] - 10)
+	var c: Array = D.world.get("balai", [960, 930])
+	target_pos = Vector2(c[0] + 20, c[1] + 40)
 	if me != "" and creatures.has(me): target_pos = creatures[me].position; target_view = get_viewport_rect().size.x / 3.0
 	if mode == "web" and me == "":
 		var vp0 := get_viewport_rect().size
@@ -120,6 +145,57 @@ func _build() -> void:
 	if mode == "desktop": _build_ui()
 	built = true
 	if mode == "web": JavaScriptBridge.eval("window.pokoReady && window.pokoReady()", true)
+
+# the Ketua Koloni sits on the throne beside the Balai Warga, wrapped in a purple flame aura
+func _seat_ketua() -> void:
+	var th: Array = D.world.get("throne", [])
+	if th.is_empty(): return
+	for u in creatures:
+		var c: PokoCreature = creatures[u]
+		var g := str(c.w.get("gelar")) if c.w.get("gelar") != null else ""
+		if g == "Ketua Koloni":
+			c.home = Vector2(th[0], th[1] + 2); c.position = c.home; c.scripted = true; c.seated = true; c.z_index = 0
+			var f := CPUParticles2D.new(); f.amount = 26; f.lifetime = 0.9; f.texture = Art.dot()
+			f.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE; f.emission_rect_extents = Vector2(13, 3)
+			f.direction = Vector2(0, -1); f.spread = 12; f.gravity = Vector2(0, -40); f.initial_velocity_min = 8; f.initial_velocity_max = 18
+			f.scale_amount_min = 2; f.scale_amount_max = 3; f.color = Color(0.72, 0.4, 1.0)
+			var fg := Gradient.new(); fg.set_color(0, Color(1, 1, 1, 0.9)); fg.set_color(1, Color(0.5, 0.2, 1, 0)); f.color_ramp = fg
+			var fm := CanvasItemMaterial.new(); fm.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD; f.material = fm
+			f.position = Vector2(th[0], th[1] - 6); glow.add_child(f)
+			break
+
+# little life: emote bubbles and golden beams on Mythical citizens
+var _emo_t := 1.0
+var _beam_t := 6.0
+var bubbles: Array = []
+func _ambient(dt: float) -> void:
+	_emo_t -= dt; _beam_t -= dt
+	var keys := creatures.keys()
+	if keys.is_empty(): return
+	if _emo_t <= 0:
+		_emo_t = randf_range(0.5, 1.4)
+		var c: PokoCreature = creatures[keys[randi() % keys.size()]]
+		var b := Sprite2D.new(); b.texture = Art.emote(randi() % 5); b.centered = false
+		b.offset = Vector2(-7, -16); actors.add_child(b); b.z_index = 5
+		bubbles.append([b, c, clock])
+	for i in range(bubbles.size() - 1, -1, -1):
+		var e: Array = bubbles[i]; var age: float = clock - e[2]
+		var c: PokoCreature = e[1]
+		e[0].position = c.position + Vector2(5, -c.sprite_h - 2 - minf(age, 0.25) * 8)
+		e[0].visible = c.visible
+		if age > 2.6: e[0].queue_free(); bubbles.remove_at(i)
+	if _beam_t <= 0 and not director:
+		_beam_t = randf_range(7, 14)
+		var myth := keys.filter(func(u): return creatures[u].tier >= 3 and not creatures[u].seated)
+		if myth.size(): beam(creatures[myth[randi() % myth.size()]])
+
+func beam(c: PokoCreature) -> void:
+	var b := Sprite2D.new(); b.texture = Art.beam(); b.centered = false
+	var m := CanvasItemMaterial.new(); m.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD; b.material = m
+	b.offset = Vector2(-12, -220); b.position = c.position; glow.add_child(b)
+	c.flash_t = clock
+	var tw := create_tween(); b.modulate = Color(1, 1, 1, 0)
+	tw.tween_property(b, "modulate:a", 1.0, 0.25); tw.tween_interval(1.0); tw.tween_property(b, "modulate:a", 0.0, 0.6); tw.tween_callback(b.queue_free)
 
 func _add_creature(w: Dictionary) -> void:
 	var u := str(w.u)
@@ -149,6 +225,7 @@ func _process(dt: float) -> void:
 	clock += dt
 	if director: director.step(clock)
 	_sky()
+	_ambient(dt)
 	# camera smoothing (interactive) or direct (video)
 	if not director:
 		cam.position = cam.position.lerp(target_pos, clampf(dt * 10.0, 0, 1))

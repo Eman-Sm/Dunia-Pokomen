@@ -12,7 +12,9 @@ var until := 0.0
 var face := 1.0
 var walk_phase := 0.0
 var seed_f := 0.0
-var scripted := false           # video director moves it
+var scripted := false
+var seated := false
+var frames := 1           # video director moves it
 var spawn_t := -1.0             # birth pop
 var flash_t := -1.0             # white flash (evolution)
 
@@ -41,7 +43,7 @@ func setup(data: Dictionary, spr: Dictionary, home_pos: Vector2, walk_pts: Array
 	until = rng.randf_range(0.3, 4.0)
 	face = -1.0 if rng.randf() < .5 else 1.0
 	for p in walk_pts:
-		if Vector2(p[0] - home.x, (p[1] - home.y) * 2.0).length() < 110: near.append(Vector2(p[0], p[1]))
+		if Vector2(p[0] - home.x, (p[1] - home.y) * 1.3).length() < 80: near.append(Vector2(p[0], p[1]))
 	el_col = PokoData.element_color(w.get("elemen"))
 	body = Sprite2D.new(); body.centered = false; add_child(body)
 	flash = Sprite2D.new(); flash.centered = false; flash.visible = false; add_child(flash)
@@ -78,40 +80,43 @@ func set_sprite(spr: Dictionary) -> void:
 	var tex: Texture2D = spr.tex
 	var px := float(spr.px); var grow := float(spr.grow)
 	var s := grow / px
+	frames = int(spr.get("frames", 1))
 	body.texture = tex; flash.texture = tex
+	body.hframes = frames; flash.hframes = frames
 	body.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	flash.texture_filter = body.texture_filter
 	base_scale = s
 	body.scale = Vector2(s, s); flash.scale = body.scale
-	var sz := tex.get_size()
-	body.offset = Vector2(-sz.x / 2.0, -31.0 * px); flash.offset = body.offset
-	sprite_h = 36.0 * grow
+	var sz := tex.get_size(); sz.x /= frames
+	body.offset = Vector2(-floorf(sz.x / 2.0), -31.0 * px); flash.offset = body.offset
+	sprite_h = (30.0 if frames > 1 else 36.0) * grow
 
 func _process(dt: float) -> void:
 	var now := PokoMain.clock
 	if not scripted: _wander(now, dt)
 	var moving := mode == "walk"
-	var bob := absf(sin(walk_phase)) * 2.2 if moving else 0.0
-	var breath := 1.0 + 0.025 * sin(now * 2.4 + seed_f)
-	var sq := 1.0 + 0.06 * cos(walk_phase * 2.0) if moving else breath
+	var bob := 0.0 if frames > 1 else (absf(sin(walk_phase)) * 2.2 if moving else 0.0)
+	var breath := 1.0 + (0.0 if frames > 1 else 0.025 * sin(now * 2.4 + seed_f))
+	var sq := (1.0 if frames > 1 else 1.0 + 0.06 * cos(walk_phase * 2.0)) if moving else breath
+	if frames > 1: body.frame = (1 + int(walk_phase / PI) % 2) if moving else 0
 	var pop := 1.0
 	if spawn_t >= 0.0:
 		var a := clampf((now - spawn_t) / 0.4, 0.0, 1.0); pop = _out_back(a)
-	body.position = Vector2(0, -bob)
+	body.position = Vector2(0, -bob - (9.0 if seated else 0.0))
 	body.scale = Vector2(base_scale * face / sqrt(sq) * pop, base_scale * sq * pop)
 	flash.visible = flash_t >= 0.0 and now - flash_t < 0.4
 	if flash.visible:
-		flash.position = body.position; flash.scale = body.scale; flash.modulate = Color(1, 1, 1, 1.0 - (now - flash_t) / 0.4)
-	var head := position + Vector2(0, -sprite_h * 0.86 - bob)
+		flash.position = body.position; flash.scale = body.scale; flash.frame = body.frame; flash.modulate = Color(1, 1, 1, 1.0 - (now - flash_t) / 0.4)
+	var head := position + Vector2(0, -sprite_h - bob - (9.0 if seated else 0.0))
 	if crown:
-		crown.position = Vector2(0, -sprite_h * 0.86 - bob - 4 + sin(now * 3.0) * 0.6)
+		crown.position = Vector2(0, -sprite_h - 3 - bob - (9.0 if seated else 0.0) + round(sin(now * 3.0)))
 		crown.scale = Vector2.ONE
 	if aura:
-		aura.global_position = position + Vector2(0, -sprite_h * 0.42)
+		aura.global_position = position + Vector2(0, -sprite_h * 0.45)
 		var night: float = get_parent().get_meta("night", 0.0)
 		var a := 0.10 + 0.18 * night if tier >= 3 else 0.10 * night
 		aura.modulate = Color(el_col, a * (0.85 + 0.15 * sin(now * 2.0 + seed_f)))
-		var r := (0.42 if tier >= 3 else 0.32) * maxf(1.0, sprite_h / 36.0)
+		var r := (0.9 if tier >= 3 else 0.7)
 		aura.scale = Vector2(r, r * 0.8)
 	if sparks: sparks.global_position = position + Vector2(0, -sprite_h * 0.45)
 	if label and label.visible:
@@ -144,4 +149,4 @@ func _exit_tree() -> void:
 
 func _draw() -> void:
 	draw_set_transform(Vector2.ZERO, 0, Vector2(1, 0.32))
-	draw_circle(Vector2.ZERO, 7.5 * maxf(1.0, sprite_h / 40.0), Color(0.08, 0.12, 0.04, 0.3))
+	draw_circle(Vector2.ZERO, 7.0, Color(0.08, 0.12, 0.04, 0.32))

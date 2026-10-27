@@ -31,7 +31,7 @@ static func tex_from_png(path: String) -> Texture2D:
 	return ImageTexture.create_from_image(img)
 
 func load_local(dunia_path := "res://data/dunia.json") -> void:
-	world = read_json("res://data/world.json")
+	world = read_json("res://data/hd/world.json")
 	dunia = read_json(dunia_path)
 	var meta = read_json("res://data/spr/meta.json")
 	if meta == null: meta = {}
@@ -39,7 +39,7 @@ func load_local(dunia_path := "res://data/dunia.json") -> void:
 		var m: Dictionary = meta[k]
 		var t := tex_from_png("res://data/spr/" + m.file)
 		if t == null: continue
-		var rec := {"tex": t, "px": float(m.px), "grow": float(m.grow), "hd": bool(m.hd)}
+		var rec := {"tex": t, "px": float(m.px), "grow": float(m.grow), "hd": bool(m.hd), "frames": int(m.get("frames", 1))}
 		if str(k).ends_with("#prev"): prev_sprites[str(k).trim_suffix("#prev")] = rec
 		else: sprites[k] = rec
 
@@ -50,7 +50,7 @@ func web_ready() -> bool:
 	return r != null and int(r) == 1
 
 func load_web() -> void:
-	world = JSON.parse_string(str(JavaScriptBridge.eval("JSON.stringify(window.POKO.world)", true)))
+	world = read_json("res://data/hd/world.json")
 	dunia = JSON.parse_string(str(JavaScriptBridge.eval("JSON.stringify(window.POKO.dunia)", true)))
 	for w in dunia.get("warga", []):
 		add_web_sprite(str(w.u))
@@ -63,12 +63,7 @@ func add_web_sprite(u: String) -> void:
 	var b64: String = str(s.url).split(",")[1]
 	var img := Image.new()
 	if img.load_png_from_buffer(Marshalls.base64_to_raw(b64)) != OK: return
-	sprites[u] = {"tex": ImageTexture.create_from_image(img), "px": float(s.px), "grow": float(s.grow), "hd": bool(s.hd)}
+	sprites[u] = {"tex": ImageTexture.create_from_image(img), "px": 1.0, "grow": 1.0, "hd": false, "frames": int(s.get("frames", 1))}
 
 func world_texture() -> Texture2D:
-	if OS.has_feature("web"):
-		var raw := str(JavaScriptBridge.eval("window.POKO.worldPng", true))
-		var img := Image.new()
-		if img.load_png_from_buffer(Marshalls.base64_to_raw(raw.split(",")[1])) == OK:
-			return ImageTexture.create_from_image(img)
-	return tex_from_png("res://data/world.png")
+	return load("res://data/hd/ground.png")
