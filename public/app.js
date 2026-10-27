@@ -986,7 +986,7 @@
   };
 
   // bump when the map changes so browsers do not keep the old cached image
-  const WORLD_VER = '2026-10-27-wilayah';
+  const WORLD_VER = '2026-10-27-wilayah-pagar';
   // ---------------------------------------------------------------- boot
   window.addEventListener('resize', resize);
   // ~30 fps animation loop (tick keeps the old 420 ms rhythm for lights and fireflies)

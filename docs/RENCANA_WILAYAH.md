@@ -40,3 +40,9 @@ Disetujui pemilik akun 26 Okt 2026. Jangan dibangun sebelum video Hari ke-4 taya
 - Wilayah 1 & 3 memilih; Wilayah 2 dipimpin otomatis oleh Ketua Koloni pertama, Hole (@vanzoka.7).
 - Sudah dibangun: lib/wilayah.js (Calon:/Pilih:, balasan bot, hitung suara, gelar otomatis "Ketua Koloni Wilayah N" saat ditutup), bagian "Pemilihan Ketua Koloni per Wilayah" + "Cek wilayahmu" di halaman awal, admin `pw_status` / `pw_set` / `pw_tetapkan`.
 - Belum: lahan/gapura wilayah di peta, usulan nama `Wilayah:`.
+
+## Peta wilayah (dibangun 27 Okt malam)
+- Wilayah 1, 2, 3 sama besar (radius 12 petak, seukuran Wilayah 3). Pusat: W1 (850,995), W2 (1250,640), W3 (560,520) px.
+- Setiap wilayah dikelilingi pagar kayu (titik pagar disimpan di world.json `pagar` untuk dekorasi nanti), gerbang bertuliskan nama wilayah + jalan setapak ke Pusat Koloni (gerbang tambahan di tempat jalan lama memotong pagar).
+- Balai Warga pindah ke tengah Pusat Koloni (alun-alun batu), di sampingnya Tempat Latihan (3 boneka latihan).
+- Generator: tools/world_export_v4.py (butuh world_gen.py + assets.py dari folder video).
