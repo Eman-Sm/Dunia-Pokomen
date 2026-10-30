@@ -1,7 +1,7 @@
 // Admin API — every request needs  Authorization: Bearer <ADMIN_PASSWORD>
 // Body: { action: '...', ...params }
 import { redis, getJSON, setJSON, hgetallJSON } from '../lib/db.js';
-import { CONFIG, newWarga, log, birth, requireFollow, askIfMissing, ensureTierSchema, matikan, hidupkan } from '../lib/rules.js';
+import { CONFIG, newWarga, log, birth, requireFollow, askIfMissing, ensureTierSchema, matikan, hidupkan, tambahBatu } from '../lib/rules.js';
 import { cekUnfollowOtomatis, bandingkanFollowers, parseFollowers } from '../lib/unfollow.js';
 import { generateArt, quota as geminiQuota } from '../lib/gemini.js';
 import { listStoryReplies, syncStoryReplies } from '../lib/story.js';
@@ -253,6 +253,10 @@ const actions = {
   },
   async item_katalog() { return { katalog: katalog(), riwayat: await riwayatItem(50) }; },
   async pakai_item({ username, item, nilai, bukti }) { return pakaiItem({ username, item, nilai, bukti }); },
+  /** Batu Evolusi: { username, jumlah (boleh negatif), bukti } */
+  async batu_tambah({ username, jumlah, bukti }) { return tambahBatu(username, jumlah, bukti); },
+  /** nyalakan/matikan aturan Legendary & God Mode lewat cerita + Batu Evolusi (setelah diumumkan di video) */
+  async evo_batu({ aktif }) { if (aktif) await redis('SET', 'evo_batu', '1'); else await redis('DEL', 'evo_batu'); return { aktif: (await redis('GET', 'evo_batu')) === '1', syarat: CONFIG.batuEvolusi }; },
   async ob_info() { return ob.adminInfo(); },
   async pengumuman({ text, kabar = true, obrolan = true }) {
     const t = String(text || '').trim().slice(0, 200); if (!t) throw new Error('teks kosong');

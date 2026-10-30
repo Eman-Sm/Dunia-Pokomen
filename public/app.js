@@ -5,7 +5,7 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fmt = (n) => Number(n || 0).toLocaleString('id-ID');
   let TIERS = ['Regular', 'Pseudo-evo', 'Mega Evolution', 'Mythical Evolution', 'Legendary Evolution', 'God Mode'];
-  let BENEFITS = ['-', 'Tumbuh besar', 'Elemen bangkit', 'Armor dasar', 'Outfit custom', 'Ganti wujud dasar'];
+  let BENEFITS = ['-', 'Tumbuh besar', 'Elemen bangkit', 'Armor dasar', '???', '???'];
 
   $('igLink').href = `https://www.instagram.com/${IG_HANDLE}/`;
   $('igLink').textContent = '@' + IG_HANDLE;
