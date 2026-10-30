@@ -74,7 +74,7 @@
     $('stepDM').hidden = !data.wajibFollow;
     fitted = false; refit();
     updateJam();
-    renderBook(); renderVotes(); renderNews(); renderLadder(); renderTierFilter(); renderDukungan(); renderPemilu(); renderPemiluW(); updateMeBar();
+    renderBook(); renderVotes(); renderNews(); renderLadder(); renderTierFilter(); renderDukungan(); renderPemiluW(); updateMeBar();
     const qk = new URLSearchParams(location.search).get('kartu');
     if (qk) { const w = DATA.warga.find((x) => x.u === qk.toLowerCase()); if (w) { select(w); openKartu(w); } }
     draw();
@@ -83,6 +83,19 @@
   // ---------------------------------------------------------------- map
   const box = $('mapbox'), canvas = $('map'), ctx = canvas.getContext('2d');
   let DPR = 1;
+  // ---- Mode Ringan untuk HP spek rendah: resolusi 1x, 15 fps, tanpa efek malam/skill/aura. Otomatis bila HP lemah atau peta tersendat.
+  const LS = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch { /* ignore */ } } };
+  const pilihanRingan = LS.get('pokomen_ringan'); // '1' | '0' | null (otomatis)
+  const hpLemah = (() => { const n = navigator, m = n.deviceMemory, c = n.hardwareConcurrency; return !!((n.connection && n.connection.saveData) || (m && m <= 3) || (c && c <= 4)); })();
+  let RINGAN = pilihanRingan ? pilihanRingan === '1' : hpLemah;
+  function setRingan(on, simpan = true) {
+    RINGAN = !!on; if (simpan) LS.set('pokomen_ringan', on ? '1' : '0');
+    const b = $('liteBtn'); if (b) { b.setAttribute('aria-pressed', String(RINGAN)); b.querySelector('.st').textContent = RINGAN ? 'NYALA' : 'MATI'; }
+    document.body.classList.toggle('ringan', RINGAN);
+    resize();
+  }
+  let petaTerlihat = true;
+  if (window.IntersectionObserver) new IntersectionObserver((es) => { petaTerlihat = es.some((e) => e.isIntersecting); }).observe(box);
   // the map can start hidden (e.g. inside Ruang Admin on a phone): fit the camera once it has a size
   let fitted = false;
   function refit() {
@@ -90,7 +103,7 @@
     const f = fitAll(); cam.x = f.x; cam.y = f.y; cam.z = f.z; fitted = true;
   }
   function resize() {
-    DPR = Math.min(2, window.devicePixelRatio || 1);
+    DPR = RINGAN ? 1 : Math.min(2, window.devicePixelRatio || 1);
     canvas.width = Math.round(box.clientWidth * DPR);
     canvas.height = Math.round(box.clientHeight * DPR);
     refit();
@@ -255,24 +268,23 @@
   // nama resmi wilayah (usulan berstatus "resmi"), mis. Wilayah 1 · Raiko
   function namaWil(n) { const l = ((DATA && DATA.usulNamaWilayah) || {})[n] || []; const r = l.find((x) => x.status === 'resmi'); return r ? r.nama : null; }
   function wilLabel(n) { const nm = namaWil(n); return nm ? `Wilayah ${n} · ${nm}` : `Wilayah ${n}`; }
-  // papan nama wilayah di peta (di bawah hewan, di bagian utara tiap wilayah)
-  function drawWilayahNames() {
-    const C = WORLD && WORLD.wilayah; if (!C || cam.z < .45) return;
-    const COL = { 1: '#ffcd32', 2: '#5aaaff', 3: '#6ec85a' };
-    for (const n of Object.keys(C)) {
-      const nm = namaWil(Number(n)); if (!nm) continue;
-      const [x, y] = toScreen(C[n][0], C[n][1] - 92);
-      const f = Math.round(Math.max(13, Math.min(24, 16 * cam.z)));
-      ctx.font = `800 ${f}px system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      const t = nm.toUpperCase(), tw_ = ctx.measureText(t).width, sub = `WILAYAH ${n}`;
-      const bw = tw_ + f * 1.6, bh = f * 2.1;
-      ctx.globalAlpha = .82; ctx.fillStyle = 'rgba(43,27,23,.55)'; ctx.fillRect(x - bw / 2 + 2, y - bh / 2 + 3, bw, bh);
-      ctx.fillStyle = '#fffcf4'; ctx.fillRect(x - bw / 2, y - bh / 2, bw, bh);
-      ctx.fillStyle = COL[n] || '#d8573a'; ctx.fillRect(x - bw / 2, y - bh / 2, bw, f * .28);
-      ctx.globalAlpha = 1; ctx.fillStyle = '#2b1b17'; ctx.fillText(t, x, y + f * .12);
-      ctx.font = `700 ${Math.round(f * .5)}px system-ui, sans-serif`; ctx.fillStyle = '#7a5a40'; ctx.fillText(sub, x, y + bh / 2 + f * .45);
-      ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
+  // nama wilayah ditulis di papan gapura (world.json "papan": [x, y, n] = tengah papan, koordinat dunia)
+  function wargaDiWilayah(n) { return DATA && DATA.warga ? DATA.warga.some((w) => !w.mati && w.wil === n) : false; }
+  function drawPapanGapura() {
+    const P = WORLD && WORLD.papan; if (!P || cam.z < .35) return;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (const [px, py, n] of P) {
+      const [x, y] = toScreen(px, py);
+      if (x < -60 || y < -30 || x > box.clientWidth + 60 || y > box.clientHeight + 30) continue;
+      const nm = namaWil(n);
+      const t = nm ? nm.toUpperCase() : wargaDiWilayah(n) ? `WILAYAH ${n}` : 'SEGERA';
+      let f = 9 * cam.z; ctx.font = `700 ${f}px "Pixelify Sans", system-ui, sans-serif`;
+      const max = 60 * cam.z, w0 = ctx.measureText(t).width;
+      if (w0 > max) { f *= max / w0; ctx.font = `700 ${f}px "Pixelify Sans", system-ui, sans-serif`; }
+      ctx.fillStyle = nm || wargaDiWilayah(n) ? '#2b1b17' : '#8a6a48';
+      ctx.fillText(t, x, y + .5 * cam.z);
     }
+    ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
   }
   function draw() {
     HEADS.clear();
@@ -285,6 +297,7 @@
     const sx = cam.x - Wc / cam.z / 2, sy = cam.y - Hc / cam.z / 2;
     ctx.drawImage(IMG, sx, sy, Wc / cam.z, Hc / cam.z, 0, 0, Wc, Hc);
     ctx.imageSmoothingEnabled = false;
+    try { drawPapanGapura(); } catch { /* ignore */ }
     const list = allWarga().map((w) => ({ w, p: posOf(w) })).sort((a, b) => a.p[1] - b.p[1]);
     const now = performance.now(), slp = sleeping();
     const labels = [];
@@ -310,10 +323,10 @@
       ctx.beginPath(); ctx.ellipse(x, y, 7 * cam.z, 2.2 * cam.z, 0, 0, Math.PI * 2); ctx.fill();
       if (w.tier >= 4) { ctx.fillStyle = 'rgba(255,210,63,.35)'; ctx.beginPath(); ctx.ellipse(x, y - 10 * cam.z, 15 * cam.z, 14 * cam.z, 0, 0, Math.PI * 2); ctx.fill(); }
       const footY = custom ? dh - 1 * cam.z : 31 * u * s; // feet sit at row 31 of the 36-unit sprite
-      if (sp.hd || custom) { ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; }
+      if ((sp.hd || custom) && !RINGAN) { ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; }
       // flip to face the walking direction, squash a little when breathing / landing a step
       const sq = walking ? 1 + .06 * Math.cos(A.walk * 2) : breath;
-      const SK = slp ? null : skillState(w, A, now);
+      const SK = slp || RINGAN ? null : skillState(w, A, now);
       const lift = SK && SK.kind === 'terbang' ? Math.sin(SK.p * Math.PI) * 16 * cam.z : 0;
       const shake = SK && SK.kind === 'tanah' ? Math.sin(now / 30) * 1.5 * cam.z : 0;
       const alpha = SK && SK.kind === 'hilang' ? (SK.p < .5 ? Math.max(.08, 1 - SK.p * 2) : Math.min(1, (SK.p - .5) * 2)) : 1;
@@ -344,7 +357,6 @@
      } catch (err) { console.warn('sprite gagal', w.u, err); }
     }
     drawSky(Wc, Hc, list);
-    try { drawWilayahNames(); } catch { /* ignore */ }
     // ---- labels: placed by priority; a label that would collide is hidden and becomes a small dot
     const placed = [];
     const hit = (r) => placed.some((q) => r.x < q.x + q.w + 3 && r.x + r.w + 3 > q.x && r.y < q.y + q.h + 3 && r.y + r.h + 3 > q.y);
@@ -411,7 +423,7 @@
     ctx.save();
     ctx.globalCompositeOperation = 'multiply';
     ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`; ctx.fillRect(0, 0, Wc, Hc);
-    if (dark > .25) {
+    if (dark > .25 && !RINGAN) {
       ctx.globalCompositeOperation = 'lighter';
       const a = (dark - .25) / .75;
       const flick = 0.92 + 0.08 * Math.sin(tick * 1.7);
@@ -548,7 +560,7 @@
     }
   }
   function drawChatBubbles() {
-    drawKopiAura();
+    if (!RINGAN) drawKopiAura();
     const list = (window.PokoChat && window.PokoChat.bubbles()) || [];
     const now = Date.now();
     for (const b of list) {
@@ -826,37 +838,7 @@
     n.innerHTML = log.length ? log.slice(0, 10).map((l) => `<li><span class="dot ${esc(l.type)}"></span><span>${esc(l.text)}<time datetime="${esc(l.t)}">${ago(l.t)}</time></span></li>`).join('')
       : '<li class="empty">Desa masih sepi. Kabar pertama muncul begitu warga pertama lahir.</li>';
   }
-  function renderPemilu() {
-    const P = DATA.pemilu;
-    const ketua = DATA.warga.find((w) => w.gelar === 'Ketua Koloni');
-    $('pemilu').hidden = !P || (!P.kandidat.length && !P.tutup && !ketua && !P.menunggu);
-    if ($('pemilu').hidden) return;
-    const clock = $('pemiluClock');
-    const tick = () => {
-      if (ketua && P.closed) { clock.innerHTML = `<small>KETUA KOLONI</small>@${esc(ketua.u)}`; return; }
-      if (!P.tutup) { clock.innerHTML = '<small>STATUS</small>Pemilihan dibuka'; return; }
-      const ms = Date.parse(P.tutup) - Date.now();
-      if (ms <= 0) { clock.innerHTML = '<small>STATUS</small>Ditutup, menunggu pengumuman'; return; }
-      const h = Math.floor(ms / 3.6e6), m = Math.floor(ms / 6e4) % 60, s = Math.floor(ms / 1e3) % 60;
-      clock.innerHTML = `<small>DITUTUP DALAM</small>${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    };
-    tick(); clearInterval(renderPemilu.t); renderPemilu.t = setInterval(tick, 1000);
-    const list = $('klasemen'); list.innerHTML = '';
-    if (!P.kandidat.length) list.innerHTML = P.menunggu
-      ? `<li class="empty" style="display:block;cursor:default">Pemilihan dimulai saat postingan <b>Hari ke-3</b> tayang. Syarat calon: komen di <b>Hari ke-2</b> dan <b>Hari ke-3</b>. Hadir juga di Hari ke-1 untuk nilai tambah!</li>`
-      : '<li class="empty" style="display:block;cursor:default">Belum ada calon. Pemilik yang berkomentar di postingan Hari ke-1, ke-2 dan ke-3 masuk daftar calon!</li>';
-    P.kandidat.forEach((k, i) => {
-      const w = DATA.warga.find((x) => x.u === k.u);
-      const li = document.createElement('li'); if (i === 0) li.className = 'top';
-      li.innerHTML = `<span class="rank">${i + 1}</span><span class="s"></span><span style="min-width:0"><b>@${esc(k.u)}${w ? ' · ' + esc(w.nama) : ''}</b>${k.kampanye ? `<span class="slogan">“${esc(k.kampanye)}”</span>` : ''}</span><span class="likes">${k.hadir ? `<small>${k.hadir} hari</small> ` : ''}♥ ${fmt(k.likes)}</span>`;
-      const s = li.querySelector('.s');
-      if (w) s.replaceWith(spriteNode(w, 44)); else s.textContent = '';
-      if (w) li.onclick = () => { select(w); $('peta').scrollIntoView({ behavior: 'smooth' }); };
-      list.appendChild(li);
-    });
-    $('pemiluNote').textContent = 'Calon: pemilik yang hadir berkomentar di Hari ke-1, 2 dan 3. Peringkat: total like di komentarnya. ' + (P.likesAvailable === false ? 'Jumlah like belum tersedia dari Instagram, peringkat sementara diurutkan dari komentar paling awal. ' : '')
-      + (P.updatedAt ? `Diperbarui ${ago(P.updatedAt)} · ${fmt(P.jumlahCalon)} calon dari ${fmt(P.jumlahPeserta)} akun yang berkomentar.` : '');
-  }
+
   let pwSel = null;
   function cariWarga(q) {
     q = String(q || '').trim(); if (!q) return null;
@@ -866,15 +848,19 @@
   }
   function renderPemiluW() {
     const P = DATA.pemiluWilayah;
-    $('pemiluW').hidden = !P || (P.buka && Date.now() < Date.parse(P.buka) && !/[?&]pw=1/.test(location.search));
+    // tampil saat ada pemilihan yang buka, atau sampai 3 hari setelah ditutup (hasilnya)
+    const lama = P && P.closed && Date.now() - Date.parse(P.tutup) > 3 * 864e5;
+    $('pemiluW').hidden = !P || (lama && !/[?&]pw=1/.test(location.search)) || (P.buka && Date.now() < Date.parse(P.buka) && !/[?&]pw=1/.test(location.search));
     if ($('pemiluW').hidden) return;
     const W = P.wilayah || {};
     const me = ME ? DATA.warga.find((w) => w.u === ME && !w.mati) : null;
-    if (pwSel == null || !W[pwSel]) pwSel = me && W[me.wil] ? me.wil : (Object.values(W).find((x) => x.memilih) || Object.values(W)[0] || {}).n;
+    if (pwSel == null || !W[pwSel]) pwSel = me && W[me.wil] ? me.wil : (Object.values(W).find((x) => x.memilih && !x.closed) || Object.values(W).find((x) => x.memilih) || Object.values(W)[0] || {}).n;
     const clock = $('pwClock');
     const tick = () => {
-      const ms = Date.parse(P.tutup) - Date.now();
-      if (ms <= 0) { clock.innerHTML = `<small>STATUS</small>${P.ditetapkan ? 'Ketua terpilih!' : 'Ditutup, menunggu hasil'}`; return; }
+      const X = W[pwSel]; const tutup = X && X.memilih && X.tutup ? X.tutup : P.tutup; const tetap = X && X.memilih ? X.ditetapkan : P.ditetapkan;
+      if (X && !X.memilih) { clock.innerHTML = `<small>WILAYAH ${X.n}</small>${X.ketua ? 'Sudah punya ketua' : 'Belum memilih'}`; return; }
+      const ms = Date.parse(tutup) - Date.now();
+      if (ms <= 0) { clock.innerHTML = `<small>STATUS</small>${tetap ? 'Ketua terpilih!' : 'Ditutup, menunggu hasil'}`; return; }
       const h = Math.floor(ms / 3.6e6), m = Math.floor(ms / 6e4) % 60, sec = Math.floor(ms / 1e3) % 60;
       clock.innerHTML = `<small>DITUTUP DALAM</small>${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
     };
@@ -893,7 +879,7 @@
     const list = $('pwList'); list.innerHTML = '';
     if (!x.memilih) {
       const k = x.ketua && DATA.warga.find((w) => w.u === x.ketua.u);
-      list.innerHTML = `<li class="empty" style="display:block;cursor:default">${x.ketua ? `Wilayah ${x.n} dipimpin <b>Ketua ${esc(x.ketua.nama)}</b> (@${esc(x.ketua.u)}), Ketua Koloni pertama. Wilayah ini tidak ikut memilih.` : `Wilayah ${x.n} belum ikut pemilihan kali ini.`}</li>`;
+      list.innerHTML = `<li class="empty" style="display:block;cursor:default">${x.ketua ? `${esc(wilLabel(x.n))} dipimpin <b>Ketua ${esc(x.ketua.nama)}</b> (@${esc(x.ketua.u)}). Wilayah ini tidak ikut memilih sekarang.` : `Wilayah ${x.n} belum ikut pemilihan kali ini.`}</li>`;
       if (k) list.firstChild.onclick = () => { select(k); $('peta').scrollIntoView({ behavior: 'smooth' }); };
     } else if (!x.calon.length) {
       list.innerHTML = `<li class="empty" style="display:block;cursor:default">Belum ada calon di Wilayah ${x.n}. Warga wilayah ini bisa mendaftar dengan komentar “Calon: janjimu”!</li>`;
@@ -914,7 +900,8 @@
       if (w) li.onclick = () => { select(w); $('peta').scrollIntoView({ behavior: 'smooth' }); };
       list.appendChild(li);
     });
-    $('pwNote').textContent = P.closed ? 'Pemilihan sudah ditutup.' : `Ditutup ${new Date(P.tutup).toLocaleString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })} WIB. Nilai = suara sah + like di komentar calon pada postingan terbaru. Suara terakhir yang dihitung. Nama kembar ditulis dengan nomor warganya, mis. "Pilih: Raiko 47".` + (P.likesAt ? ` Like diperbarui ${ago(P.likesAt)}.` : '');
+    { const X = W[pwSel] || {}; const tt = X.tutup || P.tutup; const ditutup = Date.now() > Date.parse(tt);
+      $('pwNote').textContent = !X.memilih ? '' : ditutup ? '🔒 Pemilihan wilayah ini sudah ditutup.' : `⏰ Ditutup ${new Date(tt).toLocaleString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })} WIB. Nama kembar? Tulis nomornya, mis. "Pilih: Raiko 47".` + (P.likesAt ? ` Like dicek ${ago(P.likesAt)}.` : ''); }
     const nm = (DATA.usulNamaWilayah || {})[x.n] || [];
     $('pwNamaTitle').textContent = namaWil(x.n) ? `Nama resmi Wilayah ${x.n}: ${namaWil(x.n)}` : `Usulan nama Wilayah ${x.n}`;
     $('pwNama').innerHTML = nm.length ? nm.map((v, i) => `<li${i ? '' : ' class="top"'}><span><b>${esc(v.nama)}</b> <span class="muted">@${esc(v.u)}</span>${v.status === 'resmi' ? ' <span class="gelar">Resmi</span>' : ''}</span><span class="likes">♥ ${fmt(v.likes)}</span></li>`).join('')
@@ -1018,22 +1005,27 @@
   // used by Ruang Admin (same-origin iframe)
   window.Pokomen = {
     data: () => DATA,
+    ringan: () => RINGAN,
     me: () => ME,
     focus(u) { const w = allWarga().find((x) => x.u === String(u).toLowerCase() && !x.makam) || allWarga().find((x) => x.u === String(u).toLowerCase()); if (w) { $('peta').scrollIntoView({ behavior: 'smooth' }); select(w); } return !!w; },
-    async reload() { try { const r = await fetch('api/dunia?t=' + Date.now(), { cache: 'no-store' }); const d = await r.json(); if (!d.error) { DATA = d; renderBook(); renderVotes(); renderNews(); renderPemilu(); renderPemiluW(); $('chipWarga').textContent = fmt(d.jumlahWarga) + ' WARGA'; draw(); } } catch { /* ignore */ } },
+    async reload() { try { const r = await fetch('api/dunia?t=' + Date.now(), { cache: 'no-store' }); const d = await r.json(); if (!d.error) { DATA = d; renderBook(); renderVotes(); renderNews(); renderPemiluW(); $('chipWarga').textContent = fmt(d.jumlahWarga) + ' WARGA'; draw(); } } catch { /* ignore */ } },
   };
 
   // bump when the map changes so browsers do not keep the old cached image
-  const WORLD_VER = '2026-10-27-wilayah-pagar';
+  const WORLD_VER = '2026-10-30-wilayah5';
   // ---------------------------------------------------------------- boot
   window.addEventListener('resize', resize);
   // ~30 fps animation loop (tick keeps the old 420 ms rhythm for lights and fireflies)
-  let last = performance.now();
+  let last = performance.now(), lambat = 0, cekCepat = 0;
   function frame(now) {
     const dt = Math.min(100, now - last);
-    if (dt >= 33) {
+    if (dt >= (RINGAN ? 66 : 33)) {
       last = now; tick = now / 420;
-      if (!document.hidden && DATA && WORLD) { stepActors(now, dt); draw(); }
+      if (!document.hidden && petaTerlihat && DATA && WORLD) {
+        const t0 = performance.now(); stepActors(now, dt); draw(); const kerja = performance.now() - t0;
+        // otomatis pindah ke Mode Ringan kalau menggambar terlalu berat (dan pengguna belum memilih sendiri)
+        if (!RINGAN && !pilihanRingan && cekCepat < 240) { cekCepat++; if (kerja > 24 || dt > 70) lambat++; if (cekCepat >= 90 && lambat > 45) { setRingan(true, false); toast('Mode Ringan dinyalakan supaya peta tidak patah-patah'); } }
+      }
     }
     requestAnimationFrame(frame);
   }
@@ -1043,6 +1035,8 @@
     new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = 'assets/world.png?v=' + WORLD_VER; }),
   ]).then(([w, im]) => {
     WORLD = w; IMG = im;
+    document.body.classList.toggle('ringan', RINGAN);
+    const lb = $('liteBtn'); if (lb) { lb.onclick = () => { setRingan(!RINGAN); toast(RINGAN ? 'Mode Ringan NYALA: peta lebih enteng untuk HP' : 'Mode Ringan MATI: efek lengkap'); }; lb.setAttribute('aria-pressed', String(RINGAN)); lb.querySelector('.st').textContent = RINGAN ? 'NYALA' : 'MATI'; }
     cam.x = w.center[0]; cam.y = w.center[1];
     resize(); cam.z = homeZ();
     load();

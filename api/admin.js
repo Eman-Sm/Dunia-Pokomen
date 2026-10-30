@@ -11,7 +11,7 @@ import { refreshToken, subscribeWebhooks, listMedia, listComments, me, sendDM, r
 import { json, bearer, safeEqual, hariKe } from '../lib/http.js';
 import { katalog, pakaiItem, riwayatItem } from '../lib/item.js';
 import * as ob from '../lib/obrolan.js';
-import { getCfg as pwCfg, setCfg as pwSet, hasilWilayah, tetapkanPemenang, segarkanLike } from '../lib/wilayah.js';
+import { getCfg as pwCfg, setCfg as pwSet, hasilWilayah, tetapkanPemenang, segarkanLike, bukaWilayahBaru, jadwalOf } from '../lib/wilayah.js';
 import { getConfig as pemiluCfg, setConfig as pemiluSet, hitung as pemiluHitung, tetapkanKetua } from '../lib/pemilu.js';
 
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -229,6 +229,14 @@ const actions = {
   },
   async pw_tetapkan({ force }) { await segarkanLike(0, { force: true }); return tetapkanPemenang({ force: !!force }); },
   async pw_like() { return segarkanLike(0, { force: true }); },
+  /** buka pemilihan + usulan nama untuk wilayah baru sekarang (biasanya otomatis) */
+  async pw_buka_baru() { return { dibuka: await bukaWilayahBaru() }; },
+  /** ubah jadwal satu wilayah, mis. { wilayah: 4, tutup: '2026-11-01T05:00:00Z' } */
+  async pw_jadwal({ wilayah, buka, tutup }) {
+    const cfg = await pwCfg(); const J = jadwalOf(cfg); const n = Number(wilayah); if (!J[n]) throw new Error('wilayah ini belum punya jadwal');
+    if (buka) J[n].buka = new Date(buka).toISOString(); if (tutup) { J[n].tutup = new Date(tutup).toISOString(); J[n].ditetapkan = false; }
+    return pwSet({ jadwal: J });
+  },
   async item_katalog() { return { katalog: katalog(), riwayat: await riwayatItem(50) }; },
   async pakai_item({ username, item, nilai, bukti }) { return pakaiItem({ username, item, nilai, bukti }); },
   async ob_info() { return ob.adminInfo(); },

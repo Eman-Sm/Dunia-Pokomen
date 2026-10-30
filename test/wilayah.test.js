@@ -80,3 +80,30 @@ test('nilai = suara + like', async () => {
   const h = await hasilWilayah();
   assert.equal(h.wilayah[1].calon[0].u, 'val'); assert.equal(h.wilayah[1].calon[0].skor, 10 + h.wilayah[1].calon[0].suara);
 });
+
+test('wilayah baru otomatis: nama + pemilihan ketua', async () => {
+  const { bukaWilayahBaru, getCfg, jadwalOf, tutupDefault } = await import('../lib/wilayah.js');
+  const { getJSON } = await import('../lib/db.js');
+  await setCfg({ ditetapkan: true }); // ronde Wilayah 1 & 3 sudah selesai
+  const now = Date.now(); const ts = new Date(now + 6e4).toISOString();
+  assert.deepEqual(await bukaWilayahBaru({ now, post: null }), []); // belum ada warga Wilayah 4
+  await add('d1', 'Kirin', 150); await add('d2', 'Momo', 151); await add('d3', 'Puff', 152);
+  assert.deepEqual(await bukaWilayahBaru({ now, post: null }), [4]);
+  assert.deepEqual(await bukaWilayahBaru({ now, post: null }), []); // tidak dibuka dua kali
+  const J = jadwalOf(await getCfg());
+  assert.equal(J[4].tutup, tutupDefault(now)); assert.equal(J[1].ditetapkan, true);
+  const k = (u, text, cid) => processComment({ id: cid, username: u, text, mediaId: 'p6', timestamp: ts, likeCount: 4 });
+  assert.equal(await k('d1', 'Calon: wilayah utara jaya', 'n1'), 'pw:calon');
+  assert.equal(await k('d2', 'Pilih: Kirin', 'n2'), 'pw:pilih');
+  assert.equal(await k('d3', 'Pilih: Kirin', 'n3'), 'pw:pilih');
+  assert.equal(await k('val', 'Calon: lagi', 'n4'), 'pw:wilayah-tidak-memilih'); // Wilayah 1 sudah punya ketua
+  assert.equal(await k('d2', 'Wilayah: Lembah Utara', 'n5'), 'wil:usul');
+  const h = await hasilWilayah();
+  assert.equal(h.wilayah[4].memilih, true); assert.equal(h.wilayah[4].calon[0].suara, 2); assert.equal(h.closed, false);
+  await assert.rejects(tetapkanPemenang()); // belum ditutup
+  const r = await tetapkanPemenang({ force: true });
+  assert.ok(r.some((x) => x.wilayah === 4 && x.pemenang === 'd1'));
+  assert.equal((await getJSON('warga', 'd1')).gelar, 'Ketua Koloni Wilayah 4');
+  assert.equal((await getJSON('usul_wilayah', 'n5')).status, 'resmi');
+  assert.deepEqual(await bukaWilayahBaru({ now, post: null }), []);
+});

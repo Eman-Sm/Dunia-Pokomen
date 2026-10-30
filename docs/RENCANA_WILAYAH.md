@@ -46,3 +46,10 @@ Disetujui pemilik akun 26 Okt 2026. Jangan dibangun sebelum video Hari ke-4 taya
 - Setiap wilayah dikelilingi pagar kayu (titik pagar disimpan di world.json `pagar` untuk dekorasi nanti), gerbang bertuliskan nama wilayah + jalan setapak ke Pusat Koloni (gerbang tambahan di tempat jalan lama memotong pagar).
 - Balai Warga pindah ke tengah Pusat Koloni (alun-alun batu), di sampingnya Tempat Latihan (3 boneka latihan).
 - Generator: tools/world_export_v4.py (butuh world_gen.py + assets.py dari folder video).
+
+## Update 30 Okt 2026: wilayah baru otomatis + nama di gapura
+- Peta v5 (`tools/world_export_v5.py`): Wilayah 4 (utara, warga 151–200) dan Wilayah 5 (barat daya, 201–250) sudah berpagar & bergapura. Wilayah 6 (warga 251+) butuh lahan baru di peta.
+- Papan gapura kosong di gambar; website menulis nama resmi di papan (`world.json.papan`). Belum bernama: "WILAYAH N"; belum ada warga: "SEGERA".
+- `bukaWilayahBaru()` (dipanggil dari `/api/dunia`, cek tiap menit): begitu wilayah punya warga tapi belum punya ketua/jadwal, otomatis membuka usulan nama + pemilihan ketua, ditutup 2 hari kemudian pukul 12.00 WIB, diumumkan di Kabar Desa & Obrolan. Like dihitung dari postingan terbaru saat dibuka.
+- Saat ditutup, `tetapkanPemenang()` otomatis memberi gelar "Ketua Koloni Wilayah N" dan meresmikan usulan nama dengan like terbanyak.
+- Admin: `pw_buka_baru` (buka sekarang), `pw_jadwal` (ubah tanggal tutup satu wilayah).

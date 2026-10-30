@@ -2,10 +2,9 @@
 import { redis, hgetallJSON } from '../lib/db.js';
 import { publicWarga, publicMakam, CONFIG, ensureTierSchema } from '../lib/rules.js';
 import { json, hariKe } from '../lib/http.js';
-import { hitungJikaBasi, getConfig, publicPemilu } from '../lib/pemilu.js';
 import { papanKopi, isTest, lencanaKopi, BIJI_PER_KOPI } from '../lib/sahabat.js';
 import { namaKembar, normNama } from '../lib/hewan.js';
-import { hasilWilayah, publicHasil, tetapkanPemenang, wilayahOf, daftarUsulWilayah, segarkanLike } from '../lib/wilayah.js';
+import { hasilWilayah, publicHasil, tetapkanPemenang, wilayahOf, daftarUsulWilayah, segarkanLike, bukaWilayahBaru } from '../lib/wilayah.js';
 
 export async function GET() {
   try {
@@ -22,12 +21,14 @@ export async function GET() {
       .filter((x) => x && !x.hidden && !isTest(x)).slice(0, 12)
       .map(({ nama, pesan, unit, jumlah, t }) => ({ nama, pesan, unit: process.env.TRAKTEER_UNIT_NAME || 'Kopi Admin', jumlah, t }));
     const visible = warga.filter((w) => !w.hidden).sort((a, b) => a.spot - b.spot);
-    const [pemiluHasil, pemiluCfg] = await Promise.all([hitungJikaBasi(20), getConfig()]);
     let pw = null;
     try {
+      // wilayah baru (mis. Wilayah 4 saat warga ke-151 lahir) otomatis membuka usulan nama + pemilihan ketua
+      if ((await redis('SET', 'pw_cek_baru', '1', 'NX', 'EX', '60')) === 'OK') { try { await bukaWilayahBaru(); } catch { /* ignore */ } }
       await segarkanLike(10);
       pw = await hasilWilayah();
-      if (pw.closed && !pw.ditetapkan && (await redis('SET', 'pw_tetap_lock', '1', 'NX', 'EX', '120')) === 'OK') { await tetapkanPemenang(); pw = await hasilWilayah(); }
+      const perlu = Object.values(pw.wilayah).some((x) => x.memilih && x.closed && !x.ditetapkan);
+      if (perlu && (await redis('SET', 'pw_tetap_lock', '1', 'NX', 'EX', '120')) === 'OK') { await tetapkanPemenang(); pw = await hasilWilayah(); }
     } catch { pw = null; }
     let namaWil = {};
     try { namaWil = await daftarUsulWilayah(); } catch { /* ignore */ }
@@ -49,7 +50,6 @@ export async function GET() {
       wajibFollow: process.env.REQUIRE_FOLLOW === '1',
       trakteer: process.env.TRAKTEER_URL || null,
       dukungan,
-      pemilu: publicPemilu(pemiluHasil, pemiluCfg),
       pemiluWilayah: pw ? publicHasil(pw) : null,
       usulNamaWilayah: namaWil,
       log: (logRaw || []).map((s) => { try { return JSON.parse(s); } catch { return null; } }).filter((x) => x && !(x.type === 'dukung' && /^\s*\[.*test.*\]/i.test(x.text || ''))),

@@ -89,7 +89,7 @@
     const sec = document.getElementById('obrolan');
     const visible = !document.hidden;
     const near = sec && sec.getBoundingClientRect().top < innerHeight * 1.5;
-    poll(); setTimeout(loop, !visible ? 20000 : near ? 4000 : 9000);
+    poll(); setTimeout(loop, !visible ? 20000 : near ? (window.Pokomen && window.Pokomen.ringan && window.Pokomen.ringan() ? 7000 : 4000) : 9000);
   }
   async function kirim(text) {
     $('obErr').textContent = '';

@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&family=Pixelify+Sans:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=kopi1">
+<link rel="stylesheet" href="style.css?v=ramah1">
 </head>
 <body>
 <header class="topbar">
@@ -23,7 +23,7 @@
       <span><span class="name">DUNIA POKOMEN</span><span class="sub">Populasi Komentar</span></span>
     </a>
     <nav class="tabs" aria-label="Bagian halaman">
-      <a href="#peta">Peta</a><a href="#warga">Buku Warga</a><a href="#fasilitas">Fasilitas</a><a href="#ikut">Cara Ikut</a>
+      <a href="#peta">🗺️ Peta</a><a href="#obrolan">💬 Ngobrol</a><a href="#warga">📖 Warga</a><a href="#ikut">🐣 Cara Ikut</a>
     </nav>
     <div class="chips">
       <span class="chip" id="chipHari">HARI KE-1</span>
@@ -37,19 +37,26 @@
 <main>
   <section class="wrap hero" id="peta">
     <div>
-      <h1>Selamat datang di Dunia Pokomen</h1>
-      <p>Setiap komentar di Instagram kami melahirkan satu warga baru. Geser dan perbesar peta, lalu cari hewanmu.</p>
+      <h1>Dunia Pokomen 🐾</h1>
+      <p>Tulis hewanmu di komentar Instagram, lalu dia <b>lahir di peta ini!</b></p>
+      <ol class="mulai" aria-label="Cara mulai">
+        <li><span class="no">1</span><span><b>Follow</b> @duniapokomen</span></li>
+        <li><span class="no">2</span><span><b>Komen</b> hewanmu</span></li>
+        <li><span class="no">3</span><span>Hewanmu <b>lahir!</b> 🐣</span></li>
+      </ol>
+      <a class="btn mulai-btn" href="#ikut">Lihat caranya ↓</a>
     </div>
-    <div class="bubble" id="bubble">Halo warga! Aku Admin semesta. Hewanmu sudah lahir belum?</div>
+    <div class="bubble" id="bubble">Halo! Aku Admin. Hewanmu sudah lahir belum? Cari di peta ya!</div>
   </section>
 
   <section class="wrap" id="mapSec">
     <div class="mapframe wood">
       <div class="map-tools">
         <form class="search" id="searchForm" role="search">
-          <input type="search" id="searchInput" placeholder="Cari @username atau nama hewan" aria-label="Cari warga">
+          <input type="search" id="searchInput" placeholder="🔍 Cari nama hewan atau @akun" aria-label="Cari warga">
           <button class="btn" type="submit">Cari</button>
         </form>
+        <button class="btn ghost" id="liteBtn" type="button" aria-pressed="false" title="Mode Ringan: peta lebih enteng untuk HP">⚡ <span class="long">Mode Ringan:</span> <span class="st">MATI</span></button>
         <button class="btn ghost sq" id="zoomIn" type="button" aria-label="Perbesar">+</button>
         <button class="btn ghost sq" id="zoomOut" type="button" aria-label="Perkecil">&minus;</button>
         <button class="btn ghost" id="zoomHome" type="button"><span class="long">Lihat semua warga</span><span class="short">Semua</span></button>
@@ -60,7 +67,7 @@
       <div class="mebar" id="meBar" hidden></div>
       <div class="mapbox" id="mapbox">
         <canvas id="map" aria-label="Peta Dunia Pokomen"></canvas>
-        <div class="map-hint" id="mapHint">Seret untuk geser, scroll atau cubit untuk zoom</div>
+        <div class="map-hint" id="mapHint">☝️ Geser peta pakai jari · cubit untuk zoom</div>
         <article class="card" id="card" hidden aria-live="polite"></article>
       </div>
     </div>
@@ -69,7 +76,7 @@
   <section class="wrap" id="obrolan" aria-labelledby="obTitle" style="padding-top:26px">
     <div class="parchment ob">
       <div class="ob-head">
-        <h2 id="obTitle">💬 Obrolan Warga</h2>
+        <h2 id="obTitle">💬 Ngobrol dengan Warga</h2>
         <span class="ob-who" id="obWho"></span>
       </div>
       <div class="ob-tabs" id="obTabs" role="tablist" aria-label="Ruang obrolan"></div>
@@ -82,8 +89,8 @@
         </form>
         <p class="muted ob-err" id="obErr" aria-live="polite"></p>
       </div>
-      <p class="ob-join" id="obJoin">Mau ikut ngobrol? <b>DM kata OBROLAN</b> ke <a href="https://www.instagram.com/duniapokomen/" target="_blank" rel="noopener">@duniapokomen</a> untuk link pribadimu. Tanpa link, kamu tetap bisa membaca.</p>
-      <p class="muted ob-rule">Sopan ya! Tanpa link, nomor HP, atau ajakan pindah ke aplikasi lain. Pesan yang dilaporkan 3 warga disembunyikan.</p>
+      <p class="ob-join" id="obJoin">Mau ikut ngobrol? Kirim <b>DM: OBROLAN</b> ke <a href="https://www.instagram.com/duniapokomen/" target="_blank" rel="noopener">@duniapokomen</a>. Nanti kamu dapat link khusus. Tanpa link, kamu tetap bisa membaca.</p>
+      <p class="muted ob-rule">🙂 Harus sopan. 🚫 Jangan kirim link, nomor HP, atau ajak pindah ke aplikasi lain.</p>
     </div>
   </section>
 
@@ -91,13 +98,18 @@
     <div class="parchment pemilu">
       <div class="pemilu-head">
         <div>
-          <h2 id="pwTitle">Pemilihan Ketua Koloni per Wilayah</h2>
-          <p>Setiap wilayah berisi 50 hewan sesuai nomor warga. Daftar jadi calon dengan komentar <code>Calon: janjimu</code>. Memilih dengan komentar <code>Pilih: nama hewan</code> di postingan terbaru. Kamu hanya bisa memilih calon <b>dari wilayahmu sendiri</b>, dan tidak bisa memilih dirimu sendiri. Nilai calon = <b>suara + like di komentarnya</b> pada postingan terbaru.</p>
+          <h2 id="pwTitle">👑 Pemilihan Ketua Wilayah</h2>
+          <ul class="aturan">
+            <li>Mau jadi ketua? Komen <code>Calon: janjimu</code></li>
+            <li>Mau memilih? Komen <code>Pilih: nama hewan</code></li>
+            <li>Hanya untuk tetangga <b>satu wilayah</b>. Tidak bisa pilih diri sendiri.</li>
+            <li>Nilai = <b>suara + like</b> di komentar calon.</li>
+          </ul>
         </div>
         <div class="pemilu-clock" id="pwClock"></div>
       </div>
       <form class="pw-cek" id="pwCek" autocomplete="off">
-        <label for="pwCekIn"><b>Cek wilayahmu</b></label>
+        <label for="pwCekIn"><b>🏠 Hewanmu tinggal di mana?</b></label>
         <input id="pwCekIn" type="search" placeholder="@username atau nama hewanmu">
         <button class="btn" type="submit">Cek</button>
         <span id="pwCekOut" class="pw-cek-out" aria-live="polite"></span>
@@ -107,31 +119,17 @@
       <ol class="klasemen" id="pwList"></ol>
       <p class="muted" id="pwNote"></p>
       <h3 class="pw-sub" id="pwNamaTitle">Usulan nama wilayah</h3>
-      <p class="muted">Komen <code>Wilayah: nama usulanmu</code>. Usulan masuk ke wilayah hewanmu, dan yang like-nya terbanyak jadi nama resmi (diumumkan Hari ke-5).</p>
+      <p class="muted">Wilayah baru belum punya nama? Komen <code>Wilayah: nama usulanmu</code>. Like terbanyak saat pemilihan ditutup jadi nama resmi dan dipasang di gapura!</p>
       <ol class="pw-nama" id="pwNama"></ol>
-    </div>
-  </section>
-
-  <section class="wrap" id="pemilu" hidden aria-labelledby="pemiluTitle" style="padding-top:26px">
-    <div class="parchment pemilu">
-      <div class="pemilu-head">
-        <div>
-          <h2 id="pemiluTitle">Pemilihan Ketua Koloni</h2>
-          <p>Calon adalah pemilik hewan yang <b>hadir berkomentar di postingan Hari ke-1, ke-2 dan ke-3</b>. Di antara calon, yang menang adalah yang <b>total like di komentarnya paling banyak</b>. Tulis <code>Kampanye: …</code> untuk menampilkan slogan.</p>
-        </div>
-        <div class="pemilu-clock" id="pemiluClock"></div>
-      </div>
-      <ol class="klasemen" id="klasemen"></ol>
-      <p class="muted" id="pemiluNote"></p>
     </div>
   </section>
 
   <div class="wrap ledger">
     <section class="parchment" id="warga" aria-labelledby="wargaTitle">
-      <h2 id="wargaTitle">Buku Warga</h2>
-      <p id="wargaSub">Semua hewan yang sudah lahir dari kolom komentar.</p>
+      <h2 id="wargaTitle">📖 Buku Warga</h2>
+      <p id="wargaSub">Semua hewan yang sudah lahir.</p>
       <div class="filters">
-        <input type="search" id="bookSearch" placeholder="Saring nama, @akun, atau hewan" aria-label="Saring warga">
+        <input type="search" id="bookSearch" placeholder="🔍 Cari di buku warga" aria-label="Saring warga">
         <div class="filters" id="tierFilter" role="group" aria-label="Saring tingkat" style="margin:0"></div>
       </div>
       <div class="grid" id="book"></div>
@@ -140,13 +138,13 @@
 
     <div class="col">
       <section class="parchment" id="fasilitas" aria-labelledby="fasTitle">
-        <h2 id="fasTitle">Usulan Fasilitas</h2>
-        <p>Usulan dengan like terbanyak dibangun di episode berikutnya.</p>
+        <h2 id="fasTitle">🏗️ Usulan Bangunan</h2>
+        <p>Komen <code>Usul: nama bangunan</code>. Like terbanyak dibangun!</p>
         <ul class="votes" id="votes"></ul>
       </section>
       <section class="parchment" id="dukungan" aria-labelledby="dukTitle" hidden>
-        <h2 id="dukTitle">Kopi Ronda Admin</h2>
-        <p>Tiap malam Admin begadang ronda, menjaga para warga dari netizen jahil. Kirim kopi supaya Admin tetap melek!</p>
+        <h2 id="dukTitle">☕ Kopi untuk Admin</h2>
+        <p>Admin begadang menjaga warga tiap malam. Kirim kopi supaya Admin tetap melek!</p>
         <div class="melek" id="melek"></div>
         <div class="kopi-hadiah">
           <b>Yang kamu dapat dari setiap kopi:</b>
@@ -163,8 +161,8 @@
         <a class="btn traktir" id="traktirBtn" href="#" target="_blank" rel="noopener" style="margin-top:14px;display:inline-block">Kirim Kopi lewat Trakteer</a>
       </section>
       <section class="parchment" aria-labelledby="newsTitle">
-        <h2 id="newsTitle">Kabar Desa</h2>
-        <p>Kelahiran, evolusi, dan pembangunan terbaru.</p>
+        <h2 id="newsTitle">📰 Kabar Desa</h2>
+        <p>Siapa yang baru lahir, berevolusi, dan apa yang dibangun.</p>
         <ul class="news" id="news"></ul>
       </section>
     </div>
@@ -173,34 +171,31 @@
   <section class="wrap join" id="ikut" aria-labelledby="ikutTitle">
     <div class="parchment">
       <div>
-        <h2 id="ikutTitle">Cara jadi warga</h2>
+        <h2 id="ikutTitle">🐣 Cara jadi warga</h2>
         <ol class="steps">
-          <li><span><b>Follow</b> dan buka postingan terbaru <a id="igLink" href="https://www.instagram.com/duniapokomen/" target="_blank" rel="noopener">@duniapokomen</a> dan tulis komentar dengan format di samping.</span></li>
-          <li id="stepDM" hidden><span>Cek DM dari Admin, lalu balas dengan kata <b>LAHIR</b>. Admin akan mengecek apakah kamu sudah follow.</span></li>
-          <li><span>Dalam beberapa menit hewanmu lahir dan muncul di peta. Kalau komentarmu menyertakan <b>Cerita</b>, hewanmu langsung lahir sebagai <b>Pseudo-evo</b>; tanpa cerita ia lahir sebagai <b>Regular</b>.</span></li>
-          <li><span>Di postingan berikutnya, ceritakan satu kebiasaan unik hewanmu. Setiap cerita di postingan baru membuatnya naik satu tier, sampai <b>Mythical Evolution</b>.</span></li>
-          <li><span>Di <b>Mega Evolution</b> elemen hewanmu bangkit. Kalau belum kamu sebut, Admin akan bertanya lewat balasan komentar.</span></li>
-          <li><span>Gelar <b>Ketua Koloni</b> dipilih lewat jumlah hari hadir di komentar, lalu like sebagai penentu jika seri. Gelarnya hanya kosmetik.</span></li>
-          <li><span><b>Jangan unfollow!</b> Kalau kamu berhenti follow @duniapokomen, hewanmu mati karena diterlantarkan dan hanya tersisa makamnya di peta.</span></li>
-          <li><span><b>Legendary Evolution</b> (outfit custom) dan <b>God Mode</b> (ganti wujud dasar) hanya diberikan Admin untuk warga paling berkesan.</span></li>
+          <li><span><b>Follow</b> <a id="igLink" href="https://www.instagram.com/duniapokomen/" target="_blank" rel="noopener">@duniapokomen</a> di Instagram.</span></li>
+          <li><span><b>Komen</b> di postingan terbaru. Pakai contoh di samping, ganti dengan hewanmu sendiri.</span></li>
+          <li id="stepDM" hidden><span>Cek DM dari Admin, lalu balas kata <b>LAHIR</b>.</span></li>
+          <li><span>Tunggu sebentar… hewanmu <b>lahir di peta!</b> 🐣 Kalau kamu tulis <b>Cerita</b>, dia langsung lebih kuat.</span></li>
+          <li><span>Mau makin kuat? Di postingan berikutnya, komen <b>Cerita</b> tentang kegiatan hewanmu. Tiap cerita = <b>naik 1 tingkat</b>, sampai <b>Mythical</b> ✨</span></li>
+          <li><span>Di tingkat <b>Mega</b>, hewanmu dapat <b>elemen</b>: api, air, petir, dan lainnya.</span></li>
+          <li><span>⚠️ <b>Jangan unfollow!</b> Kalau unfollow, hewanmu mati dan jadi makam.</span></li>
         </ol>
         <div class="ladder" id="ladder"></div>
       </div>
       <div>
-        <h3 class="display" style="margin:0 0 6px">Daftar jadi warga</h3>
+        <h3 class="display" style="margin:0 0 6px">🐣 Contoh komen untuk lahir</h3>
         <div class="formatbox" id="fmt1">Nama: Bolu | Hewan: Kucing + Naga | Cerita: suka menghangatkan air mandi warga</div>
-        <div class="copyrow"><button class="btn" type="button" data-copy="fmt1">Salin format</button><span class="muted">Ganti isinya dengan hewanmu sendiri.</span></div>
-        <h3 class="display" style="margin:0 0 6px">Evolusi lewat cerita</h3>
+        <div class="copyrow"><button class="btn" type="button" data-copy="fmt1">Salin format</button><span class="muted">Ganti dengan hewanmu sendiri.</span></div>
+        <h3 class="display" style="margin:0 0 6px">✨ Contoh komen supaya naik tingkat</h3>
         <div class="formatbox" id="fmt2">Cerita: hari ini Bolu belajar berenang di danau barat</div>
         <div class="copyrow"><button class="btn" type="button" data-copy="fmt2">Salin format</button></div>
-        <h3 class="display" style="margin:0 0 6px">Usulkan fasilitas</h3>
+        <h3 class="display" style="margin:0 0 6px">🏗️ Usul bangunan</h3>
         <div class="formatbox" id="fmt3">Usul: Kolam Minum</div>
         <div class="copyrow"><button class="btn" type="button" data-copy="fmt3">Salin format</button></div>
-        <h3 class="display" style="margin:0 0 6px">Elemen, outfit, dan wujud</h3>
-        <div class="formatbox" id="fmt4">Elemen: Petir
-Outfit: jubah ninja merah dengan syal emas
-Wujud Dewa: Mecha Beast</div>
-        <div class="copyrow"><span class="muted">Elemen muncul di Mega Evolution, outfit di Legendary, wujud di God Mode. Boleh ditulis lebih awal.</span></div>
+        <h3 class="display" style="margin:0 0 6px">🔥 Pilih elemen hewanmu</h3>
+        <div class="formatbox" id="fmt4">Elemen: Petir</div>
+        <div class="copyrow"><button class="btn" type="button" data-copy="fmt4">Salin format</button><span class="muted">Elemen muncul di tingkat Mega. Legendary &amp; God Mode hanya dari Admin untuk warga spesial.</span></div>
       </div>
     </div>
   </section>
@@ -221,7 +216,7 @@ Wujud Dewa: Mecha Beast</div>
 <script src="creature-hd.js?v=2026-10-25"></script>
 <script src="creature.js?v=kr1"></script>
 <script src="card.js?v=sohabat"></script>
-<script src="app.js?v=kopi1"></script>
-<script src="obrolan.js?v=kopi1"></script>
+<script src="app.js?v=ramah1"></script>
+<script src="obrolan.js?v=ramah1"></script>
 </body>
 </html>

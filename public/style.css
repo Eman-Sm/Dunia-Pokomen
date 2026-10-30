@@ -542,3 +542,42 @@ body.embed .mebar { display: none; }
 .kopi-hadiah { background: #fff3dc; border: 2px solid #c8915a; padding: 8px 12px; margin: 10px 0; }
 .kopi-hadiah ul { margin: 6px 0; padding-left: 4px; list-style: none; display: grid; gap: 4px; }
 .skill.kopi-emas { background: #fff3c4; } .skill.kopi-perak { background: #eef1f5; } .skill.kopi-perunggu { background: #f6e6d6; }
+
+/* ---------- Ramah anak (30 Okt): tulisan lebih besar, tombol mudah ditekan, langkah singkat ---------- */
+body { font-size: 17px; }
+.muted { font-size: .95rem; }
+.tier, .gelar { font-size: .88rem; }
+.news li { font-size: 1rem; }
+.news time { font-size: .85rem; }
+.wcard span { font-size: .88rem; }
+.ladder small { font-size: .85rem; }
+.ladder b { font-size: .92rem; }
+.parchment h2 { font-size: 1.75rem; }
+.btn { min-height: 44px; }
+.btn.sq { min-width: 44px; }
+.pill, .tchip { min-height: 40px; font-size: .95rem; }
+input[type=search], input:not([type]), .search input { min-height: 44px; font-size: 16px; }
+.map-hint { font-size: .9rem; }
+code { font-family: var(--font-display); background: #2b2420; color: #ffe27a; padding: 1px 7px; border-radius: 2px; white-space: nowrap; }
+.steps li { font-size: 1.04rem; }
+.aturan { margin: 6px 0 0; padding-left: 0; list-style: none; display: grid; gap: 6px; }
+.aturan li { background: #fff8e7; border: 2px solid var(--outline); padding: 6px 10px; font-size: 1rem; }
+.mulai { list-style: none; padding: 0; margin: 14px 0 10px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; max-width: 560px; }
+.mulai li { display: flex; align-items: center; gap: 8px; background: var(--parchment); border: var(--px) solid var(--outline); box-shadow: 0 var(--px) 0 var(--outline); padding: 8px 10px; font-size: 1rem; line-height: 1.2; color: var(--ink); }
+.mulai .no { flex: none; display: grid; place-items: center; width: 34px; height: 34px; font-family: var(--font-display); font-size: 1.2rem; background: var(--gold); border: var(--px) solid var(--outline); }
+.mulai-btn { display: inline-grid; place-items: center; font-size: 1.05rem; }
+#liteBtn[aria-pressed="true"] { background: var(--gold); color: var(--outline); }
+@media (max-width: 640px) {
+  body { font-size: 17px; }
+  .topbar nav.tabs { flex-wrap: wrap; overflow: visible; }
+  .topbar nav.tabs a { font-size: .92rem; padding: 3px 7px; }
+  .klasemen li { grid-template-columns: 30px 44px minmax(0, 1fr); }
+  .klasemen .pw-act { grid-column: 2 / -1; justify-content: flex-start; }
+  .mulai { grid-template-columns: 1fr; }
+  .mulai li { font-size: 1.05rem; }
+  .hero p { font-size: 1.05rem; }
+}
+/* Mode Ringan: tanpa animasi & efek mahal */
+body.ringan *, body.ringan *::before, body.ringan *::after { animation: none !important; transition: none !important; }
+body.ringan { background-image: none; }
+body.ringan .kartu .foil, body.ringan .kartu .glare { display: none; }
