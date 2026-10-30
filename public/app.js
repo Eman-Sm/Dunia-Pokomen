@@ -313,14 +313,16 @@
       const sp = spriteFor(w);
       const custom = sp instanceof HTMLImageElement;
       const u = custom ? 1 : (sp.px || 1); // HD sprites have px units per pixel
-      const s = cam.z * (custom ? 26 * (w.tier >= 3 ? 1.5 : w.tier >= 2 ? 1.3 : 1.1) / Math.max(sp.width, sp.height * .9) : (sp.grow || 1) / u);
+      const besar = w.gelar ? 2 : 1; // hewan bergelar (Ketua Koloni) 2x lebih besar
+      const s = cam.z * (custom ? 26 * (w.tier >= 3 ? 1.5 : w.tier >= 2 ? 1.3 : 1.1) / Math.max(sp.width, sp.height * .9) : (sp.grow || 1) / u) * besar;
       const A = actor(w);
       const walking = A.mode === 'walk';
       const bob = walking ? Math.abs(Math.sin(A.walk)) * 2.2 * cam.z : 0;
       const breath = slp ? 1 + .02 * Math.sin(now / 900 + A.seed) : 1 + .025 * Math.sin(now / 420 + A.seed);
       const dw = sp.width * s, dh = sp.height * s;
+      if (besar > 1) drawAuraGelar(x, y - bob, dh, now, A.seed);
       ctx.fillStyle = 'rgba(20,30,10,.28)';
-      ctx.beginPath(); ctx.ellipse(x, y, 7 * cam.z, 2.2 * cam.z, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(x, y, 7 * cam.z * besar, 2.2 * cam.z * besar, 0, 0, Math.PI * 2); ctx.fill();
       if (w.tier >= 4) { ctx.fillStyle = 'rgba(255,210,63,.35)'; ctx.beginPath(); ctx.ellipse(x, y - 10 * cam.z, 15 * cam.z, 14 * cam.z, 0, 0, Math.PI * 2); ctx.fill(); }
       const footY = custom ? dh - 1 * cam.z : 31 * u * s; // feet sit at row 31 of the 36-unit sprite
       if ((sp.hd || custom) && !RINGAN) { ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; }
@@ -423,6 +425,17 @@
     ctx.save();
     ctx.globalCompositeOperation = 'multiply';
     ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`; ctx.fillRect(0, 0, Wc, Hc);
+    // hewan bergelar tetap bersinar terang walau sore/malam (juga di Mode Ringan)
+    ctx.globalCompositeOperation = 'lighter';
+    for (const { w, p } of list) {
+      if (!w.gelar || w.mati) continue;
+      const [sx, sy] = toScreen(p[0], p[1] - 26); const R = 62 * cam.z * (.9 + .1 * Math.sin(tick * 1.3));
+      if (sx < -R || sy < -R || sx > Wc + R || sy > Hc + R) continue;
+      const gr = ctx.createRadialGradient(sx, sy, 0, sx, sy, R);
+      gr.addColorStop(0, `rgba(255,225,120,${.12 + .18 * dark})`); gr.addColorStop(.45, `rgba(255,205,90,${.22 + .3 * Math.max(dark, warm * .6)})`); gr.addColorStop(.75, `rgba(255,180,60,${.1 + .15 * dark})`); gr.addColorStop(1, 'rgba(255,170,40,0)');
+      ctx.fillStyle = gr; ctx.fillRect(sx - R, sy - R, R * 2, R * 2);
+    }
+    ctx.globalCompositeOperation = 'multiply';
     if (dark > .25 && !RINGAN) {
       ctx.globalCompositeOperation = 'lighter';
       const a = (dark - .25) / .75;
@@ -546,6 +559,32 @@
   // ---- Obrolan Warga: what a citizen wrote pops up above its head for a few seconds
   const HEADS = new Map();
   // supporters: warm coffee steam over the creature for 24 h after sending a coffee
+  // aura bersinar untuk hewan bergelar: cahaya emas berdenyut + sinar berputar + kilau
+  function drawAuraGelar(x, y, dh, now, seed) {
+    const cy = y - dh * .42, R = dh * .78, pulse = .85 + .15 * Math.sin(now / 380 + seed);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const g = ctx.createRadialGradient(x, cy, 0, x, cy, R * pulse);
+    g.addColorStop(0, 'rgba(255,240,150,.95)'); g.addColorStop(.45, 'rgba(255,205,70,.55)'); g.addColorStop(1, 'rgba(255,170,40,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, cy, R * pulse, 0, Math.PI * 2); ctx.fill();
+    if (!RINGAN) {
+      const rot = now / 2600 + seed;
+      ctx.fillStyle = 'rgba(255,240,170,.42)';
+      for (let i = 0; i < 10; i++) {
+        const a0 = rot + i * Math.PI / 5, a1 = a0 + .12;
+        ctx.beginPath(); ctx.moveTo(x, cy);
+        ctx.lineTo(x + Math.cos(a0) * R * 1.15, cy + Math.sin(a0) * R * .9); ctx.lineTo(x + Math.cos(a1) * R * 1.15, cy + Math.sin(a1) * R * .9); ctx.closePath(); ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+      for (let i = 0; i < 6; i++) {
+        const ph = ((now / 900 + i / 6 + seed) % 1), ang = i * 1.05 + seed;
+        const sx = x + Math.cos(ang) * R * .7, sy = cy + Math.sin(ang) * R * .55 - ph * dh * .25, k = Math.max(1.5, cam.z * 1.6) * Math.sin(ph * Math.PI);
+        ctx.fillStyle = `rgba(255,250,210,${.95 * Math.sin(ph * Math.PI)})`;
+        ctx.fillRect(sx - k, sy - k / 3, k * 2, k / 1.5); ctx.fillRect(sx - k / 3, sy - k, k / 1.5, k * 2);
+      }
+    }
+    ctx.restore();
+  }
   function drawKopiAura() {
     if (!DATA) return;
     const t = performance.now() / 1000;

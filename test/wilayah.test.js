@@ -84,10 +84,13 @@ test('nilai = suara + like', async () => {
 test('wilayah baru otomatis: nama + pemilihan ketua', async () => {
   const { bukaWilayahBaru, getCfg, jadwalOf, tutupDefault } = await import('../lib/wilayah.js');
   const { getJSON } = await import('../lib/db.js');
-  await setCfg({ ditetapkan: true }); // ronde Wilayah 1 & 3 sudah selesai
+  await setCfg({ ditetapkan: true, tunda: [] }); // ronde Wilayah 1 & 3 sudah selesai
   const now = Date.now(); const ts = new Date(now + 6e4).toISOString();
   assert.deepEqual(await bukaWilayahBaru({ now, post: null }), []); // belum ada warga Wilayah 4
   await add('d1', 'Kirin', 150); await add('d2', 'Momo', 151); await add('d3', 'Puff', 152);
+  await setCfg({ tunda: [4] });
+  assert.deepEqual(await bukaWilayahBaru({ now, post: null }), []); // ditahan sampai diumumkan
+  await setCfg({ tunda: [] });
   assert.deepEqual(await bukaWilayahBaru({ now, post: null }), [4]);
   assert.deepEqual(await bukaWilayahBaru({ now, post: null }), []); // tidak dibuka dua kali
   const J = jadwalOf(await getCfg());

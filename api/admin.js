@@ -230,6 +230,20 @@ const actions = {
   async pw_tetapkan({ force }) { await segarkanLike(0, { force: true }); return tetapkanPemenang({ force: !!force }); },
   async pw_like() { return segarkanLike(0, { force: true }); },
   /** buka pemilihan + usulan nama untuk wilayah baru sekarang (biasanya otomatis) */
+  /** tahan/lepas pembukaan otomatis sebuah wilayah, mis. { wilayah: 4, tunda: true } (dibuka lagi otomatis saat dilepas) */
+  async pw_tunda({ wilayah, tunda = true }) {
+    const cfg = await pwCfg(); const n = Number(wilayah); const J = jadwalOf(cfg);
+    let T = (cfg.tunda || []).map(Number).filter((x) => x !== n);
+    if (tunda) { T.push(n); if (J[n] && !J[n].ditetapkan) delete J[n]; await redis('DEL', 'pw_buka_lock:' + n); }
+    return pwSet({ tunda: T, jadwal: J });
+  },
+  /** hapus entri Kabar Desa yang teksnya mengandung `cocok` */
+  async log_hapus({ cocok }) {
+    const c = String(cocok || ''); if (c.length < 6) throw new Error('teks pencocok terlalu pendek');
+    const all = (await redis('LRANGE', 'log', 0, 199)) || []; let n = 0;
+    for (const x of all) { if (x.includes(c)) { await redis('LREM', 'log', 0, x); n++; } }
+    return { dihapus: n };
+  },
   async pw_buka_baru() { return { dibuka: await bukaWilayahBaru() }; },
   /** ubah jadwal satu wilayah, mis. { wilayah: 4, tutup: '2026-11-01T05:00:00Z' } */
   async pw_jadwal({ wilayah, buka, tutup }) {
