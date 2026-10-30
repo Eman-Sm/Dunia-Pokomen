@@ -252,6 +252,28 @@
   }
   const posOf = (w) => { if (w.mati) return spotOf(w); const a = actor(w); return [a.x, a.y]; };
 
+  // nama resmi wilayah (usulan berstatus "resmi"), mis. Wilayah 1 · Raiko
+  function namaWil(n) { const l = ((DATA && DATA.usulNamaWilayah) || {})[n] || []; const r = l.find((x) => x.status === 'resmi'); return r ? r.nama : null; }
+  function wilLabel(n) { const nm = namaWil(n); return nm ? `Wilayah ${n} · ${nm}` : `Wilayah ${n}`; }
+  // papan nama wilayah di peta (di bawah hewan, di bagian utara tiap wilayah)
+  function drawWilayahNames() {
+    const C = WORLD && WORLD.wilayah; if (!C || cam.z < .45) return;
+    const COL = { 1: '#ffcd32', 2: '#5aaaff', 3: '#6ec85a' };
+    for (const n of Object.keys(C)) {
+      const nm = namaWil(Number(n)); if (!nm) continue;
+      const [x, y] = toScreen(C[n][0], C[n][1] - 92);
+      const f = Math.round(Math.max(13, Math.min(24, 16 * cam.z)));
+      ctx.font = `800 ${f}px system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const t = nm.toUpperCase(), tw_ = ctx.measureText(t).width, sub = `WILAYAH ${n}`;
+      const bw = tw_ + f * 1.6, bh = f * 2.1;
+      ctx.globalAlpha = .82; ctx.fillStyle = 'rgba(43,27,23,.55)'; ctx.fillRect(x - bw / 2 + 2, y - bh / 2 + 3, bw, bh);
+      ctx.fillStyle = '#fffcf4'; ctx.fillRect(x - bw / 2, y - bh / 2, bw, bh);
+      ctx.fillStyle = COL[n] || '#d8573a'; ctx.fillRect(x - bw / 2, y - bh / 2, bw, f * .28);
+      ctx.globalAlpha = 1; ctx.fillStyle = '#2b1b17'; ctx.fillText(t, x, y + f * .12);
+      ctx.font = `700 ${Math.round(f * .5)}px system-ui, sans-serif`; ctx.fillStyle = '#7a5a40'; ctx.fillText(sub, x, y + bh / 2 + f * .45);
+      ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
+    }
+  }
   function draw() {
     HEADS.clear();
     if (!IMG || !DATA) return;
@@ -322,6 +344,7 @@
      } catch (err) { console.warn('sprite gagal', w.u, err); }
     }
     drawSky(Wc, Hc, list);
+    try { drawWilayahNames(); } catch { /* ignore */ }
     // ---- labels: placed by priority; a label that would collide is hidden and becomes a small dot
     const placed = [];
     const hit = (r) => placed.some((q) => r.x < q.x + q.w + 3 && r.x + r.w + 3 > q.x && r.y < q.y + q.h + 3 && r.y + r.h + 3 > q.y);
@@ -708,7 +731,7 @@
       <div class="card-head"><span id="cardSprite"></span>
         <div><h3>${esc(namaTampil(w))}</h3>
           <a class="handle" href="https://www.instagram.com/${encodeURIComponent(w.u)}/" target="_blank" rel="noopener">@${esc(w.u)}</a><br>
-          <span class="tier t${w.tier}">${esc(w.tierNama || TIERS[w.tier])}</span>${w.gelar ? `<span class="gelar">${esc(w.gelar)}</span>` : ''}${w.sahabat ? '<span class="gelar sahabat">♛ Sohabat Admin</span>' : ''}${w.wil ? `<span class="gelar wil">Wilayah ${w.wil}</span>` : ''}</div></div>
+          <span class="tier t${w.tier}">${esc(w.tierNama || TIERS[w.tier])}</span>${w.gelar ? `<span class="gelar">${esc(w.gelar)}</span>` : ''}${w.sahabat ? '<span class="gelar sahabat">♛ Sohabat Admin</span>' : ''}${w.wil ? `<span class="gelar wil">${esc(wilLabel(w.wil))}</span>` : ''}</div></div>
       <ul class="hewan">${(w.hewan || []).map((h) => `<li>${esc(h)}</li>`).join('')}</ul>
       ${w.kopi ? `<p class="skill kopi-${esc(w.lencana)}">☕ <b>${{ emas: 'Pendukung Emas', perak: 'Pendukung Perak', perunggu: 'Pendukung Perunggu' }[w.lencana] || 'Pendukung'}</b> · ${fmt(w.kopi)} ${esc((DATA.dukunganUnit) || 'Kopi Admin')}${w.sahabat ? ' · terbanyak!' : ''}<br><span class="muted">Dompet: <b>${fmt(w.biji)} Biji Kopi</b> (dipakai saat Toko Pokomen buka)</span></p>` : ''}
       ${w.skill ? `<p class="skill">✦ Skill: <b>${esc(w.skill)}</b></p>` : w.tier >= 3 ? '<p class="muted">Skill belum diisi. Pemiliknya bisa menulis <b>Skill: ...</b> di komentar.</p>' : ''}
@@ -860,13 +883,13 @@
     Object.values(W).forEach((x) => {
       const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab');
       b.setAttribute('aria-selected', String(x.n === pwSel));
-      b.innerHTML = `Wilayah ${x.n}${me && me.wil === x.n ? ' <span class="mine">★</span>' : ''}`;
+      b.innerHTML = `${esc(wilLabel(x.n))}${me && me.wil === x.n ? ' <span class="mine">★</span>' : ''}`;
       b.onclick = () => { pwSel = x.n; renderPemiluW(); };
       tabs.appendChild(b);
     });
     const x = W[pwSel] || { calon: [] };
     const dari = (x.n - 1) * (P.ukuran || 50) + 1;
-    $('pwInfo').innerHTML = `Wilayah ${x.n}: warga nomor ${dari}–${dari + (P.ukuran || 50) - 1} · ${fmt(x.warga)} hewan` + (x.memilih ? ` · ${fmt(x.suara)} suara sah` : '');
+    $('pwInfo').innerHTML = `${esc(wilLabel(x.n))}: warga nomor ${dari}–${dari + (P.ukuran || 50) - 1} · ${fmt(x.warga)} hewan` + (x.memilih ? ` · ${fmt(x.suara)} suara sah` : '');
     const list = $('pwList'); list.innerHTML = '';
     if (!x.memilih) {
       const k = x.ketua && DATA.warga.find((w) => w.u === x.ketua.u);
@@ -893,7 +916,7 @@
     });
     $('pwNote').textContent = P.closed ? 'Pemilihan sudah ditutup.' : `Ditutup ${new Date(P.tutup).toLocaleString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })} WIB. Nilai = suara sah + like di komentar calon pada postingan terbaru. Suara terakhir yang dihitung. Nama kembar ditulis dengan nomor warganya, mis. "Pilih: Raiko 47".` + (P.likesAt ? ` Like diperbarui ${ago(P.likesAt)}.` : '');
     const nm = (DATA.usulNamaWilayah || {})[x.n] || [];
-    $('pwNamaTitle').textContent = `Usulan nama Wilayah ${x.n}`;
+    $('pwNamaTitle').textContent = namaWil(x.n) ? `Nama resmi Wilayah ${x.n}: ${namaWil(x.n)}` : `Usulan nama Wilayah ${x.n}`;
     $('pwNama').innerHTML = nm.length ? nm.map((v, i) => `<li${i ? '' : ' class="top"'}><span><b>${esc(v.nama)}</b> <span class="muted">@${esc(v.u)}</span>${v.status === 'resmi' ? ' <span class="gelar">Resmi</span>' : ''}</span><span class="likes">♥ ${fmt(v.likes)}</span></li>`).join('')
       : `<li class="muted">Belum ada usulan nama untuk Wilayah ${x.n}.</li>`;
     const form = $('pwCek');
@@ -903,7 +926,7 @@
       const out = $('pwCekOut');
       if (!w) { out.textContent = 'Hewan tidak ditemukan. Tulis @username Instagram-mu atau nama hewanmu.'; return; }
       const xw = W[w.wil];
-      out.innerHTML = `<b>${esc(namaTampil(w))}</b> (warga no. ${(w.spot ?? 0) + 1}) tinggal di <b>Wilayah ${w.wil}</b>. ` + (xw && xw.memilih ? `Pilih salah satu calon di bawah, lalu tempel di komentar.` : xw && xw.ketua ? `Wilayahmu dipimpin Ketua ${esc(xw.ketua.nama)}.` : '');
+      out.innerHTML = `<b>${esc(namaTampil(w))}</b> (warga no. ${(w.spot ?? 0) + 1}) tinggal di <b>${esc(wilLabel(w.wil))}</b>. ` + (xw && xw.memilih ? `Pilih salah satu calon di bawah, lalu tempel di komentar.` : xw && xw.ketua ? `Wilayahmu dipimpin Ketua ${esc(xw.ketua.nama)}.` : '');
       pwSel = w.wil; if (!ME) setMe(w.u); renderPemiluW(); $('pwCekOut').innerHTML = out.innerHTML;
     };
   }

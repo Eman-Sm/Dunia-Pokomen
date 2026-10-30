@@ -27,7 +27,7 @@
   function tabs() {
     const el = $('obTabs'); el.innerHTML = '';
     const rooms = [['semua', 'Semua warga']];
-    for (const n of wilayahList()) rooms.push(['w' + n, state.me && state.me.wil === n ? `Wilayahku (${n})` : `Wilayah ${n}`]);
+    for (const n of wilayahList()) { const l = ((window.Pokomen && window.Pokomen.data && window.Pokomen.data()) || {}).usulNamaWilayah || {}; const r = (l[n] || []).find((x) => x.status === 'resmi'); const nm = r ? ' · ' + r.nama : ''; rooms.push(['w' + n, state.me && state.me.wil === n ? `Wilayahku (${n}${nm})` : `Wilayah ${n}${nm}`]); }
     for (const [r, lab] of rooms) {
       const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.textContent = lab;
       b.setAttribute('aria-selected', String(r === state.ruang));

@@ -45,7 +45,10 @@ test('pemilihan ketua per wilayah', async () => {
   assert.equal(h.wilayah[1].calon[0].nama, 'Raiko 45');
   assert.equal(h.wilayah[2].ketua.nama, 'Hole'); assert.equal(h.wilayah[2].memilih, false);
   assert.equal(h.wilayah[3].calon[0].suara, 1);
+  // belum ditutup (tutup di masa depan) → menolak; tes tidak bergantung tanggal hari ini
+  await setCfg({ tutup: new Date(Date.now() + 864e5).toISOString() });
   await assert.rejects(tetapkanPemenang());
+  await setCfg({ tutup: '2026-10-28T05:00:00.000Z' });
   const r = await tetapkanPemenang({ force: true });
   assert.deepEqual(r.map((x) => x.pemenang), ['a2', 'c1']);
 });
@@ -63,6 +66,12 @@ test('usulan nama wilayah', async () => {
   const d = await daftarUsulWilayah();
   assert.equal(d[1][0].nama, 'Lembah Pelangi'); assert.equal(d[1][0].likes, 9);
   assert.equal(d[3][0].nama, 'Hutan Kabut');
+  // setelah nama resmi: usulan baru ditolak, usulan lama tetap bisa diperbarui like-nya
+  const { getJSON, setJSON } = await import('../lib/db.js');
+  const x = await getJSON('usul_wilayah', 'w1'); x.status = 'resmi'; await setJSON('usul_wilayah', 'w1', x);
+  assert.equal(await k('val', 'Wilayah: Padang Baru', 5, 'w5'), 'wil:sudah-resmi');
+  assert.equal(await k('val', 'Wilayah: Lembah Pelangi', 11, 'w1'), 'wil:likes');
+  assert.equal(await k('c1', 'Wilayah: Hutan Lain', 1, 'w6'), 'wil:usul');
 });
 
 test('nilai = suara + like', async () => {
