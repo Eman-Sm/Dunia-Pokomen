@@ -11,7 +11,11 @@ OUT = sys.argv[1] if len(sys.argv) > 1 else '/home/claude/dunia-pokomen/public/a
 # (centre_i, centre_j, radius_i, radius_j) in tile units
 R_WIL = 12.0
 def tile_of(x, y): return ((x - 850) / 16 + (y - 804) / 8) / 2, ((y - 804) / 8 - (x - 850) / 16) / 2
-CENTRES = {1: tile_of(850, 995), 2: tile_of(1250, 640), 3: tile_of(560, 520), 4: (-22.0, -36.0), 5: (5.0, 39.0)}
+ALL_CENTRES = {1: tile_of(850, 995), 2: tile_of(1250, 640), 3: tile_of(560, 520), 4: (-22.0, -36.0), 5: (5.0, 39.0)}
+# varian peta: hanya wilayah 1..N_BUKA yang sudah dibuka (lahannya digambar); sisanya tetap hutan
+import os
+N_BUKA = int(os.environ.get('N_BUKA', '5'))
+CENTRES = {n: c for n, c in ALL_CENTRES.items() if n <= N_BUKA}
 REGB = {n: [(c[0], c[1], R_WIL, R_WIL)] for n, c in CENTRES.items()}
 PKC = tile_of(880, 740)
 PKB = (PKC[0], PKC[1], 5.5, 5.5)
@@ -196,7 +200,7 @@ items.append((hx, hy + 16, None))
 for x, y, im in sorted(items, key=lambda t: t[1]):
     if im is None: cv.alpha_composite(hs, (int(hx - ha[0]), int(hy - ha[1]))); continue
     cv.alpha_composite(im, (int(x - im.width // 2), int(y - im.height + 2)))
-cv.convert('RGB').save(f'{OUT}/world.png', optimize=True)
+cv.convert('RGB').save(f'{OUT}/world-{N_BUKA}.png', optimize=True)
 
 # walkable tiles inside the clearing (centres), away from trees, the hall and water
 walk = []
@@ -225,8 +229,10 @@ by_reg = {n: [p for p in walk if RTILE.get(tuple(p)) == n] for n in REGB}
 centre = {n: Wd.iso(*c) for n, c in CENTRES.items()}
 spots = []
 for n in sorted(CENTRES): spots += homes_in(by_reg[n], centre[n], 50)
+NB = len(CENTRES)
+for k in range(250 - 50 * NB): spots.append(spots[(k % NB) * 50 + 25 + k // NB % 25])  # warga wilayah yang belum dibuka menumpang
 homes = spots
 REGION_POS = {str(n): list(centre[n]) for n in REGB}
 json.dump({'w': Wd.W, 'h': Wd.H, 'center': list(Wd.iso(*PKC)), 'walk': walk, 'spots': homes, 'open': OPEN_BLOBS, 'wilayah': REGION_POS, 'pk': list(Wd.iso(*PKC)),
-           'lights': [[hx + 12, hy + 10, 26], [hx - 14, hy + 16, 18]], 'balai': [hx, hy], 'pagar': FENCE, 'gerbang': {str(n): list(Wd.iso(*g)) for n, g in GATES.items()}, 'papan': PAPAN, 'ukuranWilayah': 50}, open(f'{OUT}/world.json', 'w'))
+           'lights': [[hx + 12, hy + 10, 26], [hx - 14, hy + 16, 18]], 'balai': [hx, hy], 'pagar': FENCE, 'gerbang': {str(n): list(Wd.iso(*g)) for n, g in GATES.items()}, 'papan': PAPAN, 'ukuranWilayah': 50, 'nBuka': N_BUKA}, open(f'{OUT}/world-{N_BUKA}.json', 'w'))
 print('walk tiles', len(walk), 'items', len(items))

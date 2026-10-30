@@ -73,6 +73,7 @@
     $('chipDemo').hidden = !data.demo;
     $('stepDM').hidden = !data.wajibFollow;
     fitted = false; refit();
+    gantiPeta();
     updateJam();
     renderBook(); renderVotes(); renderNews(); renderLadder(); renderTierFilter(); renderDukungan(); renderPemiluW(); updateMeBar();
     const qk = new URLSearchParams(location.search).get('kartu');
@@ -271,18 +272,32 @@
   // nama wilayah ditulis di papan gapura (world.json "papan": [x, y, n] = tengah papan, koordinat dunia)
   function wargaDiWilayah(n) { return DATA && DATA.warga ? DATA.warga.some((w) => !w.mati && w.wil === n) : false; }
   function drawPapanGapura() {
-    const P = WORLD && WORLD.papan; if (!P || cam.z < .35) return;
+    const P = WORLD && WORLD.papan; if (!P) return;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    for (const [px, py, n] of P) {
+    // dilihat jauh: hanya gapura utama (yang menghadap Pusat Koloni) supaya papan tidak bertumpuk
+    const G = WORLD.gerbang || {};
+    const utama = {};
+    if (cam.z < .8) for (const q of P) { const g = G[q[2]]; if (!g) continue; const d = Math.hypot(q[0] - g[0], q[1] - 34.5 - g[1]); if (!utama[q[2]] || d < utama[q[2]].d) utama[q[2]] = { q, d }; }
+    for (const q of P) {
+      const [px, py, n] = q;
+      if (cam.z < .8 && utama[n] && utama[n].q !== q) continue;
       const [x, y] = toScreen(px, py);
-      if (x < -60 || y < -30 || x > box.clientWidth + 60 || y > box.clientHeight + 30) continue;
+      if (x < -80 || y < -30 || x > box.clientWidth + 80 || y > box.clientHeight + 30) continue;
       const nm = namaWil(n);
       const t = nm ? nm.toUpperCase() : wargaDiWilayah(n) ? `WILAYAH ${n}` : 'SEGERA';
-      let f = 9 * cam.z; ctx.font = `700 ${f}px "Pixelify Sans", system-ui, sans-serif`;
-      const max = 60 * cam.z, w0 = ctx.measureText(t).width;
-      if (w0 > max) { f *= max / w0; ctx.font = `700 ${f}px "Pixelify Sans", system-ui, sans-serif`; }
+      // tulisan minimal 10px di layar; papan ikut membesar sedikit saat peta dilihat jauh (tetap menempel di gapura)
+      let f = Math.max(8, 9 * cam.z); ctx.font = `700 ${f}px "Pixelify Sans", system-ui, sans-serif`;
+      let tw_ = ctx.measureText(t).width;
+      const maxW = Math.max(60 * cam.z, 58);
+      if (tw_ > maxW) { f *= maxW / tw_; ctx.font = `700 ${f}px "Pixelify Sans", system-ui, sans-serif`; tw_ = ctx.measureText(t).width; }
+      const bw = Math.max(62 * cam.z, tw_ + 10), bh = Math.max(11 * cam.z, f + 5);
+      if (bw > 62 * cam.z + 1 || bh > 11 * cam.z + 1) { // papan diperbesar: gambar papan kayu baru di atas papan asli
+        ctx.fillStyle = '#2b1b17'; ctx.fillRect(Math.round(x - bw / 2) - 1, Math.round(y - bh / 2) - 1, Math.round(bw) + 2, Math.round(bh) + 2);
+        ctx.fillStyle = '#e8d0a0'; ctx.fillRect(Math.round(x - bw / 2), Math.round(y - bh / 2), Math.round(bw), Math.round(bh));
+        ctx.fillStyle = '#c8ac7c'; ctx.fillRect(Math.round(x - bw / 2), Math.round(y + bh / 2) - 1, Math.round(bw), 1);
+      }
       ctx.fillStyle = nm || wargaDiWilayah(n) ? '#2b1b17' : '#8a6a48';
-      ctx.fillText(t, x, y + .5 * cam.z);
+      ctx.fillText(t, x, y + .5);
     }
     ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
   }
@@ -297,7 +312,7 @@
     const sx = cam.x - Wc / cam.z / 2, sy = cam.y - Hc / cam.z / 2;
     ctx.drawImage(IMG, sx, sy, Wc / cam.z, Hc / cam.z, 0, 0, Wc, Hc);
     ctx.imageSmoothingEnabled = false;
-    try { drawPapanGapura(); } catch { /* ignore */ }
+    if (cam.z >= .8) { try { drawPapanGapura(); } catch { /* ignore */ } }
     const list = allWarga().map((w) => ({ w, p: posOf(w) })).sort((a, b) => a.p[1] - b.p[1]);
     const now = performance.now(), slp = sleeping();
     const labels = [];
@@ -344,7 +359,7 @@
         const hp = custom ? { x: sp.width / 2, y: 0 } : headPoint(sp), hx = x + shake + A.face * (hp.x - sp.width / 2) * s / Math.sqrt(sq);
         crownTop = drawSahabatCrown(hx, y - bob - lift - (footY - hp.y * s) * sq, cam.z, now);
       }
-      if (A.emote && now - A.emoteT < 1600 && !slp) {
+      if (A.emote && now - A.emoteT < 1600 && !slp && cam.z >= .7) {
         const age = (now - A.emoteT) / 1600, fs = Math.round(8 + 3 * cam.z);
         ctx.font = `700 ${fs}px "Pixelify Sans", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
         const ex = x + 7 * cam.z, ey = top + 4 * cam.z - age * 6 * cam.z;
@@ -358,6 +373,7 @@
       labels.push({ w, x, y: Math.min(headTop, crownTop) - 3, big: w === selected || w === hover });
      } catch (err) { console.warn('sprite gagal', w.u, err); }
     }
+    if (cam.z < .8) { try { drawPapanGapura(); } catch { /* ignore */ } } // dilihat jauh: papan di atas hewan supaya terbaca
     drawSky(Wc, Hc, list);
     // ---- labels: placed by priority; a label that would collide is hidden and becomes a small dot
     const placed = [];
@@ -420,7 +436,7 @@
     const lights = (WORLD && WORLD.lights) || LIGHTS;
     if (dark <= 0.01 && warm <= 0.01) return;
     const mixc = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
-    let c = mixc([255, 255, 255], [70, 82, 150], dark * .82);
+    let c = mixc([255, 255, 255], [70, 82, 150], dark * (RINGAN ? .48 : .82)); // Mode Ringan: malam lebih terang (tanpa lampu & cahaya)
     c = mixc(c, [255, 176, 120], warm * .45);
     ctx.save();
     ctx.globalCompositeOperation = 'multiply';
@@ -1047,11 +1063,11 @@
     ringan: () => RINGAN,
     me: () => ME,
     focus(u) { const w = allWarga().find((x) => x.u === String(u).toLowerCase() && !x.makam) || allWarga().find((x) => x.u === String(u).toLowerCase()); if (w) { $('peta').scrollIntoView({ behavior: 'smooth' }); select(w); } return !!w; },
-    async reload() { try { const r = await fetch('api/dunia?t=' + Date.now(), { cache: 'no-store' }); const d = await r.json(); if (!d.error) { DATA = d; renderBook(); renderVotes(); renderNews(); renderPemiluW(); $('chipWarga').textContent = fmt(d.jumlahWarga) + ' WARGA'; draw(); } } catch { /* ignore */ } },
+    async reload() { try { const r = await fetch('api/dunia?t=' + Date.now(), { cache: 'no-store' }); const d = await r.json(); if (!d.error) { DATA = d; renderBook(); renderVotes(); renderNews(); renderPemiluW(); gantiPeta(); $('chipWarga').textContent = fmt(d.jumlahWarga) + ' WARGA'; draw(); } } catch { /* ignore */ } },
   };
 
   // bump when the map changes so browsers do not keep the old cached image
-  const WORLD_VER = '2026-10-30-wilayah5';
+  const WORLD_VER = '2026-10-30-bertahap';
   // ---------------------------------------------------------------- boot
   window.addEventListener('resize', resize);
   // ~30 fps animation loop (tick keeps the old 420 ms rhythm for lights and fireflies)
@@ -1069,6 +1085,17 @@
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
+  // peta bertahap: world-3 (Wilayah 1–3), world-4, world-5 — lahan wilayah baru baru muncul setelah dibuka
+  let petaN = 3, gantiJalan = null;
+  function gantiPeta() {
+    const n = Math.max(3, Math.min(5, Number(DATA && DATA.wilayahBuka) || 3));
+    if (n === petaN || gantiJalan === n) return;
+    gantiJalan = n;
+    Promise.all([
+      fetch(`assets/world-${n}.json?v=` + WORLD_VER).then((r) => r.json()),
+      new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = `assets/world-${n}.png?v=` + WORLD_VER; }),
+    ]).then(([w, im]) => { WORLD = w; IMG = im; petaN = n; gantiJalan = null; draw(); }).catch(() => { gantiJalan = null; });
+  }
   Promise.all([
     fetch('assets/world.json?v=' + WORLD_VER).then((r) => r.json()),
     new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = 'assets/world.png?v=' + WORLD_VER; }),

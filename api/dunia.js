@@ -4,7 +4,7 @@ import { publicWarga, publicMakam, CONFIG, ensureTierSchema } from '../lib/rules
 import { json, hariKe } from '../lib/http.js';
 import { papanKopi, isTest, lencanaKopi, BIJI_PER_KOPI } from '../lib/sahabat.js';
 import { namaKembar, normNama } from '../lib/hewan.js';
-import { hasilWilayah, publicHasil, tetapkanPemenang, wilayahOf, daftarUsulWilayah, segarkanLike, bukaWilayahBaru } from '../lib/wilayah.js';
+import { hasilWilayah, publicHasil, tetapkanPemenang, wilayahOf, daftarUsulWilayah, segarkanLike, bukaWilayahBaru, jumlahWilayahBuka } from '../lib/wilayah.js';
 
 export async function GET() {
   try {
@@ -52,6 +52,7 @@ export async function GET() {
       dukungan,
       pemiluWilayah: pw ? publicHasil(pw) : null,
       usulNamaWilayah: namaWil,
+      wilayahBuka: await jumlahWilayahBuka().catch(() => 3),
       log: (logRaw || []).map((s) => { try { return JSON.parse(s); } catch { return null; } }).filter((x) => x && !(x.type === 'dukung' && /^\s*\[.*test.*\]/i.test(x.text || ''))),
     }, 200, { 'Cache-Control': 's-maxage=20, stale-while-revalidate=60' });
   } catch (e) {
