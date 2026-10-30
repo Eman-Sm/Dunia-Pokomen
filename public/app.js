@@ -313,14 +313,14 @@
       const sp = spriteFor(w);
       const custom = sp instanceof HTMLImageElement;
       const u = custom ? 1 : (sp.px || 1); // HD sprites have px units per pixel
-      const besar = w.gelar ? 2 : 1; // hewan bergelar (Ketua Koloni) 2x lebih besar
+      const besar = w.gelar || w.sahabat ? 1.45 : 1; // Ketua & Sohabat Admin tampil lebih besar (tidak berlebihan)
       const s = cam.z * (custom ? 26 * (w.tier >= 3 ? 1.5 : w.tier >= 2 ? 1.3 : 1.1) / Math.max(sp.width, sp.height * .9) : (sp.grow || 1) / u) * besar;
       const A = actor(w);
       const walking = A.mode === 'walk';
       const bob = walking ? Math.abs(Math.sin(A.walk)) * 2.2 * cam.z : 0;
       const breath = slp ? 1 + .02 * Math.sin(now / 900 + A.seed) : 1 + .025 * Math.sin(now / 420 + A.seed);
       const dw = sp.width * s, dh = sp.height * s;
-      if (besar > 1) drawAuraGelar(x, y - bob, dh, now, A.seed);
+      if (w.gelar) drawAuraGelar(x, y - bob, dh, now, A.seed);
       ctx.fillStyle = 'rgba(20,30,10,.28)';
       ctx.beginPath(); ctx.ellipse(x, y, 7 * cam.z * besar, 2.2 * cam.z * besar, 0, 0, Math.PI * 2); ctx.fill();
       if (w.tier >= 4) { ctx.fillStyle = 'rgba(255,210,63,.35)'; ctx.beginPath(); ctx.ellipse(x, y - 10 * cam.z, 15 * cam.z, 14 * cam.z, 0, 0, Math.PI * 2); ctx.fill(); }
@@ -429,7 +429,7 @@
     ctx.globalCompositeOperation = 'lighter';
     for (const { w, p } of list) {
       if (!w.gelar || w.mati) continue;
-      const [sx, sy] = toScreen(p[0], p[1] - 26); const R = 62 * cam.z * (.9 + .1 * Math.sin(tick * 1.3));
+      const [sx, sy] = toScreen(p[0], p[1] - 20); const R = 46 * cam.z * (.9 + .1 * Math.sin(tick * 1.3));
       if (sx < -R || sy < -R || sx > Wc + R || sy > Hc + R) continue;
       const gr = ctx.createRadialGradient(sx, sy, 0, sx, sy, R);
       gr.addColorStop(0, `rgba(255,225,120,${.12 + .18 * dark})`); gr.addColorStop(.45, `rgba(255,205,90,${.22 + .3 * Math.max(dark, warm * .6)})`); gr.addColorStop(.75, `rgba(255,180,60,${.1 + .15 * dark})`); gr.addColorStop(1, 'rgba(255,170,40,0)');
