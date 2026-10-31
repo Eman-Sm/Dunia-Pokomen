@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&family=Pixelify+Sans:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="style.css?v=dewa1">
+<link rel="stylesheet" href="style.css?v=toko1">
 </head>
 <body>
 <header class="topbar">
@@ -23,7 +23,7 @@
       <span><span class="name">DUNIA POKOMEN</span><span class="sub">Populasi Komentar</span></span>
     </a>
     <nav class="tabs" aria-label="Bagian halaman">
-      <a href="#peta">🗺️ Peta</a><a href="#obrolan">💬 Ngobrol</a><a href="#warga">📖 Warga</a><a href="#ikut">🐣 Cara Ikut</a>
+      <a href="#peta">🗺️ Peta</a><a href="#obrolan">💬 Ngobrol</a><a href="#toko" hidden>🏪 Toko &amp; Arena</a><a href="#warga">📖 Warga</a><a href="#ikut">🐣 Cara Ikut</a>
     </nav>
     <div class="chips">
       <span class="chip" id="chipHari">HARI KE-1</span>
@@ -91,6 +91,19 @@
       </div>
       <p class="ob-join" id="obJoin">Mau ikut ngobrol? Kirim <b>DM: OBROLAN</b> ke <a href="https://www.instagram.com/duniapokomen/" target="_blank" rel="noopener">@duniapokomen</a>. Nanti kamu dapat link khusus. Tanpa link, kamu tetap bisa membaca.</p>
       <p class="muted ob-rule">🙂 Harus sopan. 🚫 Jangan kirim link, nomor HP, atau ajak pindah ke aplikasi lain.</p>
+    </div>
+  </section>
+
+  <section class="wrap" id="toko" hidden aria-labelledby="tkTitle" style="padding-top:26px">
+    <div class="parchment tk">
+      <h2 id="tkTitle">🏪 Toko, Latihan &amp; Arena</h2>
+      <div id="tkDompet"></div>
+      <div class="tk-tabs" role="tablist" aria-label="Toko, Latihan, Arena">
+        <button type="button" role="tab" data-tab="toko">🏪 Toko <small>24 jam</small></button>
+        <button type="button" role="tab" data-tab="latihan">🏋️ Latihan</button>
+        <button type="button" role="tab" data-tab="arena">⚔️ Arena <small>07–21</small></button>
+      </div>
+      <div id="tkIsi"></div>
     </div>
   </section>
 
@@ -216,7 +229,8 @@
 <script src="creature-hd.js?v=2026-10-25"></script>
 <script src="creature.js?v=kr1"></script>
 <script src="card.js?v=dewa1"></script>
-<script src="app.js?v=dewa2"></script>
+<script src="app.js?v=toko1"></script>
 <script src="obrolan.js?v=dewa1"></script>
+<script src="toko.js?v=1"></script>
 </body>
 </html>

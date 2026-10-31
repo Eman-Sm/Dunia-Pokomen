@@ -588,3 +588,49 @@ body.ringan .kartu .foil, body.ringan .kartu .glare { display: none; }
 .skill.batu { background: #eef4ff; }
 .skill.batu, .skill.batu b { color: #2b1b17 !important; }
 .skill.batu b { color: #1d4f9a !important; }
+
+/* ---------- Toko, Latihan & Arena ---------- */
+.tk-login { background: #fff8e7; border: 2px dashed var(--outline); padding: 10px 12px; font-size: 1.02rem; margin: 8px 0 12px; }
+.tk-dompet { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin: 10px 0 14px; }
+.tk-dompet > div { background: #fff8e7; border: var(--px) solid var(--outline); padding: 10px 12px; display: grid; gap: 4px; align-content: start; }
+.tk-dompet small { font-family: var(--font-display); color: var(--ink-soft); font-size: .9rem; }
+.tk-saldo b, .tk-batu b { font-family: var(--font-display); font-size: 2rem; line-height: 1; color: #8a4f12; }
+.tk-batu b { color: #6a3fb0; }
+.tk-saldo span, .tk-batu span { font-size: .9rem; color: var(--ink-soft); }
+.tk-saldo .btn { justify-self: start; margin-top: 4px; }
+.tk-bar { display: grid; grid-template-columns: 92px 1fr auto; gap: 6px; align-items: center; font-size: .9rem; }
+.tk-bar i { height: 12px; background: #e9dcc0; border: 2px solid var(--outline); display: block; }
+.tk-bar i b { display: block; height: 100%; background: linear-gradient(90deg, #ffb340, #ffd23f); }
+.tk-bar em { font-style: normal; font-family: var(--font-display); font-size: .85rem; }
+.tk-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 12px; }
+.tk-tabs button { font-family: var(--font-display); font-size: 1.05rem; min-height: 44px; padding: 6px 14px; border: var(--px) solid var(--outline); background: var(--parchment-2); cursor: pointer; }
+.tk-tabs button small { font-size: .75rem; color: var(--ink-soft); }
+.tk-tabs button[aria-selected="true"] { background: var(--gold); }
+.tk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+.tk-item { background: #fff; border: var(--px) solid var(--outline); padding: 10px; display: grid; gap: 6px; align-content: start; text-align: center; }
+.tk-item .ik { font-size: 2rem; line-height: 1; }
+.tk-item b { font-family: var(--font-display); font-size: 1.05rem; }
+.tk-item span { font-size: .88rem; color: var(--ink-soft); }
+.tk-item .harga { font-family: var(--font-display); font-size: 1.15rem; color: #8a4f12; }
+.tk-item input { min-height: 40px; font-size: 15px; padding: 4px 8px; border: 2px solid var(--outline); width: 100%; }
+.tk-item.segera { opacity: .6; }
+.tk-info { background: #fff8e7; border: 2px solid var(--outline); padding: 8px 10px; }
+.tk-super { display: inline-block; background: var(--gold); border: 2px solid var(--outline); padding: 0 6px; font-family: var(--font-display); font-size: .85rem; }
+.tk-latih { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 10px 0; }
+.tk-latih-btn { min-height: 64px; font-size: 1.1rem; display: grid; place-items: center; gap: 2px; }
+.tk-latih-btn small { font-family: var(--font-body); font-size: .8rem; }
+.tk-masuk { background: #ffe9e4; border: var(--px) solid var(--berry); padding: 10px; display: grid; gap: 8px; margin: 8px 0; }
+.tk-masuk div { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tk-tantang { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+.tk-tantang input { flex: 1 1 180px; min-height: 44px; font-size: 16px; padding: 4px 10px; border: 2px solid var(--outline); }
+.tk-kolom { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 14px; }
+.tk-kolom h4 { font-family: var(--font-display); margin: 6px 0; font-size: 1.1rem; }
+.tk-klas { margin: 0; padding-left: 22px; display: grid; gap: 4px; }
+.tk-klas li span { display: block; font-size: .85rem; color: var(--ink-soft); }
+.tk-duel { background: #fff; border: 2px solid var(--outline); padding: 6px 10px; margin-bottom: 6px; }
+.tk-duel summary { cursor: pointer; }
+.tk-duel time { float: right; font-size: .8rem; color: var(--ink-soft); }
+.tk-duel ol { margin: 6px 0 2px; padding-left: 20px; font-size: .92rem; }
+.stat-mini { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.stat-mini span { background: #fff; border: 2px solid var(--outline); padding: 0 6px; font-size: .88rem; }
+@media (max-width: 640px) { .tk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tk-item { padding: 8px; } .tk-kolom { grid-template-columns: 1fr; } .tk-saldo b, .tk-batu b { font-size: 1.7rem; } }

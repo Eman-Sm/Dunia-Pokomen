@@ -5,6 +5,7 @@ import { json, hariKe } from '../lib/http.js';
 import { papanKopi, isTest, lencanaKopi, BIJI_PER_KOPI } from '../lib/sahabat.js';
 import { namaKembar, normNama } from '../lib/hewan.js';
 import { cuacaAktif } from '../lib/dewa.js';
+import { publik as statPublik } from '../lib/statistik.js';
 import { hasilWilayah, publicHasil, tetapkanPemenang, wilayahOf, daftarUsulWilayah, segarkanLike, bukaWilayahBaru, jumlahWilayahBuka } from '../lib/wilayah.js';
 
 export async function GET() {
@@ -48,7 +49,7 @@ export async function GET() {
       jumlahWarga: visible.filter((w) => !w.mati).length,
       jumlahMati: visible.filter((w) => w.mati).length + makam.length,
       makam: makam.filter((w) => !w.hidden).map(publicMakam),
-      warga: visible.map((w) => { const p = publicWarga(w); p.wil = wilayahOf(w); const pk = kopiBy[p.u]; if (pk && !p.mati) { p.kopi = pk.total; p.biji = pk.total * BIJI_PER_KOPI; p.lencana = lencanaKopi(pk.total)?.kode; if (Date.now() - Date.parse(pk.sejak) < 864e5) p.kopiBaru = 1; } if (kembar.has(normNama(w.nama))) p.kembar = true; if (sahabat && sahabat.u === p.u && !p.mati) p.sahabat = sahabat.total; return p; }),
+      warga: visible.map((w) => { const p = publicWarga(w); p.wil = wilayahOf(w); const pk = kopiBy[p.u]; if (pk && !p.mati) { p.kopi = pk.total; p.biji = pk.total * BIJI_PER_KOPI; p.lencana = lencanaKopi(pk.total)?.kode; if (Date.now() - Date.parse(pk.sejak) < 864e5) p.kopiBaru = 1; } if (evoBatu && !p.mati) p.stat = statPublik(w); if (kembar.has(normNama(w.nama))) p.kembar = true; if (sahabat && sahabat.u === p.u && !p.mati) p.sahabat = sahabat.total; return p; }),
       kopiBoard: papan.slice(0, 5).map(({ u, nama, total }) => ({ u, nama, total })),
       dukunganUnit: process.env.TRAKTEER_UNIT_NAME || 'Kopi Admin',
       usulan: us,
