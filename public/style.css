@@ -634,3 +634,14 @@ body.ringan .kartu .foil, body.ringan .kartu .glare { display: none; }
 .stat-mini { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
 .stat-mini span { background: #fff; border: 2px solid var(--outline); padding: 0 6px; font-size: .88rem; }
 @media (max-width: 640px) { .tk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tk-item { padding: 8px; } .tk-kolom { grid-template-columns: 1fr; } .tk-saldo b, .tk-batu b { font-size: 1.7rem; } }
+
+/* ---------- Replay duel ---------- */
+.rp-modal { position: fixed; inset: 0; z-index: 60; background: rgba(20, 14, 10, .78); display: grid; place-items: center; padding: 12px; overflow: auto; }
+.rp-box { background: var(--parchment); border: var(--px) solid var(--outline); box-shadow: 0 var(--px) 0 var(--outline); width: min(720px, 100%); padding: 10px; display: grid; gap: 8px; }
+.rp-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 1.15rem; }
+.rp-cv { width: 100%; height: auto; display: block; border: var(--px) solid var(--outline); image-rendering: pixelated; background: #7cc46a; }
+.rp-tools { display: flex; flex-wrap: wrap; gap: 6px; }
+.rp-flow { background: #fff8e7; border: 2px solid var(--outline); padding: 8px; display: grid; gap: 6px; }
+.rp-flow div { display: flex; gap: 6px; flex-wrap: wrap; }
+.rp-teks { width: 100%; font: 13px/1.4 ui-monospace, monospace; border: 2px solid var(--outline); padding: 6px; resize: vertical; }
+.tk-replay { margin: 6px 0; min-height: 38px; }

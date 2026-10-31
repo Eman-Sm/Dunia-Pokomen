@@ -3,12 +3,25 @@ import { json } from '../lib/http.js';
 import { userFromToken, sistem } from '../lib/obrolan.js';
 import { log } from '../lib/rules.js';
 import * as A from '../lib/arena.js';
+import { getJSON } from '../lib/db.js';
+import { promptFlow } from '../lib/flowprompt.js';
 
 const umumkan = async (t, u) => { await log('arena', t, { u }); await sistem(t); };
 
 export async function GET(request) {
   try {
-    const k = new URL(request.url).searchParams.get('k');
+    const qp = new URL(request.url).searchParams;
+    const k = qp.get('k');
+    // satu duel untuk replay (link berbagi ?duel=<id>) + prompt Google Flow
+    if (qp.get('duel')) {
+      const d = await A.cariDuel(qp.get('duel'));
+      if (!d) return json({ error: 'Duel tidak ditemukan (replay disimpan untuk 200 duel terakhir).' });
+      const [wa, wb] = await Promise.all([getJSON('warga', d.a), getJSON('warga', d.b)]);
+      const A_ = wa || { username: d.a, nama: d.namaA, hewan: [], tier: d.tierA }, B_ = wb || { username: d.b, nama: d.namaB, hewan: [], tier: d.tierB };
+      const out = { duel: d };
+      if (qp.get('prompt')) out.prompt = promptFlow(d, A_, B_, { rasio: qp.get('prompt') === '16:9' ? '16:9' : '9:16' });
+      return json(out, 200, { 'Cache-Control': 's-maxage=60' });
+    }
     const aktif = await A.aktif();
     if (aktif) await A.tetapkanJuaraMinggu({ umumkan }).catch(() => {});
     const u = k ? await userFromToken(k) : null;

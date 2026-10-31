@@ -64,3 +64,13 @@ test('Arena lewat komentar', async () => {
     assert.equal(await k('c2', 'Terima: Cimo', 'a3'), 'arena:gagal');
   } finally { Date.now = realNow; }
 });
+
+test('replay tersimpan & prompt Google Flow', async () => {
+  const { promptFlow } = await import('../lib/flowprompt.js');
+  const d = (await A.duelTerbaru(5))[0];
+  assert.ok(d.gerak.length >= 2); assert.equal(d.gerak.at(-1).hp.includes(0), true);
+  assert.equal((await A.cariDuel(d.id)).id, d.id);
+  const a = { ...(await getJSON('warga', d.a)), hewan: ['Naga Hitam', 'Singa'], elemen: 'Api' }, b = await getJSON('warga', d.b);
+  const p = promptFlow(d, a, b, { rasio: '16:9' });
+  assert.match(p, /black dragon and lion hybrid/); assert.match(p, /fire aura/); assert.match(p, /widescreen 16:9/); assert.match(p, /KLIP 1/); assert.match(p, /MENANG/);
+});
