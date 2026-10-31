@@ -16,7 +16,7 @@
   --violet: #6e40aa;
   --sky-tag: #2a8cbf;
   --outline: #2b1b17;
-  --font-display: 'Pixelify Sans', 'Courier New', monospace;
+  --font-display: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-body: 'Nunito', 'Trebuchet MS', system-ui, sans-serif;
   --px: 3px; /* one "pixel" of UI chrome */
   color-scheme: light;
@@ -46,7 +46,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 
-h1, h2, h3, .display { font-family: var(--font-display); font-weight: 700; letter-spacing: .02em; text-wrap: balance; }
+h1, h2, h3, .display { font-family: var(--font-display); font-weight: 900; letter-spacing: 0; text-wrap: balance; }
 
 /* ---------- wooden chrome ---------- */
 .wood {
@@ -647,3 +647,49 @@ body.ringan .kartu .foil, body.ringan .kartu .glare { display: none; }
 .tk-replay { margin: 6px 0; min-height: 38px; }
 
 .pw-luar { display: inline-block; margin-left: 6px; padding: 0 6px; font-size: .78rem; background: #ffe7a8; border: 2px solid var(--outline); border-radius: 0; vertical-align: middle; }
+
+/* 31 Okt: font pixel diganti Nunito supaya mudah dibaca semua kalangan */
+.brand .name,
+.chip,
+nav.tabs a,
+.bubble,
+.btn,
+.map-hint,
+.tier,
+.pill,
+.wcard b,
+.melek,
+.votes .row b,
+.built,
+.steps li::before,
+.formatbox,
+.ladder b,
+.toast,
+th,
+.pemilu-head code,
+.pemilu-clock,
+.klasemen .rank,
+.klasemen b,
+.klasemen .likes,
+.gelar,
+.adm-tabs button,
+.adm-world-bar b,
+.admin-side #wargaT td:nth-child(2),
+.sahabat-board h3,
+.pw-tabs button,
+.pw-sub,
+.pw-nama li b,
+.pw-nama li .likes,
+.ob-tabs button,
+.ob-name,
+code,
+.mulai .no,
+.tk-dompet small,
+.tk-saldo b, .tk-batu b,
+.tk-bar em,
+.tk-tabs button,
+.tk-item b,
+.tk-item .harga,
+.tk-super,
+.tk-kolom h4,
+.rp-head { font-weight: 800; letter-spacing: 0; }

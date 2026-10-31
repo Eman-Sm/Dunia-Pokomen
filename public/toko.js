@@ -181,7 +181,7 @@
 
   // ---------- kartu warga (intro & perayaan) ----------
   const TIER_W = ['#cfc6b0', '#6ec85a', '#5aaaff', '#c9a0ff', '#ffd23f', '#ff6a2a'];
-  const F = (sz, wt = 700) => `${wt} ${sz}px "Pixelify Sans", monospace`;
+  const F = (sz, wt = 700) => `${wt} ${sz}px Nunito, system-ui, sans-serif`;
   function potong(ctx, s, maxW) { s = String(s || ''); if (ctx.measureText(s).width <= maxW) return s; while (s.length > 1 && ctx.measureText(s + '…').width > maxW) s = s.slice(0, -1); return s + '…'; }
   function kartuWarga(ctx, o) {
     const w = wargaOf(o.u) || {}; const L = o.x - o.w / 2, T = o.y, tier = w.tier || 0;
@@ -394,7 +394,7 @@
     }
     ctx.globalAlpha = 1;
     // angka damage memantul
-    const besar = (s, xx, yy, warna, ukuran, skala = 1, miring = 0) => { ctx.save(); ctx.translate(xx, yy); ctx.rotate(miring); ctx.scale(skala, skala); ctx.font = `700 ${ukuran}px "Pixelify Sans", monospace`; ctx.textAlign = 'center'; ctx.lineWidth = Math.max(6, ukuran / 6); ctx.strokeStyle = '#2b1b17'; ctx.strokeText(s, 0, 0); ctx.fillStyle = warna; ctx.fillText(s, 0, 0); ctx.restore(); };
+    const besar = (s, xx, yy, warna, ukuran, skala = 1, miring = 0) => { ctx.save(); ctx.translate(xx, yy); ctx.rotate(miring); ctx.scale(skala, skala); ctx.font = `800 ${ukuran}px Nunito, system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.lineWidth = Math.max(6, ukuran / 6); ctx.strokeStyle = '#2b1b17'; ctx.strokeText(s, 0, 0); ctx.fillStyle = warna; ctx.fillText(s, 0, 0); ctx.restore(); };
     RP.pop = RP.pop.filter((p) => t - p.t < 1.1);
     for (const p of RP.pop) { const k = (t - p.t) / 1.1, sk = k < .15 ? .4 + 4 * k : 1; ctx.globalAlpha = k > .7 ? (1 - k) / .3 : 1; besar(p.s, p.x, 305 - ease(k) * 60, p.c, p.b, sk); ctx.globalAlpha = 1; }
     ctx.restore(); // akhir kamera
@@ -409,13 +409,13 @@
       const w = 300, h = 22, x0 = kanan ? x - w : x;
       ctx.fillStyle = '#2b1b17'; ctx.fillRect(x0 - 4, 10, w + 8, h + 36);
       ctx.fillStyle = warna; ctx.fillRect(x0 - 4, 10, w + 8, 4);
-      ctx.fillStyle = '#fffaee'; ctx.font = '700 22px "Pixelify Sans", monospace'; ctx.textAlign = kanan ? 'right' : 'left'; ctx.fillText(nama, kanan ? x : x0 + 2, 34);
+      ctx.fillStyle = '#fffaee'; ctx.font = '700 22px Nunito, system-ui, sans-serif'; ctx.textAlign = kanan ? 'right' : 'left'; ctx.fillText(nama, kanan ? x : x0 + 2, 34);
       ctx.fillStyle = '#5a2a2a'; ctx.fillRect(x0, 40, w, h);
       const pg = Math.max(0, ghost / max), p = Math.max(0, v / max);
       ctx.fillStyle = '#fffaee'; ctx.fillRect(kanan ? x0 + w * (1 - pg) : x0, 40, w * pg, h);
       ctx.fillStyle = p > .5 ? '#6ec85a' : p > .25 ? '#ffcd32' : '#e04a3a'; ctx.fillRect(kanan ? x0 + w * (1 - p) : x0, 40, w * p, h);
       ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(kanan ? x0 + w * (1 - p) : x0, 40, w * p, 6);
-      ctx.fillStyle = '#fffaee'; ctx.font = '700 17px "Pixelify Sans", monospace'; ctx.fillText(`${Math.max(0, Math.round(v))}/${max}`, kanan ? x - 4 : x0 + 4, 57);
+      ctx.fillStyle = '#fffaee'; ctx.font = '700 17px Nunito, system-ui, sans-serif'; ctx.fillText(`${Math.max(0, Math.round(v))}/${max}`, kanan ? x - 4 : x0 + 4, 57);
     };
     const hudMasuk = t < INTRO ? ease((t - KARTU - .6) / .5) : 1;
     if (hudMasuk > 0) { ctx.save(); ctx.globalAlpha = hudMasuk; bar(16, d.namaA, hp[0], RP.ghost[0], N[0], false, RP.cA); bar(W - 16, d.namaB, hp[1], RP.ghost[1], N[1], true, RP.cB); ctx.restore(); }

@@ -258,7 +258,7 @@
     if (z >= 1.4 && p < .9) {
       const label = '✦ ' + (w.skill.length > 22 ? w.skill.slice(0, 21) + '…' : w.skill);
       ctx.globalAlpha = Math.min(1, fade * 1.2);
-      ctx.font = `700 ${Math.round(7 + 2.2 * z)}px "Pixelify Sans", monospace`; ctx.textAlign = 'center';
+      ctx.font = `800 ${Math.round(7 + 2.2 * z)}px Nunito, system-ui, sans-serif`; ctx.textAlign = 'center';
       const ly = top - 4 * z - p * 6 * z;
       ctx.lineWidth = 3; ctx.strokeStyle = '#2b1b17'; ctx.strokeText(label, x, ly); ctx.fillStyle = '#ffe27a'; ctx.fillText(label, x, ly);
       ctx.textAlign = 'start';
@@ -287,10 +287,10 @@
       const nm = namaWil(n);
       const t = nm ? nm.toUpperCase() : wargaDiWilayah(n) ? `WILAYAH ${n}` : 'SEGERA';
       // tulisan minimal 10px di layar; papan ikut membesar sedikit saat peta dilihat jauh (tetap menempel di gapura)
-      let f = Math.max(8, 9 * cam.z); ctx.font = `700 ${f}px "Pixelify Sans", system-ui, sans-serif`;
+      let f = Math.max(8, 9 * cam.z); ctx.font = `800 ${f}px Nunito, system-ui, sans-serif`;
       let tw_ = ctx.measureText(t).width;
       const maxW = Math.max(60 * cam.z, 58);
-      if (tw_ > maxW) { f *= maxW / tw_; ctx.font = `700 ${f}px "Pixelify Sans", system-ui, sans-serif`; tw_ = ctx.measureText(t).width; }
+      if (tw_ > maxW) { f *= maxW / tw_; ctx.font = `800 ${f}px Nunito, system-ui, sans-serif`; tw_ = ctx.measureText(t).width; }
       const bw = Math.max(62 * cam.z, tw_ + 10), bh = Math.max(11 * cam.z, f + 5);
       if (bw > 62 * cam.z + 1 || bh > 11 * cam.z + 1) { // papan diperbesar: gambar papan kayu baru di atas papan asli
         ctx.fillStyle = '#2b1b17'; ctx.fillRect(Math.round(x - bw / 2) - 1, Math.round(y - bh / 2) - 1, Math.round(bw) + 2, Math.round(bh) + 2);
@@ -366,7 +366,7 @@
       }
       if (A.emote && now - A.emoteT < 1600 && !slp && cam.z >= .7) {
         const age = (now - A.emoteT) / 1600, fs = Math.round(8 + 3 * cam.z);
-        ctx.font = `700 ${fs}px "Pixelify Sans", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+        ctx.font = `800 ${fs}px Nunito, system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
         const ex = x + 7 * cam.z, ey = top + 4 * cam.z - age * 6 * cam.z;
         ctx.globalAlpha = age > .75 ? (1 - age) / .25 : 1;
         ctx.lineWidth = 3; ctx.strokeStyle = '#2b1b17'; ctx.strokeText(A.emote, ex, ey);
@@ -493,7 +493,7 @@
       // sleeping citizens (22:00 - 05:00)
       const h = jamWIB();
       if (h >= 22 || h < 5) {
-        ctx.font = `700 ${Math.round(6 + 2.5 * cam.z)}px "Pixelify Sans", monospace`; ctx.textBaseline = 'alphabetic';
+        ctx.font = `800 ${Math.round(6 + 2.5 * cam.z)}px Nunito, system-ui, sans-serif`; ctx.textBaseline = 'alphabetic';
         for (const { w, p } of list) {
           if (w.mati || (w.spot % 3 === 0)) continue;
           const [sx, sy] = toScreen(p[0] + 6, p[1] - 22);
@@ -591,7 +591,7 @@
       if (x + w < 0 || x - w > box.clientWidth || y + h < 0 || y - h > box.clientHeight) continue;
       ctx.imageSmoothingEnabled = false; ctx.drawImage(b.im, Math.round(x - w / 2), Math.round(y - h * .78), Math.round(w), Math.round(h));
       if (cam.z >= .8) {
-        const f = Math.max(9, 7 * cam.z); ctx.font = `700 ${f}px "Pixelify Sans", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        const f = Math.max(9, 7 * cam.z); ctx.font = `800 ${f}px Nunito, system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         const ly = b.lab === 'TOKO' ? y - h * .78 + 3 * cam.z : y + 9 * cam.z;
         if (b.lab === 'ARENA') { const tw_ = ctx.measureText(b.lab).width + 10; ctx.fillStyle = '#2b1b17'; ctx.fillRect(x - tw_ / 2 - 1, ly - f * .7 - 1, tw_ + 2, f * 1.4 + 2); ctx.fillStyle = '#e8d0a0'; ctx.fillRect(x - tw_ / 2, ly - f * .7, tw_, f * 1.4); }
         ctx.fillStyle = '#2b1b17'; ctx.fillText(b.lab, x, ly); ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
@@ -639,7 +639,7 @@
       ctx.imageSmoothingEnabled = !!sp.hd && !RINGAN;
       ctx.drawImage(sp, Math.round(x - dw / 2), Math.round(y - 5 * z - 31 * u * s), dw, dh);
       ctx.imageSmoothingEnabled = false;
-      if (z >= .9) { ctx.font = `700 ${Math.round(6.5 * z)}px "Pixelify Sans", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#f4f0e8'; ctx.fillText(w.nama.toUpperCase(), x, y - 1.5 * z); ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic'; }
+      if (z >= .9) { ctx.font = `800 ${Math.round(6.5 * z)}px Nunito, system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#f4f0e8'; ctx.fillText(w.nama.toUpperCase(), x, y - 1.5 * z); ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic'; }
     });
   }
   // ---- cuaca dari God Mode: partikel ringan di dalam wilayahnya saja (tanpa state, tanpa gradien)
@@ -732,7 +732,7 @@
       const a = age < .2 ? age / .2 : age > 6.3 ? (7 - age) / .7 : 1;
       let t = b.text; if (t.length > 42) t = t.slice(0, 41) + '…';
       const fs = Math.round(Math.max(11, Math.min(15, 9 + cam.z * 1.6)));
-      ctx.font = `700 ${fs}px Nunito, "Trebuchet MS", sans-serif`;
+      ctx.font = `800 ${fs}px Nunito, "Trebuchet MS", sans-serif`;
       const tw = ctx.measureText(t).width, bw = tw + 18, bh = fs + 12;
       const bx = Math.round(h.x - bw / 2), by = Math.round(h.y - bh - 14 - (age < .2 ? (1 - age / .2) * 6 : 0));
       ctx.save(); ctx.globalAlpha = Math.max(0, a);

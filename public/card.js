@@ -3,7 +3,7 @@
 (function () {
   const W = 600, H = 840;
   const OL = '#2b1b17';
-  const DISPLAY = '"Pixelify Sans", "Courier New", monospace';
+  const DISPLAY = 'Nunito, system-ui, sans-serif';
   const BODY = 'Nunito, "Trebuchet MS", sans-serif';
 
   const ELEMENTS = [
@@ -49,7 +49,7 @@
    * draw(canvas, w, { world, worldImg, spot, hari })
    */
   async function draw(canvas, w, env) {
-    try { await Promise.all([document.fonts.load('700 40px "Pixelify Sans"'), document.fonts.load('600 20px Nunito')]); } catch { /* fallback fonts */ }
+    try { await Promise.all([document.fonts.load('800 40px Nunito'), document.fonts.load('600 20px Nunito')]); } catch { /* fallback fonts */ }
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext('2d');
     ctx.imageSmoothingEnabled = false;
