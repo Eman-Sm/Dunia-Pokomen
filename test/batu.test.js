@@ -38,12 +38,3 @@ test('God Mode memanggil cuaca seminggu sekali; outfit hanya 1 pakaian', async (
   assert.equal(await c('g', 'Cuaca: salju', 'r1', 'c4'), 'cuaca:tunggu');
 });
 
-test('aktif 7 hari = 1 Batu Evolusi', async () => {
-  const { catatAktif } = await import('../lib/dewa.js');
-  const a = newWarga({ username: 'akt', nama: 'Aktif', hewan: ['Rubah'], spot: 7 }); await setJSON('warga', 'akt', a);
-  for (let d = 1; d <= 6; d++) await redis('SADD', 'aktif_hari:akt', `2026-10-0${d}`);
-  const r = await catatAktif('akt');
-  assert.equal(r.hari, 7); assert.equal(r.batu, 1);
-  assert.equal(await catatAktif('akt'), null); // hari yang sama tidak dihitung dua kali
-  assert.equal((await getJSON('warga', 'akt')).batu, 1);
-});

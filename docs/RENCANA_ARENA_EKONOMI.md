@@ -95,5 +95,5 @@ Hari ke-4 wilayah → Hari ke-5 teaser arena & toko → Hari ke-6 Toko Pokomen +
 - Syarat: Mythical → Legendary = cerita (postingan baru) + 2 Batu Evolusi; Legendary → God Mode = cerita + 3 Batu Evolusi.
 - Benefit Legendary: nama emas (peta, kartu, Obrolan, Buku Warga) + 1 outfit custom (hanya 1 pakaian; outfit lain dijual di Toko) + masuk segmen "Legenda Baru" di video.
 - Benefit God Mode: ganti wujud, Kartu Kosmik, partikel khusus, patung di Pusat Koloni, selalu melayang, bebas terbang ke semua wilayah, pengendali cuaca ("Cuaca: hujan bintang / salju / pelangi / hujan / badai petir / sakura", 1x seminggu, 1 jam, hanya di wilayahnya; partikel ringan).
-- Sumber batu: beli 1 batu = 3 Kopi Admin (dicatat Admin lewat `batu_tambah` sampai Toko buka), Ketua wilayah terpilih +1 (Ketua yang sudah ada dapat 1 saat aturan diaktifkan), aktif 7 hari (komen/ngobrol) = +1, juara Arena mingguan +1 (nanti).
-- Saklar: admin `evo_batu { aktif: true }` → benefit "???" berganti, kartu menampilkan batu & hari aktif.
+- Sumber batu: beli 1 batu = 3 Kopi Admin (dicatat Admin lewat `batu_tambah` sampai Toko buka), Ketua wilayah terpilih +1 (Ketua yang sudah ada dapat 1 saat aturan diaktifkan), juara Arena mingguan +1 (nanti). (Bonus aktif 7 hari dibatalkan 31 Okt supaya tidak menghambat penjualan batu.)
+- Saklar: admin `evo_batu { aktif: true }` → benefit "???" berganti, kartu menampilkan jumlah batu.
