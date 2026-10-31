@@ -1047,13 +1047,13 @@
       list.innerHTML = `<li class="empty" style="display:block;cursor:default">${x.ketua ? `${esc(wilLabel(x.n))} dipimpin <b>Ketua ${esc(x.ketua.nama)}</b> (@${esc(x.ketua.u)}). Wilayah ini tidak ikut memilih sekarang.` : `Wilayah ${x.n} belum ikut pemilihan kali ini.`}</li>`;
       if (k) list.firstChild.onclick = () => { select(k); $('peta').scrollIntoView({ behavior: 'smooth' }); };
     } else if (!x.calon.length) {
-      list.innerHTML = `<li class="empty" style="display:block;cursor:default">Belum ada calon di Wilayah ${x.n}. Warga wilayah ini bisa mendaftar dengan komentar “Calon: janjimu”!</li>`;
+      list.innerHTML = `<li class="empty" style="display:block;cursor:default">Belum ada calon di Wilayah ${x.n}. Komen “Calon: janjimu” untuk mendaftar. Warga wilayah lain juga boleh, dengan biaya 7 Biji Kopi!</li>`;
     }
     if (x.memilih) x.calon.forEach((k, i) => {
       const w = DATA.warga.find((v) => v.u === k.u);
       const li = document.createElement('li'); if (i === 0 && k.suara) li.className = 'top';
       const self = me && me.u === k.u;
-      li.innerHTML = `<span class="rank">${i + 1}</span><span class="s"></span><span style="min-width:0"><b>${esc(k.nama)} · @${esc(k.u)}</b>${k.janji ? `<span class="slogan">“${esc(k.janji)}”</span>` : ''}</span><span class="pw-act"><span class="likes" title="${fmt(k.suara)} suara + ${fmt(k.likes || 0)} like">${fmt(k.suara)} suara · ♥ ${fmt(k.likes || 0)}</span>${P.closed || self ? '' : `<button class="btn ghost pw-salin" type="button">Salin suara</button>`}</span>`;
+      li.innerHTML = `<span class="rank">${i + 1}</span><span class="s"></span><span style="min-width:0"><b>${esc(k.nama)} · @${esc(k.u)}</b>${k.luar ? `<span class="pw-luar">dari ${esc(wilLabel(k.luar))}</span>` : ''}${k.janji ? `<span class="slogan">“${esc(k.janji)}”</span>` : ''}</span><span class="pw-act"><span class="likes" title="${fmt(k.suara)} suara + ${fmt(k.likes || 0)} like">${fmt(k.suara)} suara · ♥ ${fmt(k.likes || 0)}</span>${P.closed || self ? '' : `<button class="btn ghost pw-salin" type="button">Salin suara</button>`}</span>`;
       const sp = li.querySelector('.s'); if (w) sp.replaceWith(spriteNode(w, 44)); else sp.textContent = '';
       const btn = li.querySelector('.pw-salin');
       if (btn) btn.onclick = async (e) => {
