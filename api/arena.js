@@ -14,7 +14,7 @@ export async function GET(request) {
     if (qp.get('duel')) {
       const d = await A.cariDuel(qp.get('duel'));
       if (!d) return json({ error: 'Duel tidak ditemukan (replay disimpan untuk 200 duel terakhir).' });
-      const out = { duel: d };
+      const out = { duel: d, riwayat: await A.riwayatDuel(d).catch(() => null) };
       return json(out, 200, { 'Cache-Control': 's-maxage=60' });
     }
     const aktif = await A.aktif();

@@ -114,7 +114,7 @@
   }
   async function bukaReplay(id, duel) {
     let d = duel;
-    if (!d) { try { const r = await get('api/arena?duel=' + encodeURIComponent(id)); if (r.error) { toast(r.error); return; } d = r.duel; } catch { return; } }
+    if (!d) { try { const r = await get('api/arena?duel=' + encodeURIComponent(id)); if (r.error) { toast(r.error); return; } d = r.riwayat ? { ...r.duel, riwayat: r.riwayat } : r.duel; } catch { return; } }
     tutupReplay();
     const el = document.createElement('div'); el.className = 'rp-modal'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Replay duel');
     el.innerHTML = `<div class="rp-box"><div class="rp-head"><b>⚔️ ${esc(d.namaA)} vs ${esc(d.namaB)}</b><button class="btn ghost sq rp-x" type="button" aria-label="Tutup">×</button></div>
@@ -141,7 +141,7 @@
   const WARNA_EL = { Api: '#ff6a2a', Air: '#3aa0ff', Angin: '#9ff0d8', Tanah: '#c98a4a', Petir: '#ffe14a', Es: '#bfe8ff', Daun: '#6ed36a', Cahaya: '#fff3a0', Kegelapan: '#a35cff' };
   function wargaOf(u) { const D = (window.Pokomen && window.Pokomen.data && window.Pokomen.data()) || {}; return (D.warga || []).find((x) => x.u === u) || null; }
   function warnaOf(u, cad) { const w = wargaOf(u); return WARNA_EL[w && w.elemen] || cad; }
-  const INTRO = 2.8, OUTRO = 4;
+  const KARTU = 3.4, INTRO = 5.3, OUTRO = 4;
   function jadwal(d) {
     const G = d.gerak || []; let t = INTRO; const S = [];
     G.forEach((g, i) => {
@@ -178,12 +178,64 @@
   const ease = (k) => (k < 0 ? 0 : k > 1 ? 1 : 1 - Math.pow(1 - k, 3));
   const clamp01 = (k) => Math.max(0, Math.min(1, k));
 
+
+  // ---------- kartu warga (intro & perayaan) ----------
+  const TIER_W = ['#cfc6b0', '#6ec85a', '#5aaaff', '#c9a0ff', '#ffd23f', '#ff6a2a'];
+  const F = (sz, wt = 700) => `${wt} ${sz}px "Pixelify Sans", monospace`;
+  function potong(ctx, s, maxW) { s = String(s || ''); if (ctx.measureText(s).width <= maxW) return s; while (s.length > 1 && ctx.measureText(s + '…').width > maxW) s = s.slice(0, -1); return s + '…'; }
+  function kartuWarga(ctx, o) {
+    const w = wargaOf(o.u) || {}; const L = o.x - o.w / 2, T = o.y, tier = w.tier || 0;
+    ctx.save(); ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(L + 7, T + 9, o.w, o.h);
+    ctx.fillStyle = '#2b1b17'; ctx.fillRect(L - 4, T - 4, o.w + 8, o.h + 8);
+    ctx.fillStyle = '#fff4dc'; ctx.fillRect(L, T, o.w, o.h);
+    ctx.fillStyle = o.judul ? '#ffd23f' : (TIER_W[tier] || TIER_W[0]); ctx.fillRect(L, T, o.w, 30);
+    ctx.fillStyle = '#2b1b17'; ctx.font = F(17); ctx.fillText(o.judul || String(w.tierNama || 'Regular').toUpperCase(), o.x, T + 21);
+    const PH = o.besar ? 128 : 110, py = T + 36;
+    const gr = ctx.createLinearGradient(0, py, 0, py + PH); gr.addColorStop(0, o.warna); gr.addColorStop(1, '#fff4dc');
+    ctx.globalAlpha = .6; ctx.fillStyle = gr; ctx.fillRect(L + 10, py, o.w - 20, PH); ctx.globalAlpha = 1;
+    ctx.strokeStyle = '#2b1b17'; ctx.lineWidth = 3; ctx.strokeRect(L + 10, py, o.w - 20, PH);
+    if (o.sp) { const sc = (PH - 14) / Math.max(o.sp.width, o.sp.height), sw = o.sp.width * sc, sh = o.sp.height * sc; ctx.imageSmoothingEnabled = !!o.sp.hd; ctx.drawImage(o.sp, o.x - sw / 2, py + PH - 6 - sh - (o.besar ? Math.abs(Math.sin((o.t || 0) * 5)) * 6 : 0), sw, sh); }
+    if (o.judul) { ctx.fillStyle = TIER_W[tier] || TIER_W[0]; ctx.font = F(12); const tn = String(w.tierNama || 'Regular'); const tw = ctx.measureText(tn).width + 12; ctx.fillRect(L + 14, py + 4, tw, 18); ctx.fillStyle = '#2b1b17'; ctx.textAlign = 'left'; ctx.fillText(tn, L + 20, py + 17); ctx.textAlign = 'center'; }
+    let yy = py + PH + 27;
+    ctx.fillStyle = '#2b1b17'; ctx.font = F(o.besar ? 28 : 24); ctx.fillText(potong(ctx, o.nama, o.w - 20), o.x, yy);
+    yy += 19; ctx.font = F(15, 600); ctx.fillStyle = '#6b4a2e'; ctx.fillText(potong(ctx, '@' + o.u, o.w - 20), o.x, yy);
+    const info = [(w.hewan || []).join(' + '), w.elemen ? 'Elemen ' + w.elemen : ''].filter(Boolean).join(' · ');
+    if (info) { yy += 18; ctx.font = F(14, 600); ctx.fillText(potong(ctx, info, o.w - 20), o.x, yy); }
+    if (w.gelar) { yy += 18; ctx.fillStyle = '#a06c00'; ctx.font = F(14); ctx.fillText(potong(ctx, '👑 ' + w.gelar, o.w - 20), o.x, yy); }
+    if (o.st) {
+      yy += 6; ctx.textAlign = 'left'; ctx.lineWidth = 2;
+      for (const [ic, k] of [['❤', 'nyawa'], ['⚔', 'serang'], ['🛡', 'tahan'], ['⚡', 'cepat']]) {
+        yy += 17; const v = Number(o.st[k]) || 0, m = Math.max(1, o.stMax[k] || v), bx = L + 98, bw = o.w - 150;
+        ctx.fillStyle = '#2b1b17'; ctx.font = F(13); ctx.fillText(`${ic} ${k[0].toUpperCase()}${k.slice(1)}`, L + 14, yy);
+        ctx.fillStyle = '#e6d8b8'; ctx.fillRect(bx, yy - 10, bw, 10); ctx.fillStyle = o.warna; ctx.fillRect(bx, yy - 10, bw * Math.min(1, v / m), 10);
+        ctx.strokeStyle = '#2b1b17'; ctx.strokeRect(bx, yy - 10, bw, 10); ctx.fillStyle = '#2b1b17'; ctx.textAlign = 'right'; ctx.fillText(String(v), L + o.w - 12, yy); ctx.textAlign = 'left';
+      }
+      ctx.textAlign = 'center';
+    }
+    const r = o.rek; yy += 24; ctx.fillStyle = '#2b1b17'; ctx.font = F(15);
+    if (!r || !r.main) ctx.fillText('✨ Duel pertama di Arena!', o.x, yy);
+    else {
+      ctx.fillText(potong(ctx, `⚔ ${r.main} duel · ${r.menang} menang · ${r.main - r.menang} kalah`, o.w - 16), o.x, yy);
+      if (!o.besar) {
+        yy += 7; const n = r.daftar.length, sz = 20, gap = 5, x0 = o.x - (n * sz + (n - 1) * gap) / 2;
+        r.daftar.forEach((h, i) => { ctx.fillStyle = h.menang ? '#43a047' : '#e04a3a'; ctx.fillRect(x0 + i * (sz + gap), yy, sz, sz); ctx.strokeStyle = '#2b1b17'; ctx.lineWidth = 2; ctx.strokeRect(x0 + i * (sz + gap), yy, sz, sz); ctx.fillStyle = '#fff'; ctx.font = F(13); ctx.fillText(h.menang ? 'M' : 'K', x0 + i * (sz + gap) + sz / 2, yy + 15); });
+        yy += sz;
+      } else {
+        for (const h of r.daftar.slice(0, 4)) { yy += 19; ctx.font = F(14, 600); ctx.fillStyle = h.menang ? '#2e7d32' : '#c0392b'; ctx.fillText(potong(ctx, `${h.menang ? '✅ Menang' : '❌ Kalah'} vs ${h.lawan}${h.baru ? ' (barusan!)' : ''}`, o.w - 24), o.x, yy); }
+      }
+      if (r.beruntun >= 2) { yy += 21; ctx.fillStyle = '#e05a00'; ctx.font = F(15); ctx.fillText(`🔥 ${r.beruntun}x menang beruntun!`, o.x, yy); }
+    }
+    if (o.extra) { yy += 22; ctx.fillStyle = '#6b4a2e'; ctx.font = F(14); ctx.fillText(o.extra, o.x, yy); }
+    ctx.restore();
+  }
+  function rekOf(d, u) { return (d.riwayat && d.riwayat[u]) || { main: 0, menang: 0, beruntun: 0, daftar: [] }; }
   function mulaiUlang() { if (!RP) return; RP.t0 = performance.now(); RP.lastT = -1; RP.part = []; RP.pop = []; RP.ghost = null; RP.heboh = 0; }
   function loop() {
     if (!RP) return;
     RP.raf = requestAnimationFrame(loop);
     const { d, cv, ctx } = RP; const W = cv.width, H = cv.height;
-    if (!RP.J) { RP.J = jadwal(d); RP.part = []; RP.pop = []; RP.lastT = -1; RP.heboh = 0; RP.cA = warnaOf(d.a, '#ffd23f'); RP.cB = warnaOf(d.b, '#5aaaff'); }
+    if (!RP.J) { RP.J = jadwal(d); RP.part = []; RP.pop = []; RP.lastT = -1; RP.heboh = 0; RP.cA = warnaOf(d.a, '#ffd23f'); RP.cB = warnaOf(d.b, '#5aaaff'); RP.stMax = {}; for (const k of ['nyawa', 'serang', 'tahan', 'cepat']) RP.stMax[k] = Math.max(Number((d.statA || {})[k]) || 1, Number((d.statB || {})[k]) || 1) * 1.15; }
     const { S, selesai: TEND } = RP.J;
     const now = performance.now(); const dtNyata = Math.min(.05, (now - (RP.prev || now)) / 1000); RP.prev = now;
     let t = (now - RP.t0) / 1000 * RP.cepat;
@@ -198,7 +250,8 @@
     const lewat = (x) => RP.lastT < x && t >= x;
     if (lewat(.05)) SFX.wus();
     if (lewat(.95)) { SFX.vs(); RP.heboh = 1; }
-    if (lewat(2.15)) SFX.mulai();
+    if (lewat(KARTU)) SFX.wus();
+    if (lewat(INTRO - .65)) SFX.mulai();
     for (const s of S) {
       const g = s.g, aIsP = g.p === d.a;
       const xL = aIsP ? 520 : 200, warna = aIsP ? RP.cA : RP.cB;
@@ -230,7 +283,7 @@
     let zoom = 1, fokus = [W / 2, 330], kilat = 0, getar = 0, garisCepat = 0, hitstop = false;
     const jejak = []; // afterimage
     if (t < INTRO) { // masuk dari kiri & kanan
-      const k = ease(t / .7); xA = -120 + (200 + 120) * k; xB = W + 120 - (W + 120 - 520) * k;
+      const k = ease((t - KARTU) / .6); xA = -120 + (200 + 120) * k; xB = W + 120 - (W + 120 - 520) * k;
       if (t > .95 && t < 1.25) { getar = (1.25 - t) * 40; kilat = (1.25 - t) * 2; }
     }
     if (seg && !selesai) {
@@ -364,24 +417,31 @@
       ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(kanan ? x0 + w * (1 - p) : x0, 40, w * p, 6);
       ctx.fillStyle = '#fffaee'; ctx.font = '700 17px "Pixelify Sans", monospace'; ctx.fillText(`${Math.max(0, Math.round(v))}/${max}`, kanan ? x - 4 : x0 + 4, 57);
     };
-    const hudMasuk = t < INTRO ? ease((t - 1.6) / .5) : 1;
+    const hudMasuk = t < INTRO ? ease((t - KARTU - .6) / .5) : 1;
     if (hudMasuk > 0) { ctx.save(); ctx.globalAlpha = hudMasuk; bar(16, d.namaA, hp[0], RP.ghost[0], N[0], false, RP.cA); bar(W - 16, d.namaB, hp[1], RP.ghost[1], N[1], true, RP.cB); ctx.restore(); }
 
     // ---------- teks besar ----------
     const C = W / 2;
     if (t < INTRO) {
-      // papan nama + statistik
-      const kartu = (nama, st, x, warna, k, kanan) => { const xx = kanan ? W + 260 - (W + 260 - x) * k : -260 + (x + 260) * k; ctx.fillStyle = 'rgba(43,27,23,.88)'; ctx.fillRect(xx - 130, 455, 260, 74); ctx.fillStyle = warna; ctx.fillRect(xx - 130, 455, 260, 5);
-        besar(nama, xx, 488, '#fffaee', 24); if (st) { ctx.font = '700 16px "Pixelify Sans", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#ffd23f'; ctx.fillText(`❤ ${st.nyawa}  ⚔ ${st.serang}  🛡 ${st.tahan}  ⚡ ${st.cepat}`, xx, 516); } };
-      const kk = ease((t - .3) / .6); kartu(d.namaA, d.statA, 200, RP.cA, kk, false); kartu(d.namaB, d.statB, 520, RP.cB, kk, true);
-      if (t > .9) { const k = clamp01((t - .9) / .25), sk = 3 - 2 * ease(k); besar('VS', C, 300, '#ffd23f', 96, sk, -.08); }
-      if (t < .9) besar('ARENA POKOMEN', C, 110, '#fffaee', 30, 1);
-      if (t > 1.6 && t < 2.15) besar('SIAP…', C, 120, '#fffaee', 40, 1);
-      if (t >= 2.15) { const k = clamp01((t - 2.15) / .2); besar('BERTARUNG!', C, 130, '#ff5a3a', 60, 1.6 - .6 * ease(k), -.05); }
+      if (t < KARTU) { // kartu warga kedua petarung + riwayat duel
+        ctx.fillStyle = 'rgba(10,6,25,.6)'; ctx.fillRect(0, 0, W, H);
+        const kin = ease((t - .1) / .55), kout = ease((t - (KARTU - .35)) / .35), yk = 72 - kout * (H + 40);
+        kartuWarga(ctx, { x: -200 + (180 + 200) * kin, y: yk, w: 330, h: 392, u: d.a, nama: d.namaA, sp: RP.spA, st: d.statA, stMax: RP.stMax, rek: rekOf(d, d.a), warna: RP.cA });
+        kartuWarga(ctx, { x: W + 200 - (W + 200 - 540) * kin, y: yk, w: 330, h: 392, u: d.b, nama: d.namaB, sp: RP.spB, st: d.statB, stMax: RP.stMax, rek: rekOf(d, d.b), warna: RP.cB });
+        besar('⚔ ARENA POKOMEN ⚔', C, 50 - kout * 80, '#fffaee', 26, 1);
+        if (t > .9) { const k = clamp01((t - .9) / .25), sk = 3 - 2 * ease(k); ctx.globalAlpha = 1 - kout; besar('VS', C, 452, '#ffd23f', 76, sk, -.08); ctx.globalAlpha = 1; }
+      }
+      if (t > KARTU + .8 && t < INTRO - .65) besar('SIAP…', C, 120, '#fffaee', 40, 1);
+      if (t >= INTRO - .65) { const k = clamp01((t - INTRO + .65) / .2); besar('BERTARUNG!', C, 130, '#ff5a3a', 60, 1.6 - .6 * ease(k), -.05); }
     } else if (selesai) {
       const k = t - TEND; const W_ = d.menang === d.a ? d.namaA : d.namaB;
       if (k < .35) besar('K.O.!', C, 230, '#ff3a2a', 110, 1, -.08);
-      else { besar('🏆 PEMENANG 🏆', C, 120, '#ffd23f', 34, 1); besar(W_, C, 175, '#fffaee', 50, Math.min(1, .5 + (k - .35) * 3)); besar(`menang dalam ${d.ronde} ronde`, C, 210, '#ffd23f', 20, 1); }
+      else {
+        const m = d.menang, kal = m === d.a ? d.namaB : d.namaA, r0 = rekOf(d, m), ka = ease((k - .35) / .5);
+        const rek = { main: r0.main + 1, menang: r0.menang + 1, beruntun: r0.beruntun + 1, daftar: [{ lawan: kal, menang: 1, baru: 1 }, ...r0.daftar].slice(0, 5) };
+        ctx.fillStyle = `rgba(10,6,25,${.55 * ka})`; ctx.fillRect(0, 0, W, H);
+        kartuWarga(ctx, { x: C, y: 40 + (1 - ka) * H, w: 400, h: 470, u: m, nama: W_, sp: m === d.a ? RP.spA : RP.spB, st: m === d.a ? d.statA : d.statB, stMax: RP.stMax, rek, warna: m === d.a ? RP.cA : RP.cB, judul: '🏆 PEMENANG 🏆', besar: true, t, extra: `Menang dalam ${d.ronde} ronde` });
+      }
       // konfeti
       const n = ringan ? 18 : 46; for (let i = 0; i < n; i++) { const ph = ((k * .45 + i * .37) % 1); const x = (i * 151 + Math.sin(k * 3 + i) * 20) % W; ctx.save(); ctx.translate(x, ph * H); ctx.rotate(k * 4 + i); ctx.fillStyle = ['#ffd23f', '#ff6b6b', '#5aaaff', '#6ec85a', '#c9a0ff'][i % 5]; ctx.fillRect(-4, -6, 8, 12); ctx.restore(); }
     } else if (seg) {
