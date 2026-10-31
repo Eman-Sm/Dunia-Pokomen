@@ -102,7 +102,7 @@
     S = await api('status');
     $('loginBox').hidden = true; $('panel').hidden = false;
     if (!ST) loadStory();
-    loadPw(); loadItem(); loadOb();
+    loadPw(); loadItem(); loadOb(); loadArena();
     $('chipHari').textContent = 'HARI KE-' + S.hari;
     $('chipWarga').textContent = S.warga.filter((w) => !w.hidden && !w.mati).length + ' WARGA';
     const conn = [
@@ -469,6 +469,22 @@
     } catch (e) { $('pwAdmInfo').textContent = 'Gagal memuat: ' + e.message; }
   }
   $('pwAdmReload') && ($('pwAdmReload').onclick = loadPw);
+
+  async function loadArena() {
+    if (!$('arAdmT')) return;
+    try {
+      const L = await api('arena_duel_list');
+      const f = (t) => new Date(t).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'short', timeStyle: 'short' });
+      $('arAdmT').innerHTML = L.length ? L.map((d) => `<tr data-id="${esc(d.id)}"><td>${f(d.t)}</td><td>${esc(d.namaA)} vs ${esc(d.namaB)} · ${d.ronde} ronde</td><td>${esc(d.menang === d.a ? d.namaA : d.namaB)}</td>
+        <td><a class="btn ghost" href="./?duel=${encodeURIComponent(d.id)}#toko" target="_blank" rel="noopener">Replay</a> <button class="btn ghost" data-r="9:16" type="button">Prompt 9:16</button> <button class="btn ghost" data-r="16:9" type="button">Prompt 16:9</button></td></tr>`).join('') : '<tr><td colspan="4" class="muted">Belum ada duel.</td></tr>';
+      $('arAdmT').querySelectorAll('[data-r]').forEach((b) => b.onclick = async () => {
+        b.disabled = true;
+        try { const r = await api('arena_prompt', { id: b.closest('tr').dataset.id, rasio: b.dataset.r }); $('arPrompt').value = r.prompt; try { await navigator.clipboard.writeText(r.prompt); toast('Prompt tersalin'); } catch { /* tetap di kotak */ } }
+        catch (e) { toast('Gagal: ' + e.message); } finally { b.disabled = false; }
+      });
+    } catch (e) { $('arAdmT').innerHTML = `<tr><td colspan="4">Gagal memuat: ${esc(e.message)}</td></tr>`; }
+  }
+  $('arAdmReload') && ($('arAdmReload').onclick = loadArena);
 
   async function loadOb() {
     try {

@@ -119,8 +119,7 @@
     const el = document.createElement('div'); el.className = 'rp-modal'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Replay duel');
     el.innerHTML = `<div class="rp-box"><div class="rp-head"><b>⚔️ ${esc(d.namaA)} vs ${esc(d.namaB)}</b><button class="btn ghost sq rp-x" type="button" aria-label="Tutup">×</button></div>
       <canvas class="rp-cv" width="720" height="560"></canvas>
-      <div class="rp-tools"><button class="btn rp-ulang" type="button">▶ Putar ulang</button><button class="btn ghost rp-cepat" type="button">⏩ 1x</button><button class="btn ghost rp-link" type="button">🔗 Salin link</button></div>
-      <div class="rp-flow"><b>🎬 Prompt Google Flow (YouTube)</b><div><button class="btn ghost rp-p" type="button" data-r="9:16">Shorts 9:16</button><button class="btn ghost rp-p" type="button" data-r="16:9">Video 16:9</button></div><textarea class="rp-teks" rows="5" readonly placeholder="Tekan salah satu tombol di atas, prompt langsung tersalin."></textarea></div></div>`;
+      <div class="rp-tools"><button class="btn rp-ulang" type="button">▶ Putar ulang</button><button class="btn ghost rp-cepat" type="button">⏩ 1x</button><button class="btn ghost rp-link" type="button">🔗 Salin link</button></div></div></div>`;
     document.body.appendChild(el);
     const cv = el.querySelector('.rp-cv'), ctx = cv.getContext('2d');
     RP = { el, d, cv, ctx, t0: performance.now(), cepat: 1, spA: sprite(d.a, d.namaA), spB: sprite(d.b, d.namaB), raf: 0 };
@@ -129,10 +128,6 @@
     el.querySelector('.rp-ulang').onclick = () => { RP.t0 = performance.now(); };
     el.querySelector('.rp-cepat').onclick = (e) => { RP.cepat = RP.cepat === 1 ? 2 : 1; e.target.textContent = `⏩ ${RP.cepat}x`; RP.t0 = performance.now(); };
     el.querySelector('.rp-link').onclick = async () => { const url = `${location.origin}/?duel=${encodeURIComponent(d.id)}#toko`; try { await navigator.clipboard.writeText(url); toast('Link replay tersalin! Bagikan ke temanmu.'); } catch { toast(url); } };
-    for (const b of el.querySelectorAll('.rp-p')) b.onclick = async () => {
-      const ta = el.querySelector('.rp-teks'); ta.value = 'Membuat prompt…';
-      try { const r = await get(`api/arena?duel=${encodeURIComponent(d.id)}&prompt=${encodeURIComponent(b.dataset.r)}`); ta.value = r.prompt || r.error || ''; ta.rows = 12; try { await navigator.clipboard.writeText(ta.value); toast('Prompt Google Flow tersalin!'); } catch { /* tetap tampil di kotak */ } } catch { ta.value = 'Gagal memuat prompt.'; }
-    };
     document.addEventListener('keydown', escTutup);
     loop();
   }

@@ -244,6 +244,15 @@ const actions = {
     for (const x of all) { if (x.includes(c)) { await redis('LREM', 'log', 0, x); n++; } }
     return { dihapus: n };
   },
+  /** Arena: duel terbaru (untuk replay & prompt Google Flow) */
+  async arena_duel_list() { const A = await import('../lib/arena.js'); return (await A.duelTerbaru(50)).map(({ gerak, catatan, statA, statB, ...d }) => ({ ...d, langkah: (gerak || []).length })); },
+  /** Prompt Google Flow untuk satu duel (hanya Admin) */
+  async arena_prompt({ id, rasio }) {
+    const A = await import('../lib/arena.js'); const { promptFlow } = await import('../lib/flowprompt.js');
+    const d = await A.cariDuel(id); if (!d) throw new Error('duel tidak ditemukan');
+    const [wa, wb] = await Promise.all([getJSON('warga', d.a), getJSON('warga', d.b)]);
+    return { prompt: promptFlow(d, wa || { username: d.a, nama: d.namaA, hewan: [], tier: d.tierA }, wb || { username: d.b, nama: d.namaB, hewan: [], tier: d.tierB }, { rasio: rasio === '16:9' ? '16:9' : '9:16' }) };
+  },
   async pw_buka_baru() { return { dibuka: await bukaWilayahBaru() }; },
   /** ubah jadwal satu wilayah, mis. { wilayah: 4, tutup: '2026-11-01T05:00:00Z' } */
   async pw_jadwal({ wilayah, buka, tutup }) {
