@@ -315,6 +315,7 @@
     ctx.imageSmoothingEnabled = false;
     if (cam.z >= .8) { try { drawPapanGapura(); } catch { /* ignore */ } }
     try { drawPatung(); } catch { /* ignore */ }
+    try { drawBangunan(); } catch { /* ignore */ }
     const list = allWarga().map((w) => ({ w, p: posOf(w) })).sort((a, b) => a.p[1] - b.p[1]);
     const now = performance.now(), slp = sleeping();
     const labels = [];
@@ -580,6 +581,23 @@
   // ---- Obrolan Warga: what a citizen wrote pops up above its head for a few seconds
   const HEADS = new Map();
   // supporters: warm coffee steam over the creature for 24 h after sending a coffee
+  // ---- Toko Pokomen & Arena di Pusat Koloni (muncul setelah dibuka)
+  const BANGUNAN = [['toko', 935, 705, 'TOKO'], ['arena', 822, 776, 'ARENA']].map(([k, x, y, lab]) => { const im = new Image(); im.onload = () => draw(); im.src = `assets/${k}.png?v=1`; return { im, x, y, lab }; });
+  function drawBangunan() {
+    if (!DATA || !DATA.evoBatu) return;
+    for (const b of BANGUNAN) {
+      if (!b.im.complete || !b.im.naturalWidth) continue;
+      const [x, y] = toScreen(b.x, b.y); const w = b.im.naturalWidth * cam.z, h = b.im.naturalHeight * cam.z;
+      if (x + w < 0 || x - w > box.clientWidth || y + h < 0 || y - h > box.clientHeight) continue;
+      ctx.imageSmoothingEnabled = false; ctx.drawImage(b.im, Math.round(x - w / 2), Math.round(y - h * .78), Math.round(w), Math.round(h));
+      if (cam.z >= .8) {
+        const f = Math.max(9, 7 * cam.z); ctx.font = `700 ${f}px "Pixelify Sans", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        const ly = b.lab === 'TOKO' ? y - h * .78 + 3 * cam.z : y + 9 * cam.z;
+        if (b.lab === 'ARENA') { const tw_ = ctx.measureText(b.lab).width + 10; ctx.fillStyle = '#2b1b17'; ctx.fillRect(x - tw_ / 2 - 1, ly - f * .7 - 1, tw_ + 2, f * 1.4 + 2); ctx.fillStyle = '#e8d0a0'; ctx.fillRect(x - tw_ / 2, ly - f * .7, tw_, f * 1.4); }
+        ctx.fillStyle = '#2b1b17'; ctx.fillText(b.lab, x, ly); ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
+      }
+    }
+  }
   // ---- God Mode: partikel khusus berputar di sekelilingnya (sedikit di Mode Ringan)
   function drawPartikelDewa(w, x, y, dh, now, seed) {
     const col = w.elemen && window.Creature.elementColor ? window.Creature.elementColor(w.elemen) : '#fff2a8';
@@ -595,7 +613,7 @@
     ctx.globalAlpha = 1;
   }
   // ---- patung para God Mode di Pusat Koloni (abu-abu batu di atas alas)
-  const PATUNG_SLOT = [[-78, 34], [78, 34], [-44, 56], [44, 56], [-108, 8], [108, 8], [0, 66], [-120, -24], [120, -24], [-20, -40]];
+  const PATUNG_SLOT = [[-45, -36], [-85, -18], [100, 10], [0, 60], [40, 58], [-120, 12], [125, 30], [-40, -60], [70, -60], [-100, -40]]; // jauh dari Toko, Arena & Tempat Latihan
   const patungCache = new Map();
   function patungSprite(w) {
     const sp = spriteFor(w), id = w.u + ':' + w.tier + ':' + (sp.width || 0);
