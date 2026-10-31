@@ -163,7 +163,7 @@
       }
       if (a.mode === 'walk') {
         const dx = a.tx - a.x, dy = a.ty - a.y, d = Math.hypot(dx, dy);
-        const sp = (10 + Math.min(4, w.tier || 0) * 1.5) * dt / 1000;
+        const sp = (10 + Math.min(4, w.tier || 0) * 1.5) * (w.tier >= 5 ? 2.2 : 1) * dt / 1000;
         if (d <= sp) { a.x = a.tx; a.y = a.ty; a.mode = 'idle'; a.until = now + rand(1500, 6000); }
         else { a.x += dx / d * sp; a.y += dy / d * sp; a.walk += dt / 1000 * 9; if (Math.abs(dx) > .3) a.face = dx < 0 ? -1 : 1; }
       } else if (now > a.until) {
@@ -174,6 +174,7 @@
             // stay around home (each citizen lives in its own wilayah)
             const R = 60 + Math.min(4, w.tier || 0) * 10;
             let t = null;
+            if (w.tier >= 5) t = W[Math.floor(Math.random() * W.length)]; // God Mode bebas terbang ke wilayah mana pun
             for (let k = 0; k < 12 && !t; k++) { const c = W[Math.floor(Math.random() * W.length)]; if (Math.hypot(c[0] - a.hx, (c[1] - a.hy) * 2) < R) t = c; }
             if (!t) t = [a.x + rand(-10, 10), a.y + rand(-5, 5)];
             a.tx = t[0] + rand(-6, 6); a.ty = t[1] + rand(-3, 3);
@@ -313,6 +314,7 @@
     ctx.drawImage(IMG, sx, sy, Wc / cam.z, Hc / cam.z, 0, 0, Wc, Hc);
     ctx.imageSmoothingEnabled = false;
     if (cam.z >= .8) { try { drawPapanGapura(); } catch { /* ignore */ } }
+    try { drawPatung(); } catch { /* ignore */ }
     const list = allWarga().map((w) => ({ w, p: posOf(w) })).sort((a, b) => a.p[1] - b.p[1]);
     const now = performance.now(), slp = sleeping();
     const labels = [];
@@ -344,7 +346,8 @@
       // flip to face the walking direction, squash a little when breathing / landing a step
       const sq = walking ? 1 + .06 * Math.cos(A.walk * 2) : breath;
       const SK = slp || RINGAN ? null : skillState(w, A, now);
-      const lift = SK && SK.kind === 'terbang' ? Math.sin(SK.p * Math.PI) * 16 * cam.z : 0;
+      const dewa = w.tier >= 5;
+      const lift = (SK && SK.kind === 'terbang' ? Math.sin(SK.p * Math.PI) * 16 * cam.z : 0) + (dewa ? (14 + 4 * Math.sin(now / 520 + A.seed)) * cam.z : 0); // God Mode selalu melayang
       const shake = SK && SK.kind === 'tanah' ? Math.sin(now / 30) * 1.5 * cam.z : 0;
       const alpha = SK && SK.kind === 'hilang' ? (SK.p < .5 ? Math.max(.08, 1 - SK.p * 2) : Math.min(1, (SK.p - .5) * 2)) : 1;
       if (SK && SK.kind === 'lari') for (let g = 3; g >= 1; g--) { ctx.save(); ctx.globalAlpha = .18 * (4 - g) / 3; ctx.translate(Math.round(x - A.face * g * 7 * cam.z), Math.round(y - bob)); ctx.scale(A.face < 0 ? -1 : 1, 1); ctx.drawImage(sp, -dw / 2, -footY, dw, dh); ctx.restore(); }
@@ -354,6 +357,7 @@
       ctx.imageSmoothingEnabled = false;
       const top = y - footY * sq - bob - lift;
       if (SK) { ctx.imageSmoothingEnabled = false; drawSkill(SK, w, x, y, top, A.face, cam.z); }
+      if (dewa) drawPartikelDewa(w, x, y - bob - lift, dh, now, A.seed);
       let crownTop = Infinity;
       if (w.sahabat && alpha > .3) {
         const hp = custom ? { x: sp.width / 2, y: 0 } : headPoint(sp), hx = x + shake + A.face * (hp.x - sp.width / 2) * s / Math.sqrt(sq);
@@ -375,6 +379,7 @@
     }
     if (cam.z < .8) { try { drawPapanGapura(); } catch { /* ignore */ } } // dilihat jauh: papan di atas hewan supaya terbaca
     drawSky(Wc, Hc, list);
+    try { drawCuaca(now); } catch { /* ignore */ }
     // ---- labels: placed by priority; a label that would collide is hidden and becomes a small dot
     const placed = [];
     const hit = (r) => placed.some((q) => r.x < q.x + q.w + 3 && r.x + r.w + 3 > q.x && r.y < q.y + q.h + 3 && r.y + r.h + 3 > q.y);
@@ -569,12 +574,97 @@
     if (arguments[0].mine) { pill(bx, by, bw, bh, bh / 2); ctx.lineWidth = 2; ctx.strokeStyle = '#2b1b17'; ctx.stroke(); }
     ctx.fillStyle = tagAccent(w); ctx.beginPath(); ctx.arc(bx + bh / 2, by + bh / 2, bh * .2, 0, Math.PI * 2); ctx.fill();
     if (w.gelar) { ctx.fillStyle = '#ffd23f'; ctx.fillRect(Math.round(x) - 5, by - 6, 11, 4); ctx.fillRect(Math.round(x) - 5, by - 9, 2, 3); ctx.fillRect(Math.round(x) - 1, by - 10, 3, 4); ctx.fillRect(Math.round(x) + 4, by - 9, 2, 3); ctx.fillStyle = '#d9483b'; ctx.fillRect(Math.round(x), by - 5, 1, 2); }
-    ctx.font = font; ctx.textBaseline = 'middle'; ctx.fillStyle = arguments[0].mine ? '#2b1b17' : '#ffffff';
+    ctx.font = font; ctx.textBaseline = 'middle'; ctx.fillStyle = arguments[0].mine ? '#2b1b17' : w.tier >= 4 && !w.mati ? '#ffd23f' : '#ffffff';
     ctx.fillText(text, bx + bh * .85, by + bh / 2 + .5);
   }
   // ---- Obrolan Warga: what a citizen wrote pops up above its head for a few seconds
   const HEADS = new Map();
   // supporters: warm coffee steam over the creature for 24 h after sending a coffee
+  // ---- God Mode: partikel khusus berputar di sekelilingnya (sedikit di Mode Ringan)
+  function drawPartikelDewa(w, x, y, dh, now, seed) {
+    const col = w.elemen && window.Creature.elementColor ? window.Creature.elementColor(w.elemen) : '#fff2a8';
+    const n = RINGAN ? 4 : 10, cy = y - dh * .45, R = dh * .62, k = Math.max(1.5, cam.z * 1.4);
+    for (let i = 0; i < n; i++) {
+      const a = now / 900 + i / n * Math.PI * 2 + seed, h = Math.sin(now / 400 + i) * .25;
+      const px = x + Math.cos(a) * R, py = cy + Math.sin(a) * R * .38 + h * R * .3;
+      ctx.globalAlpha = .55 + .45 * Math.sin(now / 250 + i * 1.7);
+      ctx.fillStyle = i % 3 === 0 ? '#ffffff' : col;
+      ctx.fillRect(Math.round(px - k), Math.round(py - k / 3), Math.round(k * 2), Math.max(1, Math.round(k / 1.5)));
+      ctx.fillRect(Math.round(px - k / 3), Math.round(py - k), Math.max(1, Math.round(k / 1.5)), Math.round(k * 2));
+    }
+    ctx.globalAlpha = 1;
+  }
+  // ---- patung para God Mode di Pusat Koloni (abu-abu batu di atas alas)
+  const PATUNG_SLOT = [[-78, 34], [78, 34], [-44, 56], [44, 56], [-108, 8], [108, 8], [0, 66], [-120, -24], [120, -24], [-20, -40]];
+  const patungCache = new Map();
+  function patungSprite(w) {
+    const sp = spriteFor(w), id = w.u + ':' + w.tier + ':' + (sp.width || 0);
+    if (patungCache.has(id)) return patungCache.get(id);
+    try {
+      const c = document.createElement('canvas'); c.width = sp.width; c.height = sp.height; const g = c.getContext('2d');
+      g.drawImage(sp, 0, 0); const d = g.getImageData(0, 0, c.width, c.height), a = d.data;
+      for (let i = 0; i < a.length; i += 4) { const v = (a[i] * .3 + a[i + 1] * .55 + a[i + 2] * .15) * .75 + 70; a[i] = v * .98; a[i + 1] = v * .98; a[i + 2] = v * 1.03; }
+      g.putImageData(d, 0, 0); c.px = sp.px; c.grow = sp.grow; c.hd = sp.hd; patungCache.set(id, c); return c;
+    } catch { return null; }
+  }
+  function drawPatung() {
+    const pk = WORLD && (WORLD.pk || WORLD.center); if (!pk || !DATA) return;
+    const dewa = DATA.warga.filter((w) => w.tier >= 5 && !w.mati).sort((a, b) => String(a.lahir).localeCompare(String(b.lahir))).slice(0, PATUNG_SLOT.length);
+    dewa.forEach((w, i) => {
+      const [ox, oy] = PATUNG_SLOT[i]; const [x, y] = toScreen(pk[0] + ox, pk[1] + oy);
+      if (x < -60 || y < -80 || x > box.clientWidth + 60 || y > box.clientHeight + 40) return;
+      const z = cam.z;
+      ctx.fillStyle = '#5e5a66'; ctx.fillRect(Math.round(x - 10 * z), Math.round(y - 5 * z), Math.round(20 * z), Math.round(7 * z));
+      ctx.fillStyle = '#9a96a4'; ctx.fillRect(Math.round(x - 9 * z), Math.round(y - 6 * z), Math.round(18 * z), Math.round(3 * z));
+      const sp = patungSprite(w); if (!sp) return;
+      const u = sp.px || 1, s = z * .9 * (sp.grow || 1) / u, dw = sp.width * s, dh = sp.height * s;
+      ctx.imageSmoothingEnabled = !!sp.hd && !RINGAN;
+      ctx.drawImage(sp, Math.round(x - dw / 2), Math.round(y - 5 * z - 31 * u * s), dw, dh);
+      ctx.imageSmoothingEnabled = false;
+      if (z >= .9) { ctx.font = `700 ${Math.round(6.5 * z)}px "Pixelify Sans", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#f4f0e8'; ctx.fillText(w.nama.toUpperCase(), x, y - 1.5 * z); ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic'; }
+    });
+  }
+  // ---- cuaca dari God Mode: partikel ringan di dalam wilayahnya saja (tanpa state, tanpa gradien)
+  function drawCuaca(now) {
+    const L = DATA && DATA.cuaca; if (!L || !L.length || !WORLD || !WORLD.wilayah) return;
+    for (const c of L) {
+      if (Date.parse(c.sampai) < Date.now()) continue;
+      const C = WORLD.wilayah[c.wilayah]; if (!C) continue;
+      const [cx, cy] = toScreen(C[0], C[1]); const rx = 250 * cam.z, ry = 125 * cam.z;
+      if (cx + rx < 0 || cx - rx > box.clientWidth || cy + ry < -60 * cam.z || cy - ry > box.clientHeight) continue;
+      const N = RINGAN ? 18 : 46, k = Math.max(1.5, 1.6 * cam.z);
+      if (c.jenis === 'pelangi') {
+        const col = ['#ff5a5a', '#ffa53a', '#ffe14a', '#5fd36a', '#4aa8ff', '#9b6bff'];
+        ctx.globalAlpha = .32; ctx.lineWidth = Math.max(2, 5 * cam.z);
+        col.forEach((cc, i) => { ctx.strokeStyle = cc; ctx.beginPath(); ctx.ellipse(cx, cy + ry * .55, rx * (.95 - i * .045), ry * (1.6 - i * .08), 0, Math.PI, 0); ctx.stroke(); });
+        ctx.globalAlpha = 1;
+      }
+      if (c.jenis === 'petir') {
+        const fase = now % 3600;
+        if (fase < 140) { ctx.globalAlpha = .28 * (1 - fase / 140); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
+        if (fase < 260) {
+          let r = Math.floor(now / 3600) * 9301 + 49297; const rnd = () => ((r = (r * 9301 + 49297) % 233280) / 233280);
+          let x = cx + (rnd() - .5) * rx, y = cy - ry - 40 * cam.z; ctx.strokeStyle = '#fff6a0'; ctx.lineWidth = Math.max(2, 2.5 * cam.z); ctx.beginPath(); ctx.moveTo(x, y);
+          while (y < cy + ry * .3) { y += (12 + rnd() * 10) * cam.z; x += (rnd() - .5) * 18 * cam.z; ctx.lineTo(x, y); } ctx.stroke();
+        }
+      }
+      if (c.jenis === 'pelangi') continue;
+      const warna = { bintang: '#fff3a0', salju: '#ffffff', hujan: '#9fd0ff', petir: '#9fd0ff', sakura: '#ffb3cf' }[c.jenis] || '#ffffff';
+      const cepat = { bintang: .5, salju: .12, hujan: .9, petir: 1.1, sakura: .15 }[c.jenis] || .3;
+      ctx.fillStyle = warna; ctx.strokeStyle = warna; ctx.lineWidth = Math.max(1, cam.z);
+      for (let i = 0; i < N; i++) {
+        const ang = i * 2.39996, rr = Math.sqrt((i + .5) / N);
+        const f = (now / 1000 * cepat + i * .137) % 1;
+        const x = cx + Math.cos(ang) * rr * rx + (c.jenis === 'salju' || c.jenis === 'sakura' ? Math.sin(now / 700 + i) * 6 * cam.z : 0);
+        const y = cy + Math.sin(ang) * rr * ry - 70 * cam.z + f * 90 * cam.z;
+        ctx.globalAlpha = Math.sin(f * Math.PI);
+        if (c.jenis === 'hujan' || c.jenis === 'petir') { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 2 * cam.z, y + 7 * cam.z); ctx.stroke(); }
+        else if (c.jenis === 'bintang') { ctx.fillRect(Math.round(x), Math.round(y), Math.round(k * 1.4), Math.round(k * 1.4)); ctx.globalAlpha *= .5; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 8 * cam.z, y - 8 * cam.z); ctx.stroke(); }
+        else ctx.fillRect(Math.round(x), Math.round(y), Math.round(k * (c.jenis === 'sakura' ? 1.6 : 1.2)), Math.round(k));
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
   // aura bersinar untuk hewan bergelar: cahaya emas berdenyut + sinar berputar + kilau
   function drawAuraGelar(x, y, dh, now, seed) {
     const cy = y - dh * .42, R = dh * .78, pulse = .85 + .15 * Math.sin(now / 380 + seed);
@@ -646,7 +736,7 @@
     pill(bx, by, bw, bh, 12); ctx.fillStyle = 'rgba(255,252,244,.97)'; ctx.fill(); ctx.restore();
     pill(bx, by, bw, bh, 12); ctx.lineWidth = 2; ctx.strokeStyle = tagAccent(w); ctx.stroke();
     ctx.fillStyle = 'rgba(255,252,244,.97)'; ctx.beginPath(); ctx.moveTo(x - 6, by + bh - 1); ctx.lineTo(x + 6, by + bh - 1); ctx.lineTo(x, by + bh + 6); ctx.closePath(); ctx.fill();
-    ctx.textBaseline = 'top'; ctx.font = f1; ctx.fillStyle = '#2b1b17'; ctx.fillText(t, bx + 11, by + 4);
+    ctx.textBaseline = 'top'; ctx.font = f1; ctx.fillStyle = w.tier >= 4 && !w.mati ? '#b77d00' : '#2b1b17'; ctx.fillText(t, bx + 11, by + 4);
     ctx.font = f2; ctx.fillStyle = '#7a5a40'; ctx.fillText(sub, bx + 11, by + 22);
   }
 
@@ -796,11 +886,12 @@
     card.innerHTML = `
       <button class="btn ghost sq close" type="button" aria-label="Tutup">×</button>
       <div class="card-head"><span id="cardSprite"></span>
-        <div><h3>${esc(namaTampil(w))}</h3>
+        <div><h3${w.tier >= 4 ? ' class="emas"' : ''}>${esc(namaTampil(w))}</h3>
           <a class="handle" href="https://www.instagram.com/${encodeURIComponent(w.u)}/" target="_blank" rel="noopener">@${esc(w.u)}</a><br>
           <span class="tier t${w.tier}">${esc(w.tierNama || TIERS[w.tier])}</span>${w.gelar ? `<span class="gelar">${esc(w.gelar)}</span>` : ''}${w.sahabat ? '<span class="gelar sahabat">♛ Sohabat Admin</span>' : ''}${w.wil ? `<span class="gelar wil">${esc(wilLabel(w.wil))}</span>` : ''}</div></div>
       <ul class="hewan">${(w.hewan || []).map((h) => `<li>${esc(h)}</li>`).join('')}</ul>
       ${w.kopi ? `<p class="skill kopi-${esc(w.lencana)}">☕ <b>${{ emas: 'Pendukung Emas', perak: 'Pendukung Perak', perunggu: 'Pendukung Perunggu' }[w.lencana] || 'Pendukung'}</b> · ${fmt(w.kopi)} ${esc((DATA.dukunganUnit) || 'Kopi Admin')}${w.sahabat ? ' · terbanyak!' : ''}<br><span class="muted">Dompet: <b>${fmt(w.biji)} Biji Kopi</b> (dipakai saat Toko Pokomen buka)</span></p>` : ''}
+      ${DATA.evoBatu && !w.mati ? `<p class="skill batu">💎 Batu Evolusi: <b>${fmt(w.batu || 0)}</b>${w.tier >= 3 && w.tier < 5 && DATA.batuSyarat ? ` <span class="muted">(butuh ${DATA.batuSyarat[w.tier]} + cerita untuk naik ke ${esc(TIERS[w.tier + 1])})</span>` : ''}<br><span class="muted">📅 Hari aktif: <b>${(w.hariAktif || 0) % 7}/7</b> · tiap 7 hari aktif = 1 batu gratis</span></p>` : ''}
       ${w.skill ? `<p class="skill">✦ Skill: <b>${esc(w.skill)}</b></p>` : w.tier >= 3 ? '<p class="muted">Skill belum diisi. Pemiliknya bisa menulis <b>Skill: ...</b> di komentar.</p>' : ''}
       ${(w.cerita || []).length ? `<ul class="stories">${w.cerita.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>` : '<p class="muted">Belum ada cerita. Ceritakan kebiasaan uniknya di postingan berikutnya untuk berevolusi.</p>'}
       <p class="muted">Lahir ${esc(lahir)} · kavling #${w.spot + 1}</p>
@@ -860,7 +951,7 @@
     for (const w of list.slice(0, shown)) {
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'wcard' + (w.mati ? ' mati' : '');
-      b.innerHTML = `<span class="s"></span><span style="min-width:0"><b>${esc(w.nama)}</b><span>${esc((w.hewan || []).join(' + '))}</span><span>@${esc(w.u)} · ${w.mati ? 'RIP · diterlantarkan' : esc(w.tierNama || TIERS[w.tier])}</span></span>`;
+      b.innerHTML = `<span class="s"></span><span style="min-width:0"><b${!w.mati && w.tier >= 4 ? ' class="emas"' : ''}>${esc(w.nama)}</b><span>${esc((w.hewan || []).join(' + '))}</span><span>@${esc(w.u)} · ${w.mati ? 'RIP · diterlantarkan' : esc(w.tierNama || TIERS[w.tier])}</span></span>`;
       if (w.mati) { const g = document.createElement('span'); g.className = 'grave-ico'; g.setAttribute('aria-hidden', 'true'); b.querySelector('.s').replaceWith(g); }
       else b.querySelector('.s').replaceWith(spriteNode(w, 44));
       b.onclick = () => { select(w); $('peta').scrollIntoView({ behavior: 'smooth' }); };

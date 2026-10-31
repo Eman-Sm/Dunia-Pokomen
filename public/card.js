@@ -88,7 +88,7 @@
     }
 
     // ---- header: name, number, tier
-    ctx.fillStyle = S.text; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = tier >= 5 ? '#ffd23f' : tier >= 4 ? '#a86f00' : S.text; ctx.textBaseline = 'alphabetic'; // nama emas untuk Legendary & God Mode
     let size = 46; ctx.font = `700 ${size}px ${DISPLAY}`;
     while (ctx.measureText(w.nama).width > 330 && size > 26) { size -= 2; ctx.font = `700 ${size}px ${DISPLAY}`; }
     ctx.fillText(w.nama, 44, 84);

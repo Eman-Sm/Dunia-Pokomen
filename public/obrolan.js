@@ -11,7 +11,7 @@
     else TOKEN = localStorage.getItem('pokomen_k') || '';
     if (qs.get('k')) { qs.delete('k'); history.replaceState(null, '', location.pathname + (qs.toString() ? '?' + qs : '') + location.hash); } // keep the secret out of the address bar
   } catch { /* ignore */ }
-  const TIERC = ['#9a8f80', '#5a9a3a', '#2f7fd0', '#8a5ad0', '#c08a10', '#d9483b'];
+  const TIERC = ['#9a8f80', '#5a9a3a', '#2f7fd0', '#8a5ad0', '#c99500', '#c99500']; // Legendary & God Mode: nama emas
   const EMO = ['👋', '❤️', '😂', '🔥', '🎉', '👑'];
   const state = { ruang: 'semua', me: null, last: {}, msgs: {}, bubbles: [], kunci: false };
 
@@ -51,7 +51,7 @@
     const atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 40;
     list.innerHTML = msgs.length ? msgs.map((m) => m.sistem
       ? `<li class="sys"><span>${esc(m.text)}</span><time>${jam(m.t)}</time></li>`
-      : `<li${state.me && m.u === state.me.u ? ' class="me"' : ''}><button type="button" class="ob-name" data-u="${esc(m.u)}" style="color:${TIERC[Math.min(5, m.tier || 0)]}">${m.gelar ? '♛ ' : ''}${m.kopi ? '<span title="Pendukung Kopi Admin">☕</span> ' : ''}${esc(m.nama)}</button><span class="ob-wil">W${m.wil}</span><time>${jam(m.t)}</time>
+      : `<li${state.me && m.u === state.me.u ? ' class="me"' : ''}><button type="button" class="ob-name${(m.tier || 0) >= 4 ? ' emas' : ''}" data-u="${esc(m.u)}" style="color:${TIERC[Math.min(5, m.tier || 0)]}">${m.gelar ? '♛ ' : ''}${m.kopi ? '<span title="Pendukung Kopi Admin">☕</span> ' : ''}${esc(m.nama)}</button><span class="ob-wil">W${m.wil}</span><time>${jam(m.t)}</time>
          <button type="button" class="ob-flag" data-id="${m.id}" title="Laporkan pesan ini" aria-label="Laporkan">⚑</button><p>${esc(m.text)}</p></li>`).join('')
       : `<li class="empty">Belum ada obrolan di sini. ${state.me ? 'Sapa duluan yuk!' : ''}</li>`;
     list.querySelectorAll('.ob-name').forEach((b) => (b.onclick = () => window.Pokomen && window.Pokomen.focus(b.dataset.u)));

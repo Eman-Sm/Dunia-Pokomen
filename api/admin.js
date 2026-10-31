@@ -256,7 +256,7 @@ const actions = {
   /** Batu Evolusi: { username, jumlah (boleh negatif), bukti } */
   async batu_tambah({ username, jumlah, bukti }) { return tambahBatu(username, jumlah, bukti); },
   /** nyalakan/matikan aturan Legendary & God Mode lewat cerita + Batu Evolusi (setelah diumumkan di video) */
-  async evo_batu({ aktif }) { if (aktif) await redis('SET', 'evo_batu', '1'); else await redis('DEL', 'evo_batu'); return { aktif: (await redis('GET', 'evo_batu')) === '1', syarat: CONFIG.batuEvolusi }; },
+  async evo_batu({ aktif }) { let ketua = []; if (aktif) { await redis('SET', 'evo_batu', '1'); ketua = await (await import('../lib/dewa.js')).batuKetuaAwal(); } else await redis('DEL', 'evo_batu'); return { aktif: (await redis('GET', 'evo_batu')) === '1', syarat: CONFIG.batuEvolusi, batuKetua: ketua }; },
   async ob_info() { return ob.adminInfo(); },
   async pengumuman({ text, kabar = true, obrolan = true }) {
     const t = String(text || '').trim().slice(0, 200); if (!t) throw new Error('teks kosong');

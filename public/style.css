@@ -581,3 +581,10 @@ code { font-family: var(--font-display); background: #2b2420; color: #ffe27a; pa
 body.ringan *, body.ringan *::before, body.ringan *::after { animation: none !important; transition: none !important; }
 body.ringan { background-image: none; }
 body.ringan .kartu .foil, body.ringan .kartu .glare { display: none; }
+
+/* Legendary & God Mode: nama emas */
+.emas { color: #c99500 !important; text-shadow: 0 0 6px rgba(255, 210, 63, .65), 1px 1px 0 #6b4a00; }
+.wcard b.emas { text-shadow: 0 0 4px rgba(255, 210, 63, .7); }
+.skill.batu { background: #eef4ff; }
+.skill.batu, .skill.batu b { color: #2b1b17 !important; }
+.skill.batu b { color: #1d4f9a !important; }

@@ -23,3 +23,27 @@ test('Legendary & God Mode: cerita + Batu Evolusi (aktif setelah diumumkan)', as
   x = await getJSON('warga', 'm'); assert.equal(x.tier, 5); assert.equal(x.batu, 0);
   assert.equal(await c('m', 'Cerita: Mito sudah jadi dewa sekarang', 'q5', 'b6'), 'cerita'); // God Mode = tertinggi
 });
+
+test('God Mode memanggil cuaca seminggu sekali; outfit hanya 1 pakaian', async () => {
+  const { parseComment } = await import('../lib/parse.js');
+  const { cuacaAktif, jenisCuaca } = await import('../lib/dewa.js');
+  assert.equal(parseComment('Outfit: jubah merah, topi emas dan pedang').outfit, 'jubah merah');
+  assert.equal(jenisCuaca('hujan bintang dong'), 'bintang'); assert.equal(jenisCuaca('badai petir'), 'petir'); assert.equal(jenisCuaca('panas'), null);
+  const g = newWarga({ username: 'g', nama: 'Gaia', hewan: ['Naga'], spot: 5 }); g.tier = 5; await setJSON('warga', 'g', g);
+  const l = newWarga({ username: 'l', nama: 'Lumo', hewan: ['Kucing'], spot: 6 }); l.tier = 4; await setJSON('warga', 'l', l);
+  assert.equal(await c('l', 'Cuaca: hujan bintang', 'r1', 'c1'), 'cuaca:bukan-dewa');
+  assert.equal(await c('g', 'Cuaca: panas terik', 'r1', 'c2'), 'cuaca:tidak-dikenal');
+  assert.equal(await c('g', 'Cuaca: hujan bintang', 'r1', 'c3'), 'cuaca:bintang');
+  const a = await cuacaAktif(); assert.equal(a.length, 1); assert.equal(a[0].wilayah, 1); assert.equal(a[0].jenis, 'bintang');
+  assert.equal(await c('g', 'Cuaca: salju', 'r1', 'c4'), 'cuaca:tunggu');
+});
+
+test('aktif 7 hari = 1 Batu Evolusi', async () => {
+  const { catatAktif } = await import('../lib/dewa.js');
+  const a = newWarga({ username: 'akt', nama: 'Aktif', hewan: ['Rubah'], spot: 7 }); await setJSON('warga', 'akt', a);
+  for (let d = 1; d <= 6; d++) await redis('SADD', 'aktif_hari:akt', `2026-10-0${d}`);
+  const r = await catatAktif('akt');
+  assert.equal(r.hari, 7); assert.equal(r.batu, 1);
+  assert.equal(await catatAktif('akt'), null); // hari yang sama tidak dihitung dua kali
+  assert.equal((await getJSON('warga', 'akt')).batu, 1);
+});

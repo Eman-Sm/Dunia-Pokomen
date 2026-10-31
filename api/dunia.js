@@ -4,6 +4,7 @@ import { publicWarga, publicMakam, CONFIG, ensureTierSchema } from '../lib/rules
 import { json, hariKe } from '../lib/http.js';
 import { papanKopi, isTest, lencanaKopi, BIJI_PER_KOPI } from '../lib/sahabat.js';
 import { namaKembar, normNama } from '../lib/hewan.js';
+import { cuacaAktif } from '../lib/dewa.js';
 import { hasilWilayah, publicHasil, tetapkanPemenang, wilayahOf, daftarUsulWilayah, segarkanLike, bukaWilayahBaru, jumlahWilayahBuka } from '../lib/wilayah.js';
 
 export async function GET() {
@@ -30,6 +31,9 @@ export async function GET() {
       const perlu = Object.values(pw.wilayah).some((x) => x.memilih && x.closed && !x.ditetapkan);
       if (perlu && (await redis('SET', 'pw_tetap_lock', '1', 'NX', 'EX', '120')) === 'OK') { await tetapkanPemenang(); pw = await hasilWilayah(); }
     } catch { pw = null; }
+    const evoBatu = (await redis('GET', 'evo_batu')) === '1';
+    let aktifN = {};
+    if (evoBatu) { try { const a = (await redis('HGETALL', 'aktif_n')) || []; if (Array.isArray(a)) for (let i = 0; i < a.length; i += 2) aktifN[a[i]] = Number(a[i + 1]); else aktifN = a; } catch { /* ignore */ } }
     let namaWil = {};
     try { namaWil = await daftarUsulWilayah(); } catch { /* ignore */ }
     const us = usulan.filter((x) => x.status !== 'ditolak')
@@ -39,11 +43,14 @@ export async function GET() {
     return json({
       hari: hariKe(start),
       tiers: CONFIG.tiers,
-      benefits: CONFIG.benefits,
+      benefits: evoBatu ? [...CONFIG.benefits.slice(0, 4), ...CONFIG.benefitsBaru] : CONFIG.benefits,
+      evoBatu,
+      batuSyarat: evoBatu ? CONFIG.batuEvolusi : null,
+      cuaca: evoBatu ? await cuacaAktif().catch(() => []) : [],
       jumlahWarga: visible.filter((w) => !w.mati).length,
       jumlahMati: visible.filter((w) => w.mati).length + makam.length,
       makam: makam.filter((w) => !w.hidden).map(publicMakam),
-      warga: visible.map((w) => { const p = publicWarga(w); p.wil = wilayahOf(w); const pk = kopiBy[p.u]; if (pk && !p.mati) { p.kopi = pk.total; p.biji = pk.total * BIJI_PER_KOPI; p.lencana = lencanaKopi(pk.total)?.kode; if (Date.now() - Date.parse(pk.sejak) < 864e5) p.kopiBaru = 1; } if (kembar.has(normNama(w.nama))) p.kembar = true; if (sahabat && sahabat.u === p.u && !p.mati) p.sahabat = sahabat.total; return p; }),
+      warga: visible.map((w) => { const p = publicWarga(w); p.wil = wilayahOf(w); const pk = kopiBy[p.u]; if (pk && !p.mati) { p.kopi = pk.total; p.biji = pk.total * BIJI_PER_KOPI; p.lencana = lencanaKopi(pk.total)?.kode; if (Date.now() - Date.parse(pk.sejak) < 864e5) p.kopiBaru = 1; } if (evoBatu && aktifN[p.u]) p.hariAktif = Number(aktifN[p.u]); if (kembar.has(normNama(w.nama))) p.kembar = true; if (sahabat && sahabat.u === p.u && !p.mati) p.sahabat = sahabat.total; return p; }),
       kopiBoard: papan.slice(0, 5).map(({ u, nama, total }) => ({ u, nama, total })),
       dukunganUnit: process.env.TRAKTEER_UNIT_NAME || 'Kopi Admin',
       usulan: us,
