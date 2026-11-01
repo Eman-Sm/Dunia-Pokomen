@@ -22,7 +22,7 @@ export async function GET(request) {
     const u = k ? await userFromToken(k) : null;
     return json({
       aktif, buka: A.buka(), jam: [A.JAM_BUKA, A.JAM_TUTUP], hariJuara: A.HARI_JUARA,
-      duel: aktif ? await A.duelTerbaru(12) : [], beruntun: aktif ? await A.papanBeruntun() : [], terbuka: aktif ? await A.tantanganTerbuka() : [],
+      duel: aktif ? await A.duelTerbaru(12) : [], beruntun: aktif ? await A.papanBeruntun() : [], minMenang: A.MIN_MENANG, terbuka: aktif ? await A.tantanganTerbuka() : [],
       saya: aktif && u ? { u, tantangan: await A.tantanganUntuk(u) } : null,
     }, 200, { 'Cache-Control': 'no-store' });
   } catch (e) { return json({ error: e.message }, 200); }
@@ -36,11 +36,11 @@ export async function POST(request) {
     if (!u) return json({ error: 'Link pribadimu tidak berlaku. DM "ARENA" ke @duniapokomen untuk link baru.' });
     if (b.aksi === 'tantang') {
       const t = await A.tantang(u, b.lawan);
-      await sistem(`⚔️ ${t.namaDari} menantang ${t.namaKe} di Arena! Berlaku 2 jam.`).catch(() => {});
+      await sistem(`⚔️ ${t.namaDari} menantang ${t.namaKe} di Arena! Berlaku 12 jam.`).catch(() => {});
       return json({ ok: true, tantangan: t });
     }
     if (b.aksi === 'terima') return json({ ok: true, duel: await A.terima(u, b.id, { umumkan }) });
-    if (b.aksi === 'tolak') return json(await A.tolak(u, b.id));
+    if (b.aksi === 'tolak') return json(await A.tolak(u, b.id, { umumkan }));
     return json({ error: 'aksi tidak dikenal' });
   } catch (e) { return json({ error: e.message }, 200); }
 }

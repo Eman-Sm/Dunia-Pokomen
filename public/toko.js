@@ -53,11 +53,12 @@
   }
 
   function duelHTML(d) {
+    if (d.wo) return `<details class="tk-duel"><summary>⏰ <b>${esc(d.namaB)}</b> ${d.wo === 'menolak' ? 'menolak' : 'tidak menjawab'} tantangan <b>${esc(d.namaA)}</b> <time>${jam(d.t)}</time></summary><ol>${(d.catatan || []).map((c) => `<li>${esc(c)}</li>`).join('')}</ol></details>`;
     const W = d.menang === d.a ? d.namaA : d.namaB;
     return `<details class="tk-duel"><summary><b>${esc(d.namaA)}</b> vs <b>${esc(d.namaB)}</b> · 🏆 ${esc(W)} <time>${jam(d.t)}</time></summary>${d.gerak ? `<button class="btn tk-replay" type="button" data-id="${esc(d.id)}">▶ Tonton replay</button>` : ''}<ol>${d.catatan.map((c) => `<li>${esc(c)}</li>`).join('')}</ol></details>`;
   }
   function sisaJuara(iso) {
-    const ms = Date.parse(iso) - Date.now(); if (!(ms > 0)) return 'sebentar lagi!';
+    const ms = Date.parse(iso) - Date.now(); if (!(ms > 0)) return '✓ terpenuhi';
     const h = Math.floor(ms / 864e5), j = Math.floor((ms % 864e5) / 36e5);
     return h ? `${h} hari ${j} jam lagi` : j ? `${j} jam lagi` : `${Math.max(1, Math.round(ms / 6e4))} menit lagi`;
   }
@@ -67,11 +68,11 @@
     const D = (window.Pokomen && window.Pokomen.data && window.Pokomen.data()) || {};
     const nama = (u) => ((D.warga || []).find((w) => w.u === u) || {}).nama || u;
     return `<p class="tk-info">${A.buka ? '🟢 Arena <b>BUKA</b>' : '🔴 Arena <b>TUTUP</b>'} · setiap hari pukul ${String(A.jam?.[0] ?? 7).padStart(2, '0')}.00–${A.jam?.[1] ?? 21}.00 WIB · maks. 5 tantangan per hari</p>
-      <p class="tk-info">🏆 <b>Juara Arena</b>: tak terkalahkan <b>7 hari</b> sejak kemenangan pertama → <b>💎 1 Batu Evolusi</b>. Kalah sekali, hitungannya mulai dari nol lagi.</p>
+      <p class="tk-info">🏆 <b>Juara Arena</b>: tak terkalahkan <b>7 hari</b> sejak kemenangan pertama + minimal <b>${A.minMenang || 5} menang</b> → <b>💎 1 Batu Evolusi</b>. Kalah sekali = mulai dari nol. Tantangan berlaku <b>12 jam</b>; menolak atau tidak menjawab = dianggap kalah, kemenangan <b>-1</b>.</p>
       ${masuk.length ? `<div class="tk-masuk"><b>⚔️ Kamu ditantang!</b>${masuk.map((t) => `<div><span>${esc(t.namaDari)} menantang ${esc(t.namaKe)} · sampai ${jam(t.sampai)}</span><button class="btn tk-terima" type="button" data-id="${esc(t.id)}">Terima & bertarung</button><button class="btn ghost tk-tolak" type="button" data-id="${esc(t.id)}">Tolak</button></div>`).join('')}</div>` : ''}
       ${keluar.length ? `<p class="muted">Menunggu jawaban: ${keluar.map((t) => esc(t.namaKe)).join(', ')}</p>` : ''}
       ${me ? `<form class="tk-tantang" id="tkTantang" autocomplete="off"><input id="tkLawan" placeholder="Nama hewan lawan" maxlength="40" required><button class="btn" type="submit" ${A.buka ? '' : 'disabled'}>⚔️ Tantang</button></form>` : '<p class="muted">Bisa juga lewat komentar: <code>Tantang: nama hewan</code> lalu lawan membalas <code>Terima: nama penantang</code>.</p>'}
-      <div class="tk-kolom"><div><h4>🔥 Belum terkalahkan</h4><ol class="tk-klas">${(A.beruntun || []).map((k) => `<li><b>${esc(nama(k.u))}</b><span>${k.menang} menang beruntun · juara ${sisaJuara(k.juaraPada)}</span></li>`).join('') || '<li class="muted">Belum ada. Menangkan duel pertamamu!</li>'}</ol></div>
+      <div class="tk-kolom"><div><h4>🔥 Belum terkalahkan</h4><ol class="tk-klas">${(A.beruntun || []).map((k) => `<li><b>${esc(nama(k.u))}</b><span>${k.menang} menang beruntun${k.menang < (A.minMenang || 5) ? ` (butuh ${A.minMenang || 5})` : ''} · 7 hari: ${sisaJuara(k.juaraPada)}</span></li>`).join('') || '<li class="muted">Belum ada. Menangkan duel pertamamu!</li>'}</ol></div>
       <div><h4>⚔️ Duel terbaru</h4>${(A.duel || []).map(duelHTML).join('') || '<p class="muted">Belum ada duel.</p>'}</div></div>`;
   }
 
@@ -106,7 +107,7 @@
     if (btn) btn.disabled = true;
     const r = await post('api/arena', { aksi, ...body });
     if (r.error) toast(r.error);
-    else if (aksi === 'tantang') toast(`Tantangan untuk ${r.tantangan.namaKe} terkirim! Tunggu dia menerima (2 jam).`);
+    else if (aksi === 'tantang') toast(`Tantangan untuk ${r.tantangan.namaKe} terkirim! Tunggu dia menerima (12 jam).`);
     else if (aksi === 'terima') { bukaReplay(r.duel.id, r.duel); }
     await muat();
   }

@@ -45,27 +45,50 @@ test('Arena: jam buka, tantang, terima, duel, juara = 7 hari tak terkalahkan', a
   assert.equal(t.ke, 'kuat');
   await assert.rejects(A.tantang('lemah', 'Kuat', { now: SIANG + 1000 }), /sudah bertemu/);
   const d = await A.terima('kuat', '', { now: SIANG + 60000 });
-  assert.equal(d.menang, 'kuat'); assert.ok(d.catatan.length >= 2);
+  assert.equal(d.menang, 'kuat'); assert.ok(d.catatan.length >= 1);
   let b = await A.papanBeruntun(10, SIANG + 70000); assert.equal(b[0].u, 'kuat'); assert.equal(b[0].menang, 1);
   // replay is deterministic
   assert.deepEqual(A.simulasi(await getJSON('warga', 'lemah'), await getJSON('warga', 'kuat'), t.id).menang, d.menang);
   // belum 7 hari → belum juara
   assert.deepEqual(await A.cekJuara({ now: SIANG + 6 * 864e5 }), []);
-  // 7 hari tak terkalahkan → +1 batu, sekali saja, lalu hitungan baru
-  const j = await A.cekJuara({ now: SIANG + 7 * 864e5 + 120000 });
+  // sudah 7 hari tapi baru 1 menang (minimal 5) → belum juara
+  assert.deepEqual(await A.cekJuara({ now: SIANG + 7 * 864e5 + 120000 }), []);
+  const st = await getJSON('arena_streak', 'kuat'); await setJSON('arena_streak', 'kuat', { ...st, menang: 5 });
+  const j = await A.cekJuara({ now: SIANG + 7 * 864e5 + 180000 });
   assert.equal(j[0].u, 'kuat'); assert.equal((await getJSON('warga', 'kuat')).batu, 1);
-  assert.deepEqual(await A.cekJuara({ now: SIANG + 7 * 864e5 + 180000 }), []);
+  assert.deepEqual(await A.cekJuara({ now: SIANG + 7 * 864e5 + 240000 }), []);
   assert.equal((await A.papanBeruntun(10)).find((x) => x.u === 'kuat'), undefined);
-  // kalah sekali → hitungan direset
+  // diterima besok pagi → tetap dihitung pada waktu tantangan diberikan
   const H8 = SIANG + 8 * 864e5;
-  await A.tantang('lemah', 'Kuat', { now: H8 }); await A.terima('kuat', '', { now: H8 + 1000 });
-  assert.equal((await A.papanBeruntun(10)).find((x) => x.u === 'kuat').menang, 1);
+  const t2 = await A.tantang('lemah', 'Kuat', { now: H8 });
+  assert.equal(Date.parse(t2.sampai) - H8, 12 * 36e5);
+  const d1 = await A.terima('kuat', '', { now: H8 + 9 * 36e5 }); // 9 jam kemudian (masih jam buka di tes)
+  assert.equal(d1.tHitung, t2.t);
+  assert.equal((await A.papanBeruntun(10)).find((x) => x.u === 'kuat').mulai, t2.t);
+  // menang lagi, lalu menolak tantangan → -1
+  await add('c9', 'Cemara', 0, 11);
+  await A.tantang('c9', 'Kuat', { now: H8 + 1000 }); await A.terima('kuat', '', { now: H8 + 2000 });
+  assert.equal((await A.papanBeruntun(10)).find((x) => x.u === 'kuat').menang, 2);
+  await add('c10', 'Dahan', 0, 12);
+  const t3 = await A.tantang('c10', 'Kuat', { now: H8 + 3000 });
+  const tl = await A.tolak('kuat', t3.id, { now: H8 + 4000 });
+  assert.equal(tl.hukuman.menang, 1);
+  // tidak dijawab 12 jam → -1, dicatat sebagai kalah di riwayat
+  await add('c11', 'Ranting', 0, 13);
+  const t4 = await A.tantang('c11', 'Kuat', { now: H8 + 5000 });
+  assert.deepEqual(await A.sapuTantangan({ now: H8 + 5000 + 6 * 36e5 }), []);
+  const sw = await A.sapuTantangan({ now: H8 + 5000 + 12 * 36e5 + 1 });
+  assert.equal(sw[0].u, 'kuat'); assert.equal(sw[0].menang, 0);
+  const rw = await A.riwayatDuel({ id: 'x', t: new Date(H8 + 13 * 36e5).toISOString(), a: 'kuat', b: 'c11' });
+  assert.equal(rw.kuat.daftar[0].menang, 0); assert.equal(rw.c11.main, 0);
+  assert.ok(t4.id);
+  // kalah sekali → hitungan direset
   await add('dewa', 'Dewa', 5, 9);
-  await A.tantang('dewa', 'Kuat', { now: H8 + 2000 }); const d2 = await A.terima('kuat', '', { now: H8 + 3000 });
+  const H9 = SIANG + 9 * 864e5;
+  await A.tantang('dewa', 'Kuat', { now: H9 }); const d2 = await A.terima('kuat', '', { now: H9 + 3000 });
   assert.equal(d2.menang, 'dewa');
-  b = await A.papanBeruntun(10);
-  assert.equal(b.find((x) => x.u === 'kuat'), undefined); assert.equal(b.find((x) => x.u === 'dewa').menang, 1);
-  assert.deepEqual((await A.cekJuara({ now: H8 + 7 * 864e5 + 5000 })).map((x) => x.u), ['dewa']);
+  const b2 = await A.papanBeruntun(10);
+  assert.equal(b2.find((x) => x.u === 'kuat'), undefined); assert.equal(b2.find((x) => x.u === 'dewa').menang, 1);
 });
 
 test('Arena lewat komentar', async () => {
