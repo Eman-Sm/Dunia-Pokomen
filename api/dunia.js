@@ -28,6 +28,8 @@ export async function GET() {
       // wilayah baru (mis. Wilayah 4 saat warga ke-151 lahir) otomatis membuka usulan nama + pemilihan ketua
       if ((await redis('SET', 'pw_cek_baru', '1', 'NX', 'EX', '60')) === 'OK') {
         try { await bukaWilayahBaru(); } catch { /* ignore */ }
+        // 2 Nov 06.00: Pokoboll mulai dijual → umumkan sekali di Kabar Desa & Obrolan
+        try { const PB = await import('../lib/pokoboll.js'); if (Date.now() >= PB.MULAI_JUAL && Date.now() - PB.MULAI_JUAL < 2 * 864e5 && (await redis('SET', 'ob_umum_pokoboll_v1', '1', 'NX')) === 'OK') { const { log } = await import('../lib/rules.js'); const ob = await import('../lib/obrolan.js'); const t = '🏠 POKOBOLL DIJUAL! Item EKSKLUSIF, cuma ada 1 di Dunia Pokomen: rumah bola yang bentuknya mengikuti hewanmu. Harga 100 Biji Kopi atau 6 Batu Evolusi di Toko. Siapa cepat, dia dapat!'; await log('bangun', t); await ob.sistem('📢 ' + t); } } catch { /* ignore */ }
         // 1 Nov 20.05: harga latihan turun lagi jadi 3 (sekali saja)
         try { if ((await redis('SET', 'ob_umum_latihan3_v1', '1', 'NX')) === 'OK') { const ob = await import('../lib/obrolan.js'); await ob.sistem('📢 🏋️ Harga turun LAGI! Sesi di Tempat Latihan sekarang cuma 3 Biji Kopi per sesi. Setiap sesi ke-5 tetap LATIHAN SUPER 2x. Ayo latihan sebanyak-banyaknya untuk Liga Arena!'); } } catch { /* ignore */ }
         // 1 Nov 20.00: umumkan harga latihan baru (sekali saja)

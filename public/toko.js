@@ -45,8 +45,8 @@
     const fitur = contoh && window.PokobollArt ? window.PokobollArt.arch(contoh).label.join(' · ') : '';
     let isi;
     if (P.pemilik) isi = `<p>✅ <b>TERJUAL</b> · milik <b>${esc(pemilik ? pemilik.nama : P.pemilik)}</b> (@${esc(P.pemilik)}). Hanya ada satu di seluruh Dunia Pokomen!</p>`;
-    else isi = `<p>Harga: <b>💎 ${P.harga.batu} Batu Evolusi</b> atau <b>${P.harga.biji} Biji Kopi</b>. Stok: <b>1</b>. Siapa cepat, dia dapat!</p>
-      <div class="tk-pb">${['batu', 'biji'].map((c) => `<button class="btn tk-pb-beli" type="button" data-cara="${c}" ${T.saya ? '' : 'disabled'}>${konfirm === 'pb-' + c ? 'Yakin? Tekan lagi' : c === 'batu' ? `Beli · 💎 ${P.harga.batu} Batu` : `Beli · ${P.harga.biji} Biji`}</button>`).join('')}</div>`;
+    else isi = `<p>Harga: <b>${P.harga.biji} Biji Kopi</b> atau <b>💎 ${P.harga.batu} Batu Evolusi</b>. Stok: <b>1</b>. Siapa cepat, dia dapat!</p>
+      <div class="tk-pb">${['biji', 'batu'].map((c) => `<button class="btn tk-pb-beli" type="button" data-cara="${c}" ${T.saya ? '' : 'disabled'}>${konfirm === 'pb-' + c ? 'Yakin? Tekan lagi' : c === 'batu' ? `Beli · 💎 ${P.harga.batu} Batu` : `Beli · ${P.harga.biji} Biji Kopi`}</button>`).join('')}</div>`;
     return `<div class="tk-pokoboll"><canvas class="tk-pb-cv" width="220" height="200" aria-label="Pratinjau Pokoboll"></canvas><div><b>POKOBOLL</b> <span class="tk-eks">EKSKLUSIF · HANYA 1</span>
       <p class="muted">Rumah bola di Pulau Pokoboll. Arsitekturnya mengikuti kombinasi hewan pemiliknya, dan hewannya tidur di dalam setiap malam.</p>
       ${contoh && !P.pemilik ? `<p class="muted">Kalau ${esc(contoh.nama)} pemiliknya, Pokoboll-nya punya: <b>${esc(fitur)}</b>.</p>` : ''}${isi}<button class="btn ghost tk-pb-lihat" type="button">📍 Lihat di peta</button></div></div>`;
@@ -56,7 +56,7 @@
     const P = T.pokoboll, D = (window.Pokomen && window.Pokomen.data && window.Pokomen.data()) || {};
     const wOf = (u) => (D.warga || []).find((w) => w.u === u) || null;
     const w = (P.pemilik && wOf(P.pemilik)) || (T.saya && wOf(T.saya.u)) || { hewan: ['Naga'], elemen: 'Cahaya', pal: { body: '#8a6a3a', acc: '#e6c060' } };
-    const ctx = cv.getContext('2d'); const loop = () => { if (!cv.isConnected) return; ctx.clearRect(0, 0, cv.width, cv.height); window.PokobollArt.draw(ctx, 110, 104, 62, w, { now: performance.now() }); requestAnimationFrame(loop); }; loop();
+    const ctx = cv.getContext('2d'); const loop = () => { if (!cv.isConnected) return; ctx.clearRect(0, 0, cv.width, cv.height); window.PokobollArt.draw(ctx, 110, 108, 60, w, { now: performance.now() }); ctx.save(); ctx.translate(110, 186); ctx.rotate(-.04); ctx.fillStyle = '#2b1b17'; ctx.fillRect(-72, -13, 144, 26); ctx.fillStyle = '#7a4bd8'; ctx.fillRect(-70, -11, 140, 22); ctx.fillStyle = '#ffe066'; ctx.font = '900 14px Nunito, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('★ EKSKLUSIF ★', 0, 1); ctx.restore(); requestAnimationFrame(loop); }; loop();
   }
   function tokoTab() {
     return pokobollHTML() + `<div class="tk-grid">${T.katalog.filter((x) => x.id !== 'latihan').map((x) => `

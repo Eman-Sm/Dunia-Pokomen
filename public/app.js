@@ -655,6 +655,10 @@
       ctx.fillStyle = '#ffe7a8'; ctx.fillRect(sx - tw / 2, sy - f * 2.3, tw, f * 2.3);
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#7a4bd8'; ctx.fillText(judul, sx, sy - f * 1.6);
       ctx.fillStyle = w ? '#2b1b17' : '#c0392b'; ctx.fillText(sub, sx, sy - f * .6);
+      // pita EKSKLUSIF
+      const fe = Math.max(8, 5 * z); ctx.font = `900 ${fe}px Nunito, system-ui, sans-serif`; const ew = ctx.measureText('★ EKSKLUSIF ★').width + 8, ey = sy - f * 2.3 - fe * 1.1;
+      ctx.fillStyle = '#2b1b17'; ctx.fillRect(sx - ew / 2 - 1, ey - fe * .7 - 1, ew + 2, fe * 1.4 + 2); ctx.fillStyle = '#7a4bd8'; ctx.fillRect(sx - ew / 2, ey - fe * .7, ew, fe * 1.4);
+      ctx.fillStyle = '#ffe066'; ctx.fillText('★ EKSKLUSIF ★', sx, ey);
       ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
     }
     ctx.restore();
