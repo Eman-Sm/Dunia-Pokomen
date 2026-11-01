@@ -28,6 +28,8 @@ export async function GET() {
       // wilayah baru (mis. Wilayah 4 saat warga ke-151 lahir) otomatis membuka usulan nama + pemilihan ketua
       if ((await redis('SET', 'pw_cek_baru', '1', 'NX', 'EX', '60')) === 'OK') {
         try { await bukaWilayahBaru(); } catch { /* ignore */ }
+        // 1 Nov 20.00: umumkan harga latihan baru (sekali saja)
+        try { if ((await redis('SET', 'ob_umum_latihan5_v1', '1', 'NX')) === 'OK') { const ob = await import('../lib/obrolan.js'); await ob.sistem('📢 🏋️ Harga turun! Sesi di Tempat Latihan sekarang hanya 5 Biji Kopi per sesi (sebelumnya 10). Setiap sesi ke-5 tetap LATIHAN SUPER 2x. Ayo latih hewanmu untuk Liga Arena!'); } } catch { /* ignore */ }
         // 1 Nov 19.55: umumkan aturan tantangan setingkat (sekali saja)
         try { if ((await redis('SET', 'ob_umum_tingkat_v1', '1', 'NX')) === 'OK') { const ob = await import('../lib/obrolan.js'); await ob.sistem('📢 ⚔️ Aturan baru Liga Arena: kamu hanya bisa menantang hewan yang setingkat, 1 tingkat di atas, atau 1 tingkat di bawah tingkatmu. Duel jadi lebih seimbang!'); } } catch { /* ignore */ }
         // 1 Nov: semua warga boleh memilih di wilayah baru → hitung ulang suara Wilayah 4 sekali, lalu umumkan di Obrolan
