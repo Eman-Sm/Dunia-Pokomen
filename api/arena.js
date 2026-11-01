@@ -21,8 +21,8 @@ export async function GET(request) {
     if (aktif) await A.cekJuara({ umumkan }).catch(() => {});
     const u = k ? await userFromToken(k) : null;
     return json({
-      aktif, buka: A.buka(), jam: [A.JAM_BUKA, A.JAM_TUTUP], hariJuara: A.HARI_JUARA,
-      duel: aktif ? await A.duelTerbaru(12) : [], beruntun: aktif ? await A.papanBeruntun() : [], aturanJuara: { hari: A.HARI_JUARA, poinHarian: A.POIN_HARIAN, menang: A.POIN_MENANG, kalah: A.POIN_KALAH }, terbuka: aktif ? await A.tantanganTerbuka() : [],
+      aktif, buka: A.buka(), jam: [A.JAM_BUKA, A.JAM_TUTUP],
+      duel: aktif ? await A.duelTerbaru(12) : [], musim: A.musimDari(), klasemen: aktif ? await A.klasemenLiga() : [], poin: { menang: A.POIN_MENANG, kalah: A.POIN_KALAH }, terbuka: aktif ? await A.tantanganTerbuka() : [],
       saya: aktif && u ? { u, tantangan: await A.tantanganUntuk(u) } : null,
     }, 200, { 'Cache-Control': 'no-store' });
   } catch (e) { return json({ error: e.message }, 200); }

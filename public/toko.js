@@ -57,18 +57,18 @@
     const W = d.menang === d.a ? d.namaA : d.namaB;
     return `<details class="tk-duel"><summary><b>${esc(d.namaA)}</b> vs <b>${esc(d.namaB)}</b> · 🏆 ${esc(W)} <time>${jam(d.t)}</time></summary>${d.gerak ? `<button class="btn tk-replay" type="button" data-id="${esc(d.id)}">▶ Tonton replay</button>` : ''}<ol>${d.catatan.map((c) => `<li>${esc(c)}</li>`).join('')}</ol></details>`;
   }
-  function hariIni() { return new Date(Date.now() + 7 * 36e5).toISOString().slice(0, 10); }
+  function tglPendek(d) { if (!d) return ''; const B = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']; const x = new Date(d + 'T00:00:00Z'); return `${x.getUTCDate()} ${B[x.getUTCMonth()]}`; }
   function arenaTab() {
     const A = AR || {}; const me = A.saya;
     const masuk = me ? me.tantangan.filter((t) => t.ke === me.u) : [], keluar = me ? me.tantangan.filter((t) => t.dari === me.u) : [];
     const D = (window.Pokomen && window.Pokomen.data && window.Pokomen.data()) || {};
     const nama = (u) => ((D.warga || []).find((w) => w.u === u) || {}).nama || u;
     return `<p class="tk-info">${A.buka ? '🟢 Arena <b>BUKA</b>' : '🔴 Arena <b>TUTUP</b>'} · setiap hari pukul ${String(A.jam?.[0] ?? 7).padStart(2, '0')}.00–${A.jam?.[1] ?? 21}.00 WIB · maks. 5 tantangan per hari</p>
-      <p class="tk-info">🏆 <b>Juara Arena</b> = <b>7 hari berturut-turut</b> dengan minimal <b>4 poin setiap hari</b>, dihitung dari hari kemenangan pertama → <b>💎 1 Batu Evolusi</b>. Menang <b>+1</b>, kalah <b>−2</b>. Tantangan berlaku <b>12 jam</b>; menolak atau tidak menjawab = kalah. Satu hari kurang dari 4 poin = mulai lagi dari hari pertama.</p>
+      <p class="tk-info">🏆 <b>Liga Arena</b>: menang <b>+1 poin</b>, kalah <b>−2 poin</b>. Tantangan berlaku <b>12 jam</b>; menolak atau tidak menjawab = kalah. Peringkat 1 di akhir musim dapat <b>💎 1 Batu Evolusi</b>.</p>
       ${masuk.length ? `<div class="tk-masuk"><b>⚔️ Kamu ditantang!</b>${masuk.map((t) => `<div><span>${esc(t.namaDari)} menantang ${esc(t.namaKe)} · sampai ${jam(t.sampai)}</span><button class="btn tk-terima" type="button" data-id="${esc(t.id)}">Terima & bertarung</button><button class="btn ghost tk-tolak" type="button" data-id="${esc(t.id)}">Tolak</button></div>`).join('')}</div>` : ''}
       ${keluar.length ? `<p class="muted">Menunggu jawaban: ${keluar.map((t) => esc(t.namaKe)).join(', ')}</p>` : ''}
       ${me ? `<form class="tk-tantang" id="tkTantang" autocomplete="off"><input id="tkLawan" placeholder="Nama hewan lawan" maxlength="40" required><button class="btn" type="submit" ${A.buka ? '' : 'disabled'}>⚔️ Tantang</button></form>` : '<p class="muted">Bisa juga lewat komentar: <code>Tantang: nama hewan</code> lalu lawan membalas <code>Terima: nama penantang</code>.</p>'}
-      <div class="tk-kolom"><div><h4>🔥 Menuju Juara Arena</h4><ol class="tk-klas">${(A.beruntun || []).map((k) => `<li><b>${esc(nama(k.u))}</b><span>Hari ke-${k.hariKe}/7 · ${k.poin}/4 poin${k.hari !== hariIni() ? ' (kemarin)' : ''} · ${'🟩'.repeat(k.lulus)}${'⬜'.repeat(Math.max(0, 7 - k.lulus))}</span></li>`).join('') || '<li class="muted">Belum ada. Menangkan duel pertamamu!</li>'}</ol></div>
+      <div class="tk-kolom"><div><h4>🏆 Klasemen Liga · ${esc(A.musim?.nama || 'Musim')}</h4><p class="muted tk-musim">${tglPendek(A.musim?.mulai)} – Minggu ${tglPendek(A.musim?.akhir)} · juara ditetapkan Senin 09.00 WIB</p>${(A.klasemen || []).length ? `<table class="tk-liga"><thead><tr><th>#</th><th>Hewan</th><th title="Menang">M</th><th title="Kalah">K</th><th>Poin</th></tr></thead><tbody>${A.klasemen.map((k, i) => `<tr${i === 0 && k.poin > 0 ? ' class="top"' : ''}><td>${i + 1}</td><td><b>${esc(nama(k.u))}</b></td><td>${k.menang}</td><td>${k.kalah + k.wo}</td><td><b>${k.poin > 0 ? '+' : ''}${k.poin}</b></td></tr>`).join('')}</tbody></table>` : '<p class="muted">Belum ada duel di musim ini. Jadilah yang pertama!</p>'}</div>
       <div><h4>⚔️ Duel terbaru</h4>${(A.duel || []).map(duelHTML).join('') || '<p class="muted">Belum ada duel.</p>'}</div></div>`;
   }
 

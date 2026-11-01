@@ -693,3 +693,10 @@ code,
 .tk-super,
 .tk-kolom h4,
 .rp-head { font-weight: 800; letter-spacing: 0; }
+
+.tk-musim { margin: -4px 0 6px; font-size: .85rem; }
+.tk-liga { width: 100%; border-collapse: collapse; font-size: .95rem; }
+.tk-liga th, .tk-liga td { border: 2px solid var(--outline); padding: 4px 6px; text-align: center; }
+.tk-liga td:nth-child(2) { text-align: left; overflow-wrap: anywhere; }
+.tk-liga th { background: var(--parchment-2); position: static; }
+.tk-liga tr.top td { background: #ffe7a8; }
