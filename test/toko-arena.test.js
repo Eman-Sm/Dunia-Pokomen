@@ -53,7 +53,7 @@ test('Arena: jam buka, tantang, terima, duel, liga & juara musim', async () => {
   assert.equal(A.musimDari(SIANG).id, 'M1');
   assert.deepEqual(A.musimDari(SIANG + 7 * 864e5), { id: 'M2', nama: 'Musim 2', mulai: '2026-11-09', akhir: '2026-11-15' });
   let k = await A.klasemenLiga(A.musimDari(SIANG));
-  assert.equal(k[0].u, 'kuat'); assert.equal(k[0].poin, 1); assert.equal(k[1].u, 'lemah'); assert.equal(k[1].poin, -2);
+  assert.equal(k[0].u, 'kuat'); assert.equal(k[0].poin, 1); assert.equal(k[1].u, 'lemah'); assert.equal(k[1].poin, 0); // kalah −1, tapi poin terendah 0
   // diterima besok pagi → poin tetap pada hari tantangan
   const t2 = await A.tantang('lemah', 'Kuat', { now: SIANG + 864e5 });
   assert.equal(Date.parse(t2.sampai) - SIANG - 864e5, 12 * 36e5);
@@ -64,7 +64,7 @@ test('Arena: jam buka, tantang, terima, duel, liga & juara musim', async () => {
   await add('c10', 'Dahan', 0, 12);
   const t3 = await A.tantang('c10', 'Kuat', { now: SIANG + 864e5 + 1000 });
   const tl = await A.tolak('kuat', t3.id, { now: SIANG + 864e5 + 2000 });
-  assert.equal(tl.hukuman.poin, 0); // 2 menang − 2
+  assert.equal(tl.hukuman.poin, 1); // 2 menang − 1
   // tidak dijawab 12 jam: tanpa hukuman bagi yang belum bertanding di musim ini; −2 bagi yang sudah
   await add('c11', 'Ranting', 0, 13);
   await A.tantang('kuat', 'Ranting', { now: SIANG + 864e5 + 3000 });
@@ -72,7 +72,7 @@ test('Arena: jam buka, tantang, terima, duel, liga & juara musim', async () => {
   await add('c12', 'Akar', 0, 14);
   await A.tantang('c12', 'Lemah', { now: SIANG + 864e5 + 4000 });
   const sw = await A.sapuTantangan({ now: SIANG + 864e5 + 4000 + 12 * 36e5 + 1 });
-  assert.equal(sw[0].u, 'lemah'); assert.equal(sw[0].poin, -6);
+  assert.equal(sw[0].u, 'lemah'); assert.equal(sw[0].poin, 0);
   const rw = await A.riwayatDuel({ id: 'x', t: new Date(SIANG + 3 * 864e5).toISOString(), a: 'lemah', b: 'c12' });
   assert.equal(rw.lemah.daftar[0].menang, 0); assert.equal(rw.c12.main, 0);
   k = await A.klasemenLiga(A.musimDari(SIANG));
@@ -83,6 +83,15 @@ test('Arena: jam buka, tantang, terima, duel, liga & juara musim', async () => {
   const j = await A.cekJuara({ now: Date.parse('2026-11-09T09:01:00+07:00') });
   assert.deepEqual(j.map((x) => x.u), ['kuat']); assert.equal((await getJSON('warga', 'kuat')).batu, 1);
   assert.deepEqual(await A.cekJuara({ now: Date.parse('2026-11-09T10:00:00+07:00') }), []);
+  // poin sama → head to head menentukan (meski lawannya menang lebih banyak)
+  const M3 = A.musimDari(Date.parse('2026-11-17T10:00:00+07:00'));
+  const ev = (u, list) => setJSON('arena_poin', u, { ev: list.map(([d, x, id]) => [d, x, id]) });
+  await ev('hA', [['2026-11-17', 1, '1795400000001']]); // A mengalahkan B
+  await ev('hB', [['2026-11-17', -1, '1795400000001'], ['2026-11-18', 1, '1795500000001'], ['2026-11-18', 1, '1795500000002'], ['2026-11-19', -1, '1795600000001']]);
+  await redis('LPUSH', 'arena_duel', JSON.stringify({ id: '1795400000001', t: '2026-11-17T05:00:00.000Z', a: 'hA', b: 'hB', namaA: 'A', namaB: 'B', menang: 'hA', catatan: [] }));
+  const k3 = await A.klasemenLiga(M3);
+  assert.deepEqual(k3.map((x) => [x.u, x.poin, x.menang]), [['hA', 1, 1], ['hB', 1, 2]]);
+  assert.equal(A.poinMusim([['2026-11-17', -1, '1'], ['2026-11-17', 1, '2'], ['2026-11-17', -1, '3'], ['2026-11-17', -1, '4']], M3), 0);
   // musim baru mulai dari nol
   assert.deepEqual(await A.klasemenLiga(A.musimDari(Date.parse('2026-11-10T10:00:00+07:00'))), []);
 });
