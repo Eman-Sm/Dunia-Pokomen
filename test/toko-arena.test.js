@@ -39,7 +39,12 @@ test('Toko: saldo dari kopi, beli batu & latihan, saldo kurang ditolak', async (
 });
 
 test('Arena: jam buka, tantang, terima, duel, liga & juara musim', async () => {
-  await add('kuat', 'Kuat', 3, 1); await add('lemah', 'Lemah', 0, 2);
+  await add('kuat', 'Kuat', 3, 1); await add('lemah', 'Lemah', 2, 2);
+  { const w = await getJSON('warga', 'kuat'); w.latih = { nyawa: 400, serang: 60, tahan: 60, cepat: 60 }; await setJSON('warga', 'kuat', w); }
+  // tingkat terlalu jauh (Mythical vs Regular) ditolak
+  await add('kecil', 'Kecil', 0, 3);
+  await assert.rejects(A.tantang('kecil', 'Kuat', { now: SIANG }), /terlalu jauh tingkatnya/);
+  await assert.rejects(A.tantang('kuat', 'Kecil', { now: SIANG }), /terlalu jauh tingkatnya/);
   await assert.rejects(A.tantang('lemah', 'Kuat', { now: MALAM }), /buka pukul/);
   const t = await A.tantang('lemah', 'Kuat', { now: SIANG });
   assert.equal(t.ke, 'kuat');
@@ -61,15 +66,15 @@ test('Arena: jam buka, tantang, terima, duel, liga & juara musim', async () => {
   assert.equal(d1.tHitung, t2.t);
   assert.deepEqual((await getJSON('arena_poin', 'kuat')).ev.at(-1).slice(0, 2), [D(1), 1]);
   // menolak = kalah −2 (sudah bertanding di musim ini)
-  await add('c10', 'Dahan', 0, 12);
+  await add('c10', 'Dahan', 2, 12);
   const t3 = await A.tantang('c10', 'Kuat', { now: SIANG + 864e5 + 1000 });
   const tl = await A.tolak('kuat', t3.id, { now: SIANG + 864e5 + 2000 });
   assert.equal(tl.hukuman.poin, 1); // 2 menang − 1
   // tidak dijawab 12 jam: tanpa hukuman bagi yang belum bertanding di musim ini; −2 bagi yang sudah
-  await add('c11', 'Ranting', 0, 13);
+  await add('c11', 'Ranting', 2, 13);
   await A.tantang('kuat', 'Ranting', { now: SIANG + 864e5 + 3000 });
   assert.deepEqual(await A.sapuTantangan({ now: SIANG + 864e5 + 3000 + 12 * 36e5 + 1 }), []);
-  await add('c12', 'Akar', 0, 14);
+  await add('c12', 'Akar', 2, 14);
   await A.tantang('c12', 'Lemah', { now: SIANG + 864e5 + 4000 });
   const sw = await A.sapuTantangan({ now: SIANG + 864e5 + 4000 + 12 * 36e5 + 1 });
   assert.equal(sw[0].u, 'lemah'); assert.equal(sw[0].poin, 0);
