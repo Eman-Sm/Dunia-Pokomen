@@ -30,11 +30,11 @@ test('Toko: saldo dari kopi, beli batu & latihan, saldo kurang ditolak', async (
   await redis('SET', 'evo_batu', '1');
   assert.equal((await E.saldo('pega')).biji, 30);
   const r1 = await E.beli('pega', { item: 'batu' }); assert.equal(r1.batu, 1); assert.equal(r1.saldo, 15);
-  const r2 = await E.beli('pega', { item: 'latihan', stat: 'nyawa' }); assert.equal(r2.naik, 10); assert.equal(r2.saldo, 10); // latihan 5 Biji
+  const r2 = await E.beli('pega', { item: 'latihan', stat: 'nyawa' }); assert.equal(r2.naik, 10); assert.equal(r2.saldo, 12); // latihan 3 Biji
   await assert.rejects(E.beli('pega', { item: 'batu' }), /kurang/);
   assert.equal((await getJSON('warga', 'pega')).batu, 1);
   await E.bonusBiji('pega', 35);
-  const r3 = await E.beli('pega', { item: 'nama', nilai: 'Pegasus' }); assert.equal(r3.saldo, 10);
+  const r3 = await E.beli('pega', { item: 'nama', nilai: 'Pegasus' }); assert.equal(r3.saldo, 12);
   assert.equal((await getJSON('warga', 'pega')).nama, 'Pegasus');
 });
 

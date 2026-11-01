@@ -100,7 +100,7 @@ Hari ke-4 wilayah → Hari ke-5 teaser arena & toko → Hari ke-6 Toko Pokomen +
 
 ## Update 31 Okt 2026: Toko, Tempat Latihan & Arena (kode siap, aktif bersama saklar `evo_batu`)
 - Dompet: saldo Biji = Kopi Admin x 5 + bonus Admin (`biji_bonus`) - belanja (`biji_pakai`). Riwayat belanja di list `belanja`.
-- Toko 24 jam (website, link pribadi; DM "TOKO"/"ARENA"/"DOMPET"/"LATIHAN"): Batu Evolusi 15 Biji, Sesi Latihan 5 Biji (sejak 1 Nov), Pengganti Nama 35, Rupa/Elemen/Kekuatan 25. Outfit: segera.
+- Toko 24 jam (website, link pribadi; DM "TOKO"/"ARENA"/"DOMPET"/"LATIHAN"): Batu Evolusi 15 Biji, Sesi Latihan 3 Biji (sejak 1 Nov), Pengganti Nama 35, Rupa/Elemen/Kekuatan 25. Outfit: segera.
 - Statistik (setara per tingkat): Nyawa 100 / Serang 20 / Tahan 20 / Cepat 20 untuk Regular, x1.2 Pseudo, x1.45 Mega, x1.75 Mythical, x2.1 Legendary, x2.5 God Mode.
 - Latihan: +2 stat pilihan (Nyawa +10) per sesi, setiap sesi ke-5 = Latihan Super 2x. Batas latihan per stat = 10 + 5 x tingkat (Nyawa x5) — evolusi membuka batas baru.
 - Arena 07.00–21.00 WIB: tantang (web / komentar "Tantang: nama"), terima (web / "Terima: nama penantang") dalam 2 jam, maks. 5 tantangan/hari, 1 duel per pasangan per hari. Duel dihitung otomatis (lib/arena.js), diumumkan di Kabar Desa & Obrolan. Juara mingguan (Senin–Minggu 21.00) +1 Batu Evolusi.
