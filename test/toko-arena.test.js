@@ -38,7 +38,7 @@ test('Toko: saldo dari kopi, beli batu & latihan, saldo kurang ditolak', async (
   assert.equal((await getJSON('warga', 'pega')).nama, 'Pegasus');
 });
 
-test('Arena: jam buka, tantang, terima, duel, juara = 7 hari tak terkalahkan', async () => {
+test('Arena: jam buka, tantang, terima, duel, juara = 7 hari × min. 4 poin', async () => {
   await add('kuat', 'Kuat', 3, 1); await add('lemah', 'Lemah', 0, 2);
   await assert.rejects(A.tantang('lemah', 'Kuat', { now: MALAM }), /buka pukul/);
   const t = await A.tantang('lemah', 'Kuat', { now: SIANG });
@@ -46,49 +46,55 @@ test('Arena: jam buka, tantang, terima, duel, juara = 7 hari tak terkalahkan', a
   await assert.rejects(A.tantang('lemah', 'Kuat', { now: SIANG + 1000 }), /sudah bertemu/);
   const d = await A.terima('kuat', '', { now: SIANG + 60000 });
   assert.equal(d.menang, 'kuat'); assert.ok(d.catatan.length >= 1);
-  let b = await A.papanBeruntun(10, SIANG + 70000); assert.equal(b[0].u, 'kuat'); assert.equal(b[0].menang, 1);
   // replay is deterministic
   assert.deepEqual(A.simulasi(await getJSON('warga', 'lemah'), await getJSON('warga', 'kuat'), t.id).menang, d.menang);
-  // belum 7 hari → belum juara
-  assert.deepEqual(await A.cekJuara({ now: SIANG + 6 * 864e5 }), []);
-  // sudah 7 hari tapi baru 1 menang (minimal 5) → belum juara
-  assert.deepEqual(await A.cekJuara({ now: SIANG + 7 * 864e5 + 120000 }), []);
-  const st = await getJSON('arena_streak', 'kuat'); await setJSON('arena_streak', 'kuat', { ...st, menang: 5 });
-  const j = await A.cekJuara({ now: SIANG + 7 * 864e5 + 180000 });
-  assert.equal(j[0].u, 'kuat'); assert.equal((await getJSON('warga', 'kuat')).batu, 1);
-  assert.deepEqual(await A.cekJuara({ now: SIANG + 7 * 864e5 + 240000 }), []);
-  assert.equal((await A.papanBeruntun(10)).find((x) => x.u === 'kuat'), undefined);
-  // diterima besok pagi → tetap dihitung pada waktu tantangan diberikan
+  const D = (n) => new Date(SIANG + 7 * 36e5 + n * 864e5).toISOString().slice(0, 10); // tanggal WIB hari ke-n
+  let b = await A.papanBeruntun(10, SIANG + 70000);
+  assert.equal(b[0].u, 'kuat'); assert.equal(b[0].hariKe, 1); assert.equal(b[0].poin, 1);
+  // hari pertama hanya 1 poin (< 4) → setelah hari itu final (besok 09.00), hitungan hilang
+  assert.equal((await A.papanBeruntun(10, Date.parse(D(1) + 'T08:00:00+07:00'))).length, 1);
+  assert.equal((await A.papanBeruntun(10, Date.parse(D(1) + 'T09:30:00+07:00'))).length, 0);
+  // status: 7 hari × 4 poin → juara; satu hari 3 poin → mulai lagi dari hari berikutnya yang ada kemenangan
+  const ev = (n, k) => Array.from({ length: k }, (_, i) => [D(n), 1, 'x' + n + '-' + i]);
+  const now7 = Date.parse(D(6) + 'T20:00:00+07:00');
+  let st = A.statusPoin({ ev: [0, 1, 2, 3, 4, 5, 6].flatMap((n) => ev(n, 4)) }, now7);
+  assert.equal(st.juara, true); assert.equal(st.mulai, D(0));
+  st = A.statusPoin({ ev: [0, 1, 2, 3, 4, 5].flatMap((n) => ev(n, 4)).concat(ev(6, 3)) }, now7);
+  assert.equal(st.juara, undefined); assert.equal(st.hariKe, 7); assert.equal(st.poin, 3);
+  st = A.statusPoin({ ev: [0, 1, 3, 4].flatMap((n) => ev(n, 4)).concat(ev(2, 3)) }, Date.parse(D(4) + 'T20:00:00+07:00'));
+  assert.equal(st.mulai, D(3)); assert.equal(st.hariKe, 2); // hari ke-3 gagal → reset, mulai lagi dari D(3)
+  st = A.statusPoin({ ev: [...ev(0, 5), [D(0), -2, 'k']] }, Date.parse(D(1) + 'T10:00:00+07:00'));
+  assert.equal(st.aktif, false); // 5 menang − 2 (sekali kalah) = 3 < 4
+  // cekJuara memberi batu sekali saja
+  await setJSON('arena_poin', 'lemah', { ev: [0, 1, 2, 3, 4, 5, 6].flatMap((n) => ev(n, 4)) });
+  const j = await A.cekJuara({ now: now7 });
+  assert.deepEqual(j.map((x) => x.u), ['lemah']); assert.equal((await getJSON('warga', 'lemah')).batu, 1);
+  assert.deepEqual(await A.cekJuara({ now: now7 + 60000 }), []);
+  // diterima besok pagi → poin tetap pada hari tantangan
   const H8 = SIANG + 8 * 864e5;
   const t2 = await A.tantang('lemah', 'Kuat', { now: H8 });
   assert.equal(Date.parse(t2.sampai) - H8, 12 * 36e5);
-  const d1 = await A.terima('kuat', '', { now: H8 + 9 * 36e5 }); // 9 jam kemudian (masih jam buka di tes)
+  const d1 = await A.terima('kuat', '', { now: H8 + 9 * 36e5 });
   assert.equal(d1.tHitung, t2.t);
-  assert.equal((await A.papanBeruntun(10)).find((x) => x.u === 'kuat').mulai, t2.t);
-  // menang lagi, lalu menolak tantangan → -1
-  await add('c9', 'Cemara', 0, 11);
-  await A.tantang('c9', 'Kuat', { now: H8 + 1000 }); await A.terima('kuat', '', { now: H8 + 2000 });
-  assert.equal((await A.papanBeruntun(10)).find((x) => x.u === 'kuat').menang, 2);
+  const pk = await getJSON('arena_poin', 'kuat');
+  assert.deepEqual(pk.ev.at(-1).slice(0, 2), [D(8), 1]);
+  // kalah = −2
+  assert.deepEqual((await getJSON('arena_poin', 'lemah')).ev.at(-1).slice(0, 2), [D(8), -2]);
+  // menolak / tidak menjawab = −2 (hanya bila sedang dalam hitungan)
   await add('c10', 'Dahan', 0, 12);
   const t3 = await A.tantang('c10', 'Kuat', { now: H8 + 3000 });
   const tl = await A.tolak('kuat', t3.id, { now: H8 + 4000 });
-  assert.equal(tl.hukuman.menang, 1);
-  // tidak dijawab 12 jam → -1, dicatat sebagai kalah di riwayat
+  assert.ok(tl.hukuman); assert.equal(tl.hukuman.poin, -1);
   await add('c11', 'Ranting', 0, 13);
-  const t4 = await A.tantang('c11', 'Kuat', { now: H8 + 5000 });
+  await A.tantang('c11', 'Lemah', { now: H8 + 5000 });
   assert.deepEqual(await A.sapuTantangan({ now: H8 + 5000 + 6 * 36e5 }), []);
-  const sw = await A.sapuTantangan({ now: H8 + 5000 + 12 * 36e5 + 1 });
-  assert.equal(sw[0].u, 'kuat'); assert.equal(sw[0].menang, 0);
-  const rw = await A.riwayatDuel({ id: 'x', t: new Date(H8 + 13 * 36e5).toISOString(), a: 'kuat', b: 'c11' });
-  assert.equal(rw.kuat.daftar[0].menang, 0); assert.equal(rw.c11.main, 0);
-  assert.ok(t4.id);
-  // kalah sekali → hitungan direset
-  await add('dewa', 'Dewa', 5, 9);
-  const H9 = SIANG + 9 * 864e5;
-  await A.tantang('dewa', 'Kuat', { now: H9 }); const d2 = await A.terima('kuat', '', { now: H9 + 3000 });
-  assert.equal(d2.menang, 'dewa');
-  const b2 = await A.papanBeruntun(10);
-  assert.equal(b2.find((x) => x.u === 'kuat'), undefined); assert.equal(b2.find((x) => x.u === 'dewa').menang, 1);
+  assert.deepEqual(await A.sapuTantangan({ now: H8 + 5000 + 12 * 36e5 + 1 }), []); // lemah tidak dalam hitungan → tanpa hukuman
+  await add('c12', 'Akar', 0, 14);
+  await A.tantang('c12', 'Kuat', { now: H8 + 6000 });
+  const sw = await A.sapuTantangan({ now: H8 + 6000 + 12 * 36e5 + 1 });
+  assert.equal(sw[0].u, 'kuat'); assert.equal(sw[0].poin, -3);
+  const rw = await A.riwayatDuel({ id: 'x', t: new Date(H8 + 13 * 36e5).toISOString(), a: 'kuat', b: 'c12' });
+  assert.equal(rw.kuat.daftar[0].menang, 0); assert.equal(rw.c12.main, 0);
 });
 
 test('Arena lewat komentar', async () => {
