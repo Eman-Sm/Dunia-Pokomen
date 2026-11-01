@@ -11,6 +11,7 @@ import { refreshToken, subscribeWebhooks, listMedia, listComments, me, sendDM, r
 import { json, bearer, safeEqual, hariKe } from '../lib/http.js';
 import { katalog, pakaiItem, riwayatItem } from '../lib/item.js';
 import * as ob from '../lib/obrolan.js';
+import * as PB from '../lib/pokoboll.js';
 import { getCfg as pwCfg, setCfg as pwSet, hasilWilayah, tetapkanPemenang, segarkanLike, bukaWilayahBaru, jadwalOf } from '../lib/wilayah.js';
 import { getConfig as pemiluCfg, setConfig as pemiluSet, hitung as pemiluHitung, tetapkanKetua } from '../lib/pemilu.js';
 
@@ -265,6 +266,11 @@ const actions = {
   /** Batu Evolusi: { username, jumlah (boleh negatif), bukti } */
   async batu_tambah({ username, jumlah, bukti }) { return tambahBatu(username, jumlah, bukti); },
   /** nyalakan/matikan aturan Legendary & God Mode lewat cerita + Batu Evolusi (setelah diumumkan di video) */
+  /** Pokoboll (rumah eksklusif, hanya 1): status / tampil / pemilik / lelang */
+  async pokoboll_status() { return PB.getPB(); },
+  async pokoboll_tampil({ on }) { return PB.tampil(on); },
+  async pokoboll_set({ username, bukti }) { return PB.setPemilik(username, bukti || 'Admin'); },
+  async pokoboll_lelang({ mulai, selesai, hargaAwal, kelipatan }) { return PB.bukaLelang({ mulai, selesai, hargaAwal, kelipatan }); },
   async evo_batu({ aktif }) { let ketua = []; if (aktif) { await redis('SET', 'evo_batu', '1'); ketua = await (await import('../lib/dewa.js')).batuKetuaAwal(); } else await redis('DEL', 'evo_batu'); return { aktif: (await redis('GET', 'evo_batu')) === '1', syarat: CONFIG.batuEvolusi, batuKetua: ketua }; },
   async ob_info() { return ob.adminInfo(); },
   async pengumuman({ text, kabar = true, obrolan = true }) {

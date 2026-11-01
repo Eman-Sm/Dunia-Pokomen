@@ -316,6 +316,8 @@
     if (cam.z >= .8) { try { drawPapanGapura(); } catch { /* ignore */ } }
     try { drawPatung(); } catch { /* ignore */ }
     try { drawBangunan(); } catch { /* ignore */ }
+    try { drawPokoboll(); } catch { /* ignore */ }
+    const pbTidur = (() => { try { const o = pbPemilik(); return o && sleeping() ? o.u : null; } catch { return null; } })();
     const list = allWarga().map((w) => ({ w, p: posOf(w) })).sort((a, b) => a.p[1] - b.p[1]);
     const now = performance.now(), slp = sleeping();
     const labels = [];
@@ -323,6 +325,7 @@
      try {
       const [x, y] = toScreen(p[0], p[1]);
       if (x < -40 || y < -40 || x > Wc + 40 || y > Hc + 60) continue;
+      if (pbTidur && w.u === pbTidur) continue; // tidur di dalam Pokoboll
       if (w.mati) {
         const g = drawGrave(x, y);
         labels.push({ w, x, y: g - 3, big: w === selected || w === hover });
@@ -439,7 +442,8 @@
   const LIGHTS = [[862, 894, 26], [836, 900, 18]]; // Balai Warga window & door lantern (world.json may add more)
   function drawSky(Wc, Hc, list) {
     const { dark, warm } = langit(jamWIB());
-    const lights = (WORLD && WORLD.lights) || LIGHTS;
+    let lights = (WORLD && WORLD.lights) || LIGHTS;
+    try { if (pbData()) lights = lights.concat([[PB_X, PB_Y - 16, 34]]); } catch { /* ignore */ }
     if (dark <= 0.01 && warm <= 0.01) return;
     const mixc = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
     let c = mixc([255, 255, 255], [70, 82, 150], dark * (RINGAN ? .48 : .82)); // Mode Ringan: malam lebih terang (tanpa lampu & cahaya)
@@ -597,6 +601,79 @@
         ctx.fillStyle = '#2b1b17'; ctx.fillText(b.lab, x, ly); ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
       }
     }
+  }
+
+  // ---- POKOBOLL: rumah kapsul eksklusif (hanya 1) di Pulau Pokoboll, danau barat. Desain mengikuti pemiliknya.
+  const PB_X = 330, PB_Y = 806, PB_JEMBATAN = [[398, 806], [518, 793]];
+  function pbData() { return (DATA && DATA.pokoboll && DATA.pokoboll.tampil) ? DATA.pokoboll : null; }
+  function pbPemilik() { const P = pbData(); return P && P.pemilik ? (DATA.warga || []).find((w) => w.u === P.pemilik && !w.mati) || null : null; }
+  function pbWarna(w) {
+    const el = w && w.elemen && window.Creature && window.Creature.elementColor ? window.Creature.elementColor(w.elemen) : null;
+    if (w && w.pal) return { body: w.pal.body, acc: w.pal.acc, acc2: w.pal.acc2 || '#fff4dc', gem: el || w.pal.acc };
+    if (w) return { body: el || '#f2c94c', acc: '#5a3e9e', acc2: '#fff4dc', gem: el || '#7a4bd8' };
+    return { body: '#f2c94c', acc: '#7a4bd8', acc2: '#fff2c0', gem: '#b98cff' }; // belum ada pemilik: emas misterius
+  }
+  function drawPokoboll() {
+    const P = pbData(); if (!P) return;
+    const z = cam.z, [x, y] = toScreen(PB_X, PB_Y);
+    if (x < -160 * z || x > box.clientWidth + 160 * z || y < -120 * z || y > box.clientHeight + 120 * z) return;
+    const now = performance.now(), malam = langit(jamWIB()).dark > .5, w = pbPemilik(), C = pbWarna(w);
+    ctx.save(); ctx.lineJoin = 'round';
+    // jembatan kayu ke tepi danau
+    const [ax, ay] = toScreen(...PB_JEMBATAN[0]), [bx, by] = toScreen(...PB_JEMBATAN[1]);
+    ctx.strokeStyle = '#2b1b17'; ctx.lineWidth = 12 * z; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+    ctx.strokeStyle = '#a8743f'; ctx.lineWidth = 9 * z; ctx.stroke();
+    ctx.strokeStyle = '#7a5230'; ctx.lineWidth = 1.2 * z;
+    for (let i = 1; i < 14; i++) { const t = i / 14, px = ax + (bx - ax) * t, py = ay + (by - ay) * t; ctx.beginPath(); ctx.moveTo(px - .5 * z, py - 4.5 * z); ctx.lineTo(px + .5 * z, py + 4.5 * z); ctx.stroke(); }
+    // pulau
+    ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1.5 * z; ctx.beginPath(); ctx.ellipse(x, y, (80 + 3 * Math.sin(now / 700)) * z, 38 * z, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#e9d39b'; ctx.beginPath(); ctx.ellipse(x, y, 72 * z, 33 * z, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#5ea94e'; ctx.beginPath(); ctx.ellipse(x, y - 1 * z, 63 * z, 27 * z, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#7cc46a'; ctx.beginPath(); ctx.ellipse(x, y - 2 * z, 60 * z, 25 * z, 0, 0, Math.PI * 2); ctx.fill();
+    const bunga = [[-44, 6, '#ff8fb1'], [-36, -10, '#ffe066'], [40, 8, '#ff8fb1'], [46, -6, '#bfe3ff'], [-20, 14, '#ffe066'], [24, 15, '#ff8fb1']];
+    for (const [dx, dy, c] of bunga) { ctx.fillStyle = c; ctx.fillRect(x + dx * z - 1.5 * z, y + dy * z - 1.5 * z, 3 * z, 3 * z); }
+    // rumah kapsul
+    const hx = x, base = y + 2 * z, R = 23 * z, H = 32 * z;
+    if (malam) { const g = ctx.createRadialGradient(hx, base - H * .5, 4 * z, hx, base - H * .5, 60 * z); g.addColorStop(0, 'rgba(255,226,140,.45)'); g.addColorStop(1, 'rgba(255,226,140,0)'); ctx.fillStyle = g; ctx.fillRect(hx - 60 * z, base - H * .5 - 60 * z, 120 * z, 120 * z); }
+    ctx.fillStyle = 'rgba(20,30,10,.3)'; ctx.beginPath(); ctx.ellipse(hx, base + 3 * z, 30 * z, 8 * z, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#9d968a'; ctx.beginPath(); ctx.ellipse(hx, base + 1 * z, 28 * z, 8 * z, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#c9c2b2'; ctx.beginPath(); ctx.ellipse(hx, base, 27 * z, 7 * z, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.save(); ctx.beginPath(); ctx.ellipse(hx, base, R, H, 0, Math.PI, Math.PI * 2); ctx.closePath(); ctx.clip();
+    ctx.fillStyle = C.body; ctx.fillRect(hx - R, base - H, R * 2, H);
+    ctx.fillStyle = C.acc; for (const i of [-1, 0, 1]) { ctx.beginPath(); ctx.ellipse(hx + i * 12 * z, base, 3.2 * z, H + 2 * z, 0, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = 'rgba(255,255,255,.28)'; ctx.beginPath(); ctx.ellipse(hx - 9 * z, base - H * .62, 6 * z, 10 * z, -.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = C.acc2; ctx.fillRect(hx - R, base - 6 * z, R * 2, 3.5 * z);
+    ctx.restore();
+    ctx.strokeStyle = '#2b1b17'; ctx.lineWidth = Math.max(1, 1.6 * z); ctx.beginPath(); ctx.ellipse(hx, base, R, H, 0, Math.PI, Math.PI * 2); ctx.closePath(); ctx.stroke();
+    // pintu bulat & jendela
+    ctx.fillStyle = '#6b4a2e'; ctx.beginPath(); ctx.ellipse(hx, base, 6.5 * z, 12 * z, 0, Math.PI, Math.PI * 2); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#ffd23f'; ctx.fillRect(hx + 3 * z, base - 6 * z, 1.6 * z, 1.6 * z);
+    for (const dx of [-14, 14]) { ctx.fillStyle = malam ? '#ffe7a0' : '#bfe3ff'; ctx.beginPath(); ctx.arc(hx + dx * z, base - 15 * z, 3.6 * z, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+    // menara kecil + permata elemen
+    ctx.strokeStyle = '#2b1b17'; ctx.lineWidth = 2 * z; ctx.beginPath(); ctx.moveTo(hx, base - H); ctx.lineTo(hx, base - H - 7 * z); ctx.stroke();
+    const gy = base - H - 11 * z, gb = 1 + .12 * Math.sin(now / 300);
+    ctx.fillStyle = C.gem; ctx.beginPath(); ctx.moveTo(hx, gy - 5 * z * gb); ctx.lineTo(hx + 4 * z * gb, gy); ctx.lineTo(hx, gy + 5 * z * gb); ctx.lineTo(hx - 4 * z * gb, gy); ctx.closePath(); ctx.fill(); ctx.lineWidth = Math.max(1, 1.2 * z); ctx.stroke();
+    if (!RINGAN) for (let i = 0; i < 4; i++) { const a = now / 800 + i * 1.57, px = hx + Math.cos(a) * 9 * z, py = gy + Math.sin(a) * 4 * z; ctx.globalAlpha = .5 + .5 * Math.sin(now / 200 + i); ctx.fillStyle = '#fff6c8'; ctx.fillRect(px - 1 * z, py - 1 * z, 2 * z, 2 * z); }
+    ctx.globalAlpha = 1;
+    // pemilik sedang tidur di dalam
+    if (w && sleeping()) {
+      ctx.font = `800 ${Math.round(8 * z)}px Nunito, system-ui, sans-serif`; ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#2b1b17'; ctx.lineWidth = 2;
+      for (let i = 0; i < 3; i++) { const f = ((now / 1600 + i / 3) % 1); ctx.globalAlpha = 1 - f; const zx = hx + (16 + f * 12) * z, zy = base - H - f * 22 * z; ctx.strokeText('z', zx, zy); ctx.fillText('z', zx, zy); }
+      ctx.globalAlpha = 1;
+    }
+    // papan nama
+    if (z >= .7) {
+      const sx = hx + 40 * z, sy = base + 10 * z, f = Math.max(9, 6.5 * z);
+      const L = P.lelang, judul = 'POKOBOLL', sub = w ? w.nama : (L && L.buka ? 'LELANG!' : 'SEGERA');
+      ctx.font = `900 ${f}px Nunito, system-ui, sans-serif`; const tw = Math.max(ctx.measureText(judul).width, ctx.measureText(sub).width) + 10;
+      ctx.fillStyle = '#6b4a2e'; ctx.fillRect(sx - 1 * z, sy, 2 * z, 10 * z);
+      ctx.fillStyle = '#2b1b17'; ctx.fillRect(sx - tw / 2 - 1, sy - f * 2.3 - 1, tw + 2, f * 2.3 + 2);
+      ctx.fillStyle = '#ffe7a8'; ctx.fillRect(sx - tw / 2, sy - f * 2.3, tw, f * 2.3);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#7a4bd8'; ctx.fillText(judul, sx, sy - f * 1.6);
+      ctx.fillStyle = w ? '#2b1b17' : '#c0392b'; ctx.fillText(sub, sx, sy - f * .6);
+      ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
+    }
+    ctx.restore();
   }
   // ---- God Mode: partikel khusus berputar di sekelilingnya (sedikit di Mode Ringan)
   function drawPartikelDewa(w, x, y, dh, now, seed) {
@@ -1170,6 +1247,7 @@
   // used by Ruang Admin (same-origin iframe)
   window.Pokomen = {
     data: () => DATA,
+    lihatPokoboll() { cam.x = PB_X; cam.y = PB_Y - 12; cam.z = Math.max(cam.z, 2.4); try { clampCam(); } catch { /* ignore */ } const m = $('peta') || box; if (m && m.scrollIntoView) m.scrollIntoView({ behavior: 'smooth' }); draw(); },
     ringan: () => RINGAN,
     me: () => ME,
     focus(u) { const w = allWarga().find((x) => x.u === String(u).toLowerCase() && !x.makam) || allWarga().find((x) => x.u === String(u).toLowerCase()); if (w) { $('peta').scrollIntoView({ behavior: 'smooth' }); select(w); } return !!w; },

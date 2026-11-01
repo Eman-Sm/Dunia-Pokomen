@@ -35,8 +35,25 @@
     </div>`;
   }
 
+  function sisa(iso) { const ms = Date.parse(iso) - Date.now(); if (!(ms > 0)) return 'selesai'; const h = Math.floor(ms / 36e5), m = Math.floor((ms % 36e5) / 6e4); return h ? `${h} jam ${m} menit lagi` : `${Math.max(1, m)} menit lagi`; }
+  function pokobollHTML() {
+    const P = T.pokoboll; if (!P || !P.tampil) return '';
+    const D = (window.Pokomen && window.Pokomen.data && window.Pokomen.data()) || {};
+    const nm = (u) => ((D.warga || []).find((w) => w.u === u) || {}).nama || u;
+    const L = P.lelang;
+    let isi;
+    if (P.pemilik) isi = `<p>Pemilik: <b>${esc(nm(P.pemilik))}</b> (@${esc(P.pemilik)}). Hanya ada satu di seluruh Dunia Pokomen!</p>`;
+    else if (L && L.buka) isi = `<p>🔨 <b>LELANG</b> · ${esc(sisa(L.selesai))} · ${L.jumlahTawaran} tawaran</p>
+      <p>Tawaran tertinggi: <b>${L.tertinggi ? `${L.tertinggi.jumlah} Biji · ${esc(L.tertinggi.nama)}` : 'belum ada'}</b></p>
+      <form class="tk-pb" id="tkPb" autocomplete="off"><input id="tkPbJ" type="number" inputmode="numeric" min="${L.minimal}" step="1" value="${L.minimal}" aria-label="Jumlah tawaran"><button class="btn" type="submit" ${T.saya ? '' : 'disabled'}>Tawar</button></form>
+      <small class="muted">Minimal ${L.minimal} Biji · naik kelipatan ${L.kelipatan}. Biji hanya dipotong dari pemenang saat lelang selesai. Tawaran di 5 menit terakhir memperpanjang lelang 5 menit.</small>`;
+    else if (L && L.status === 'buka') isi = `<p>🔨 Lelang dibuka <b>${esc(new Date(L.mulai).toLocaleString('id-ID', { weekday: 'long', hour: '2-digit', minute: '2-digit' }))}</b> · mulai ${L.hargaAwal} Biji.</p>`;
+    else isi = '<p>Segera hadir. Pantau terus!</p>';
+    return `<div class="tk-pokoboll"><div class="ik">🏠</div><div><b>POKOBOLL</b> <span class="tk-eks">EKSKLUSIF · HANYA 1</span>
+      <p class="muted">Rumah kapsul di Pulau Pokoboll. Desainnya mengikuti warna & elemen hewan pemiliknya, dan hewannya tidur di dalam setiap malam.</p>${isi}<button class="btn ghost tk-pb-lihat" type="button">📍 Lihat di peta</button></div></div>`;
+  }
   function tokoTab() {
-    return `<div class="tk-grid">${T.katalog.filter((x) => x.id !== 'latihan').map((x) => `
+    return pokobollHTML() + `<div class="tk-grid">${T.katalog.filter((x) => x.id !== 'latihan').map((x) => `
       <div class="tk-item"><div class="ik">${IKON[x.id] || '🎁'}</div><b>${esc(x.label)}</b><span>${esc(x.ket)}</span>
         <div class="harga">${x.biji} Biji</div>
         ${['nama', 'rupa', 'elemen', 'kekuatan'].includes(x.id) ? `<input class="tk-nilai" data-for="${x.id}" maxlength="60" placeholder="${{ nama: 'Nama baru', rupa: 'mis. Kucing + Naga', elemen: 'mis. Petir', kekuatan: 'Skill baru' }[x.id]}">` : ''}
@@ -81,6 +98,8 @@
     for (const b of sec.querySelectorAll('.tk-terima')) b.onclick = () => arena('terima', { id: b.dataset.id }, b);
     for (const b of sec.querySelectorAll('.tk-tolak')) b.onclick = () => arena('tolak', { id: b.dataset.id }, b);
     for (const b of sec.querySelectorAll('.tk-replay')) b.onclick = () => bukaReplay(b.dataset.id);
+    const lp = sec.querySelector('.tk-pb-lihat'); if (lp) lp.onclick = () => window.Pokomen && window.Pokomen.lihatPokoboll && window.Pokomen.lihatPokoboll();
+    const fp = $('tkPb'); if (fp) fp.onsubmit = async (e) => { e.preventDefault(); const btn = fp.querySelector('button'); btn.disabled = true; const r = await post('api/toko', { aksi: 'tawar_pokoboll', jumlah: Number($('tkPbJ').value) }); if (r.error) toast(r.error); else { toast('Tawaranmu tercatat! 🏠'); T.pokoboll = r.pokoboll; T.saya = r.saya; } render(); };
     const f = $('tkTantang'); if (f) f.onsubmit = (e) => { e.preventDefault(); arena('tantang', { lawan: $('tkLawan').value }, f.querySelector('button')); };
   }
 
