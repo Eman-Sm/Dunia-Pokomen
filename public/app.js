@@ -632,29 +632,13 @@
     ctx.fillStyle = '#7cc46a'; ctx.beginPath(); ctx.ellipse(x, y - 2 * z, 60 * z, 25 * z, 0, 0, Math.PI * 2); ctx.fill();
     const bunga = [[-44, 6, '#ff8fb1'], [-36, -10, '#ffe066'], [40, 8, '#ff8fb1'], [46, -6, '#bfe3ff'], [-20, 14, '#ffe066'], [24, 15, '#ff8fb1']];
     for (const [dx, dy, c] of bunga) { ctx.fillStyle = c; ctx.fillRect(x + dx * z - 1.5 * z, y + dy * z - 1.5 * z, 3 * z, 3 * z); }
-    // rumah kapsul
-    const hx = x, base = y + 2 * z, R = 23 * z, H = 32 * z;
-    if (malam) { const g = ctx.createRadialGradient(hx, base - H * .5, 4 * z, hx, base - H * .5, 60 * z); g.addColorStop(0, 'rgba(255,226,140,.45)'); g.addColorStop(1, 'rgba(255,226,140,0)'); ctx.fillStyle = g; ctx.fillRect(hx - 60 * z, base - H * .5 - 60 * z, 120 * z, 120 * z); }
-    ctx.fillStyle = 'rgba(20,30,10,.3)'; ctx.beginPath(); ctx.ellipse(hx, base + 3 * z, 30 * z, 8 * z, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#9d968a'; ctx.beginPath(); ctx.ellipse(hx, base + 1 * z, 28 * z, 8 * z, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#c9c2b2'; ctx.beginPath(); ctx.ellipse(hx, base, 27 * z, 7 * z, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.save(); ctx.beginPath(); ctx.ellipse(hx, base, R, H, 0, Math.PI, Math.PI * 2); ctx.closePath(); ctx.clip();
-    ctx.fillStyle = C.body; ctx.fillRect(hx - R, base - H, R * 2, H);
-    ctx.fillStyle = C.acc; for (const i of [-1, 0, 1]) { ctx.beginPath(); ctx.ellipse(hx + i * 12 * z, base, 3.2 * z, H + 2 * z, 0, 0, Math.PI * 2); ctx.fill(); }
-    ctx.fillStyle = 'rgba(255,255,255,.28)'; ctx.beginPath(); ctx.ellipse(hx - 9 * z, base - H * .62, 6 * z, 10 * z, -.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = C.acc2; ctx.fillRect(hx - R, base - 6 * z, R * 2, 3.5 * z);
-    ctx.restore();
-    ctx.strokeStyle = '#2b1b17'; ctx.lineWidth = Math.max(1, 1.6 * z); ctx.beginPath(); ctx.ellipse(hx, base, R, H, 0, Math.PI, Math.PI * 2); ctx.closePath(); ctx.stroke();
-    // pintu bulat & jendela
-    ctx.fillStyle = '#6b4a2e'; ctx.beginPath(); ctx.ellipse(hx, base, 6.5 * z, 12 * z, 0, Math.PI, Math.PI * 2); ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#ffd23f'; ctx.fillRect(hx + 3 * z, base - 6 * z, 1.6 * z, 1.6 * z);
-    for (const dx of [-14, 14]) { ctx.fillStyle = malam ? '#ffe7a0' : '#bfe3ff'; ctx.beginPath(); ctx.arc(hx + dx * z, base - 15 * z, 3.6 * z, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
-    // menara kecil + permata elemen
-    ctx.strokeStyle = '#2b1b17'; ctx.lineWidth = 2 * z; ctx.beginPath(); ctx.moveTo(hx, base - H); ctx.lineTo(hx, base - H - 7 * z); ctx.stroke();
-    const gy = base - H - 11 * z, gb = 1 + .12 * Math.sin(now / 300);
-    ctx.fillStyle = C.gem; ctx.beginPath(); ctx.moveTo(hx, gy - 5 * z * gb); ctx.lineTo(hx + 4 * z * gb, gy); ctx.lineTo(hx, gy + 5 * z * gb); ctx.lineTo(hx - 4 * z * gb, gy); ctx.closePath(); ctx.fill(); ctx.lineWidth = Math.max(1, 1.2 * z); ctx.stroke();
-    if (!RINGAN) for (let i = 0; i < 4; i++) { const a = now / 800 + i * 1.57, px = hx + Math.cos(a) * 9 * z, py = gy + Math.sin(a) * 4 * z; ctx.globalAlpha = .5 + .5 * Math.sin(now / 200 + i); ctx.fillStyle = '#fff6c8'; ctx.fillRect(px - 1 * z, py - 1 * z, 2 * z, 2 * z); }
-    ctx.globalAlpha = 1;
+    // rumah kapsul: bola sempurna, arsitekturnya mengikuti kombinasi hewan pemilik (pokoboll.js)
+    const hx = x, R = 22 * z, base = y + 4 * z, bcy = base - R - 2 * z;
+    if (malam) { const g = ctx.createRadialGradient(hx, bcy, 4 * z, hx, bcy, 64 * z); g.addColorStop(0, 'rgba(255,226,140,.4)'); g.addColorStop(1, 'rgba(255,226,140,0)'); ctx.fillStyle = g; ctx.fillRect(hx - 64 * z, bcy - 64 * z, 128 * z, 128 * z); }
+    ctx.fillStyle = 'rgba(20,30,10,.32)'; ctx.beginPath(); ctx.ellipse(hx, base, 24 * z, 6 * z, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#9d968a'; ctx.beginPath(); ctx.ellipse(hx, base - 1 * z, 14 * z, 4 * z, 0, 0, Math.PI * 2); ctx.fill(); // alas batu
+    if (window.PokobollArt) window.PokobollArt.draw(ctx, hx, bcy, R, w || { hewan: ['Naga'], elemen: 'Cahaya', pal: { body: '#8a6a3a', acc: '#e6c060' } }, { now, malam, ringan: RINGAN, tidur: !!(w && sleeping()) });
+    const H = R * 2 + 2 * z;
     // pemilik sedang tidur di dalam
     if (w && sleeping()) {
       ctx.font = `800 ${Math.round(8 * z)}px Nunito, system-ui, sans-serif`; ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#2b1b17'; ctx.lineWidth = 2;
@@ -664,7 +648,7 @@
     // papan nama
     if (z >= .7) {
       const sx = hx + 40 * z, sy = base + 10 * z, f = Math.max(9, 6.5 * z);
-      const L = P.lelang, judul = 'POKOBOLL', sub = w ? w.nama : (L && L.buka ? 'LELANG!' : 'SEGERA');
+      const judul = 'POKOBOLL', sub = w ? w.nama : 'DIJUAL!';
       ctx.font = `900 ${f}px Nunito, system-ui, sans-serif`; const tw = Math.max(ctx.measureText(judul).width, ctx.measureText(sub).width) + 10;
       ctx.fillStyle = '#6b4a2e'; ctx.fillRect(sx - 1 * z, sy, 2 * z, 10 * z);
       ctx.fillStyle = '#2b1b17'; ctx.fillRect(sx - tw / 2 - 1, sy - f * 2.3 - 1, tw + 2, f * 2.3 + 2);

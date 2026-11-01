@@ -703,8 +703,10 @@ code,
 
 .tk-pokoboll { display: flex; gap: 12px; align-items: flex-start; background: linear-gradient(135deg, #fff4dc, #f1e3ff); border: var(--px) solid var(--outline); box-shadow: 0 var(--px) 0 var(--outline); padding: 12px; margin-bottom: 12px; }
 .tk-pokoboll .ik { font-size: 2.2rem; line-height: 1; }
+.tk-pb-cv { width: 150px; height: auto; flex: none; }
+@media (max-width: 520px) { .tk-pokoboll { flex-direction: column; align-items: center; } }
 .tk-pokoboll p { margin: 4px 0; }
 .tk-eks { display: inline-block; font-size: .75rem; font-weight: 800; background: #7a4bd8; color: #fff; padding: 1px 6px; border: 2px solid var(--outline); }
-.tk-pb { display: flex; gap: 6px; margin: 6px 0; }
+.tk-pb { display: flex; gap: 6px; margin: 6px 0; flex-wrap: wrap; }
 .tk-pb input { width: 110px; font: inherit; padding: 4px 8px; border: 2px solid var(--outline); }
 .tk-pb-lihat { display: block; margin-top: 8px; }

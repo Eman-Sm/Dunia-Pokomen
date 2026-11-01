@@ -28,8 +28,6 @@ export async function GET() {
       // wilayah baru (mis. Wilayah 4 saat warga ke-151 lahir) otomatis membuka usulan nama + pemilihan ketua
       if ((await redis('SET', 'pw_cek_baru', '1', 'NX', 'EX', '60')) === 'OK') {
         try { await bukaWilayahBaru(); } catch { /* ignore */ }
-        // Pokoboll: tutup lelang otomatis saat waktunya habis
-        try { const PB = await import('../lib/pokoboll.js'); const { log } = await import('../lib/rules.js'); const ob = await import('../lib/obrolan.js'); await PB.tutupLelang({ umumkan: async (t, u) => { await log('legenda', t, { u }); await ob.sistem('📢 ' + t.slice(0, 190)); } }); } catch { /* ignore */ }
         // 1 Nov 20.05: harga latihan turun lagi jadi 3 (sekali saja)
         try { if ((await redis('SET', 'ob_umum_latihan3_v1', '1', 'NX')) === 'OK') { const ob = await import('../lib/obrolan.js'); await ob.sistem('📢 🏋️ Harga turun LAGI! Sesi di Tempat Latihan sekarang cuma 3 Biji Kopi per sesi. Setiap sesi ke-5 tetap LATIHAN SUPER 2x. Ayo latihan sebanyak-banyaknya untuk Liga Arena!'); } } catch { /* ignore */ }
         // 1 Nov 20.00: umumkan harga latihan baru (sekali saja)
@@ -80,7 +78,7 @@ export async function GET() {
       pemiluWilayah: pw ? publicHasil(pw) : null,
       usulNamaWilayah: namaWil,
       wilayahBuka: await jumlahWilayahBuka().catch(() => 3),
-      pokoboll: await import('../lib/pokoboll.js').then(async (PB) => PB.publik(await PB.getPB())).catch(() => ({ tampil: false })),
+      pokoboll: await import('../lib/pokoboll.js').then(async (PB) => PB.publik(await PB.getPB(), await PB.hargaBiji())).catch(() => ({ tampil: false })),
       log: (logRaw || []).map((s) => { try { return JSON.parse(s); } catch { return null; } }).filter((x) => x && !(x.type === 'dukung' && /^\s*\[.*test.*\]/i.test(x.text || ''))),
     }, 200, { 'Cache-Control': 's-maxage=20, stale-while-revalidate=60' });
   } catch (e) {

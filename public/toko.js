@@ -35,22 +35,28 @@
     </div>`;
   }
 
-  function sisa(iso) { const ms = Date.parse(iso) - Date.now(); if (!(ms > 0)) return 'selesai'; const h = Math.floor(ms / 36e5), m = Math.floor((ms % 36e5) / 6e4); return h ? `${h} jam ${m} menit lagi` : `${Math.max(1, m)} menit lagi`; }
   function pokobollHTML() {
     const P = T.pokoboll; if (!P || !P.tampil) return '';
     const D = (window.Pokomen && window.Pokomen.data && window.Pokomen.data()) || {};
-    const nm = (u) => ((D.warga || []).find((w) => w.u === u) || {}).nama || u;
-    const L = P.lelang;
+    if (!(D.warga || []).length && !pokobollHTML.tunggu) { pokobollHTML.tunggu = 1; setTimeout(() => { pokobollHTML.tunggu = 0; if (tab === 'toko') render(); }, 1500); }
+    const wOf = (u) => (D.warga || []).find((w) => w.u === u) || null;
+    const pemilik = P.pemilik ? wOf(P.pemilik) : null, saya = T.saya ? wOf(T.saya.u) : null;
+    const contoh = pemilik || saya;
+    const fitur = contoh && window.PokobollArt ? window.PokobollArt.arch(contoh).label.join(' · ') : '';
     let isi;
-    if (P.pemilik) isi = `<p>Pemilik: <b>${esc(nm(P.pemilik))}</b> (@${esc(P.pemilik)}). Hanya ada satu di seluruh Dunia Pokomen!</p>`;
-    else if (L && L.buka) isi = `<p>🔨 <b>LELANG</b> · ${esc(sisa(L.selesai))} · ${L.jumlahTawaran} tawaran</p>
-      <p>Tawaran tertinggi: <b>${L.tertinggi ? `${L.tertinggi.jumlah} Biji · ${esc(L.tertinggi.nama)}` : 'belum ada'}</b></p>
-      <form class="tk-pb" id="tkPb" autocomplete="off"><input id="tkPbJ" type="number" inputmode="numeric" min="${L.minimal}" step="1" value="${L.minimal}" aria-label="Jumlah tawaran"><button class="btn" type="submit" ${T.saya ? '' : 'disabled'}>Tawar</button></form>
-      <small class="muted">Minimal ${L.minimal} Biji · naik kelipatan ${L.kelipatan}. Biji hanya dipotong dari pemenang saat lelang selesai. Tawaran di 5 menit terakhir memperpanjang lelang 5 menit.</small>`;
-    else if (L && L.status === 'buka') isi = `<p>🔨 Lelang dibuka <b>${esc(new Date(L.mulai).toLocaleString('id-ID', { weekday: 'long', hour: '2-digit', minute: '2-digit' }))}</b> · mulai ${L.hargaAwal} Biji.</p>`;
-    else isi = '<p>Segera hadir. Pantau terus!</p>';
-    return `<div class="tk-pokoboll"><div class="ik">🏠</div><div><b>POKOBOLL</b> <span class="tk-eks">EKSKLUSIF · HANYA 1</span>
-      <p class="muted">Rumah kapsul di Pulau Pokoboll. Desainnya mengikuti warna & elemen hewan pemiliknya, dan hewannya tidur di dalam setiap malam.</p>${isi}<button class="btn ghost tk-pb-lihat" type="button">📍 Lihat di peta</button></div></div>`;
+    if (P.pemilik) isi = `<p>✅ <b>TERJUAL</b> · milik <b>${esc(pemilik ? pemilik.nama : P.pemilik)}</b> (@${esc(P.pemilik)}). Hanya ada satu di seluruh Dunia Pokomen!</p>`;
+    else isi = `<p>Harga: <b>💎 ${P.harga.batu} Batu Evolusi</b> atau <b>${P.harga.biji} Biji Kopi</b>. Stok: <b>1</b>. Siapa cepat, dia dapat!</p>
+      <div class="tk-pb">${['batu', 'biji'].map((c) => `<button class="btn tk-pb-beli" type="button" data-cara="${c}" ${T.saya ? '' : 'disabled'}>${konfirm === 'pb-' + c ? 'Yakin? Tekan lagi' : c === 'batu' ? `Beli · 💎 ${P.harga.batu} Batu` : `Beli · ${P.harga.biji} Biji`}</button>`).join('')}</div>`;
+    return `<div class="tk-pokoboll"><canvas class="tk-pb-cv" width="220" height="200" aria-label="Pratinjau Pokoboll"></canvas><div><b>POKOBOLL</b> <span class="tk-eks">EKSKLUSIF · HANYA 1</span>
+      <p class="muted">Rumah bola di Pulau Pokoboll. Arsitekturnya mengikuti kombinasi hewan pemiliknya, dan hewannya tidur di dalam setiap malam.</p>
+      ${contoh && !P.pemilik ? `<p class="muted">Kalau ${esc(contoh.nama)} pemiliknya, Pokoboll-nya punya: <b>${esc(fitur)}</b>.</p>` : ''}${isi}<button class="btn ghost tk-pb-lihat" type="button">📍 Lihat di peta</button></div></div>`;
+  }
+  function gambarPokoboll() {
+    const cv = sec.querySelector('.tk-pb-cv'); if (!cv || !window.PokobollArt) return;
+    const P = T.pokoboll, D = (window.Pokomen && window.Pokomen.data && window.Pokomen.data()) || {};
+    const wOf = (u) => (D.warga || []).find((w) => w.u === u) || null;
+    const w = (P.pemilik && wOf(P.pemilik)) || (T.saya && wOf(T.saya.u)) || { hewan: ['Naga'], elemen: 'Cahaya', pal: { body: '#8a6a3a', acc: '#e6c060' } };
+    const ctx = cv.getContext('2d'); const loop = () => { if (!cv.isConnected) return; ctx.clearRect(0, 0, cv.width, cv.height); window.PokobollArt.draw(ctx, 110, 104, 62, w, { now: performance.now() }); requestAnimationFrame(loop); }; loop();
   }
   function tokoTab() {
     return pokobollHTML() + `<div class="tk-grid">${T.katalog.filter((x) => x.id !== 'latihan').map((x) => `
@@ -99,7 +105,8 @@
     for (const b of sec.querySelectorAll('.tk-tolak')) b.onclick = () => arena('tolak', { id: b.dataset.id }, b);
     for (const b of sec.querySelectorAll('.tk-replay')) b.onclick = () => bukaReplay(b.dataset.id);
     const lp = sec.querySelector('.tk-pb-lihat'); if (lp) lp.onclick = () => window.Pokomen && window.Pokomen.lihatPokoboll && window.Pokomen.lihatPokoboll();
-    const fp = $('tkPb'); if (fp) fp.onsubmit = async (e) => { e.preventDefault(); const btn = fp.querySelector('button'); btn.disabled = true; const r = await post('api/toko', { aksi: 'tawar_pokoboll', jumlah: Number($('tkPbJ').value) }); if (r.error) toast(r.error); else { toast('Tawaranmu tercatat! 🏠'); T.pokoboll = r.pokoboll; T.saya = r.saya; } render(); };
+    for (const b of sec.querySelectorAll('.tk-pb-beli')) b.onclick = () => beliPokoboll(b.dataset.cara);
+    gambarPokoboll();
     const f = $('tkTantang'); if (f) f.onsubmit = (e) => { e.preventDefault(); arena('tantang', { lawan: $('tkLawan').value }, f.querySelector('button')); };
   }
 
@@ -110,6 +117,14 @@
     const r = await post('api/toko', { item, nilai: inp ? inp.value : undefined });
     if (r.error) { toast(r.error); render(); return; }
     toast(r.pesan || 'Berhasil!'); T.saya = r.saya; render();
+    if (window.Pokomen && window.Pokomen.reload) window.Pokomen.reload();
+  }
+  async function beliPokoboll(cara) {
+    if (konfirm !== 'pb-' + cara) { konfirm = 'pb-' + cara; render(); setTimeout(() => { if (konfirm === 'pb-' + cara) { konfirm = null; render(); } }, 4000); return; }
+    konfirm = null;
+    const r = await post('api/toko', { aksi: 'beli_pokoboll', cara });
+    if (r.error) { toast(r.error); render(); return; }
+    toast(r.pesan); T.pokoboll = r.pokoboll; T.saya = r.saya; render();
     if (window.Pokomen && window.Pokomen.reload) window.Pokomen.reload();
   }
   async function latih(stat, btn) {

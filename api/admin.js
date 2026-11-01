@@ -266,11 +266,10 @@ const actions = {
   /** Batu Evolusi: { username, jumlah (boleh negatif), bukti } */
   async batu_tambah({ username, jumlah, bukti }) { return tambahBatu(username, jumlah, bukti); },
   /** nyalakan/matikan aturan Legendary & God Mode lewat cerita + Batu Evolusi (setelah diumumkan di video) */
-  /** Pokoboll (rumah eksklusif, hanya 1): status / tampil / pemilik / lelang */
+  /** Pokoboll (rumah eksklusif, hanya 1): status / tampil (mulai dijual) / tetapkan pemilik */
   async pokoboll_status() { return PB.getPB(); },
   async pokoboll_tampil({ on }) { return PB.tampil(on); },
   async pokoboll_set({ username, bukti }) { return PB.setPemilik(username, bukti || 'Admin'); },
-  async pokoboll_lelang({ mulai, selesai, hargaAwal, kelipatan }) { return PB.bukaLelang({ mulai, selesai, hargaAwal, kelipatan }); },
   async evo_batu({ aktif }) { let ketua = []; if (aktif) { await redis('SET', 'evo_batu', '1'); ketua = await (await import('../lib/dewa.js')).batuKetuaAwal(); } else await redis('DEL', 'evo_batu'); return { aktif: (await redis('GET', 'evo_batu')) === '1', syarat: CONFIG.batuEvolusi, batuKetua: ketua }; },
   async ob_info() { return ob.adminInfo(); },
   async pengumuman({ text, kabar = true, obrolan = true }) {
