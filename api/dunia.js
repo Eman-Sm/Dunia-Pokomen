@@ -26,7 +26,11 @@ export async function GET() {
     let pw = null;
     try {
       // wilayah baru (mis. Wilayah 4 saat warga ke-151 lahir) otomatis membuka usulan nama + pemilihan ketua
-      if ((await redis('SET', 'pw_cek_baru', '1', 'NX', 'EX', '60')) === 'OK') { try { await bukaWilayahBaru(); } catch { /* ignore */ } }
+      if ((await redis('SET', 'pw_cek_baru', '1', 'NX', 'EX', '60')) === 'OK') {
+        try { await bukaWilayahBaru(); } catch { /* ignore */ }
+        // Juara Arena: 7 hari tak terkalahkan → +1 Batu Evolusi (dicek tiap menit, tanpa menunggu ada yang membuka Arena)
+        try { const AR = await import('../lib/arena.js'); if (await AR.aktif()) { const { log } = await import('../lib/rules.js'); const ob = await import('../lib/obrolan.js'); await AR.cekJuara({ umumkan: async (t, u) => { await log('arena', t, { u }); await ob.sistem(t); } }); } } catch { /* ignore */ }
+      }
       await segarkanLike(10);
       pw = await hasilWilayah();
       const perlu = Object.values(pw.wilayah).some((x) => x.memilih && x.closed && !x.ditetapkan);

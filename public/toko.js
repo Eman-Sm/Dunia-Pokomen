@@ -56,16 +56,22 @@
     const W = d.menang === d.a ? d.namaA : d.namaB;
     return `<details class="tk-duel"><summary><b>${esc(d.namaA)}</b> vs <b>${esc(d.namaB)}</b> · 🏆 ${esc(W)} <time>${jam(d.t)}</time></summary>${d.gerak ? `<button class="btn tk-replay" type="button" data-id="${esc(d.id)}">▶ Tonton replay</button>` : ''}<ol>${d.catatan.map((c) => `<li>${esc(c)}</li>`).join('')}</ol></details>`;
   }
+  function sisaJuara(iso) {
+    const ms = Date.parse(iso) - Date.now(); if (!(ms > 0)) return 'sebentar lagi!';
+    const h = Math.floor(ms / 864e5), j = Math.floor((ms % 864e5) / 36e5);
+    return h ? `${h} hari ${j} jam lagi` : j ? `${j} jam lagi` : `${Math.max(1, Math.round(ms / 6e4))} menit lagi`;
+  }
   function arenaTab() {
     const A = AR || {}; const me = A.saya;
     const masuk = me ? me.tantangan.filter((t) => t.ke === me.u) : [], keluar = me ? me.tantangan.filter((t) => t.dari === me.u) : [];
     const D = (window.Pokomen && window.Pokomen.data && window.Pokomen.data()) || {};
     const nama = (u) => ((D.warga || []).find((w) => w.u === u) || {}).nama || u;
-    return `<p class="tk-info">${A.buka ? '🟢 Arena <b>BUKA</b>' : '🔴 Arena <b>TUTUP</b>'} · setiap hari pukul ${String(A.jam?.[0] ?? 7).padStart(2, '0')}.00–${A.jam?.[1] ?? 21}.00 WIB · maks. 5 tantangan per hari · juara mingguan dapat <b>💎 1 Batu Evolusi</b></p>
+    return `<p class="tk-info">${A.buka ? '🟢 Arena <b>BUKA</b>' : '🔴 Arena <b>TUTUP</b>'} · setiap hari pukul ${String(A.jam?.[0] ?? 7).padStart(2, '0')}.00–${A.jam?.[1] ?? 21}.00 WIB · maks. 5 tantangan per hari</p>
+      <p class="tk-info">🏆 <b>Juara Arena</b>: tak terkalahkan <b>7 hari</b> sejak kemenangan pertama → <b>💎 1 Batu Evolusi</b>. Kalah sekali, hitungannya mulai dari nol lagi.</p>
       ${masuk.length ? `<div class="tk-masuk"><b>⚔️ Kamu ditantang!</b>${masuk.map((t) => `<div><span>${esc(t.namaDari)} menantang ${esc(t.namaKe)} · sampai ${jam(t.sampai)}</span><button class="btn tk-terima" type="button" data-id="${esc(t.id)}">Terima & bertarung</button><button class="btn ghost tk-tolak" type="button" data-id="${esc(t.id)}">Tolak</button></div>`).join('')}</div>` : ''}
       ${keluar.length ? `<p class="muted">Menunggu jawaban: ${keluar.map((t) => esc(t.namaKe)).join(', ')}</p>` : ''}
       ${me ? `<form class="tk-tantang" id="tkTantang" autocomplete="off"><input id="tkLawan" placeholder="Nama hewan lawan" maxlength="40" required><button class="btn" type="submit" ${A.buka ? '' : 'disabled'}>⚔️ Tantang</button></form>` : '<p class="muted">Bisa juga lewat komentar: <code>Tantang: nama hewan</code> lalu lawan membalas <code>Terima: nama penantang</code>.</p>'}
-      <div class="tk-kolom"><div><h4>🏆 Klasemen minggu ini</h4><ol class="tk-klas">${(A.klasemen || []).map((k) => `<li><b>${esc(nama(k.u))}</b><span>${k.menang} menang · ${k.main} duel</span></li>`).join('') || '<li class="muted">Belum ada duel minggu ini.</li>'}</ol></div>
+      <div class="tk-kolom"><div><h4>🔥 Belum terkalahkan</h4><ol class="tk-klas">${(A.beruntun || []).map((k) => `<li><b>${esc(nama(k.u))}</b><span>${k.menang} menang beruntun · juara ${sisaJuara(k.juaraPada)}</span></li>`).join('') || '<li class="muted">Belum ada. Menangkan duel pertamamu!</li>'}</ol></div>
       <div><h4>⚔️ Duel terbaru</h4>${(A.duel || []).map(duelHTML).join('') || '<p class="muted">Belum ada duel.</p>'}</div></div>`;
   }
 

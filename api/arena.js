@@ -18,11 +18,11 @@ export async function GET(request) {
       return json(out, 200, { 'Cache-Control': 's-maxage=60' });
     }
     const aktif = await A.aktif();
-    if (aktif) await A.tetapkanJuaraMinggu({ umumkan }).catch(() => {});
+    if (aktif) await A.cekJuara({ umumkan }).catch(() => {});
     const u = k ? await userFromToken(k) : null;
     return json({
-      aktif, buka: A.buka(), jam: [A.JAM_BUKA, A.JAM_TUTUP], minggu: A.mingguKe(), tutupMinggu: new Date(A.tutupMinggu(A.mingguKe())).toISOString(),
-      duel: aktif ? await A.duelTerbaru(12) : [], klasemen: aktif ? await A.klasemen() : [], terbuka: aktif ? await A.tantanganTerbuka() : [],
+      aktif, buka: A.buka(), jam: [A.JAM_BUKA, A.JAM_TUTUP], hariJuara: A.HARI_JUARA,
+      duel: aktif ? await A.duelTerbaru(12) : [], beruntun: aktif ? await A.papanBeruntun() : [], terbuka: aktif ? await A.tantanganTerbuka() : [],
       saya: aktif && u ? { u, tantangan: await A.tantanganUntuk(u) } : null,
     }, 200, { 'Cache-Control': 'no-store' });
   } catch (e) { return json({ error: e.message }, 200); }

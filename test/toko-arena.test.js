@@ -38,7 +38,7 @@ test('Toko: saldo dari kopi, beli batu & latihan, saldo kurang ditolak', async (
   assert.equal((await getJSON('warga', 'pega')).nama, 'Pegasus');
 });
 
-test('Arena: jam buka, tantang, terima, duel, juara mingguan dapat batu', async () => {
+test('Arena: jam buka, tantang, terima, duel, juara = 7 hari tak terkalahkan', async () => {
   await add('kuat', 'Kuat', 3, 1); await add('lemah', 'Lemah', 0, 2);
   await assert.rejects(A.tantang('lemah', 'Kuat', { now: MALAM }), /buka pukul/);
   const t = await A.tantang('lemah', 'Kuat', { now: SIANG });
@@ -46,12 +46,26 @@ test('Arena: jam buka, tantang, terima, duel, juara mingguan dapat batu', async 
   await assert.rejects(A.tantang('lemah', 'Kuat', { now: SIANG + 1000 }), /sudah bertemu/);
   const d = await A.terima('kuat', '', { now: SIANG + 60000 });
   assert.equal(d.menang, 'kuat'); assert.ok(d.catatan.length >= 2);
-  const k = await A.klasemen(A.mingguKe(SIANG)); assert.equal(k[0].u, 'kuat'); assert.equal(k[0].menang, 1);
+  let b = await A.papanBeruntun(10, SIANG + 70000); assert.equal(b[0].u, 'kuat'); assert.equal(b[0].menang, 1);
   // replay is deterministic
   assert.deepEqual(A.simulasi(await getJSON('warga', 'lemah'), await getJSON('warga', 'kuat'), t.id).menang, d.menang);
-  const j = await A.tetapkanJuaraMinggu({ now: A.tutupMinggu(A.mingguKe(SIANG)) + 60000 });
+  // belum 7 hari → belum juara
+  assert.deepEqual(await A.cekJuara({ now: SIANG + 6 * 864e5 }), []);
+  // 7 hari tak terkalahkan → +1 batu, sekali saja, lalu hitungan baru
+  const j = await A.cekJuara({ now: SIANG + 7 * 864e5 + 120000 });
   assert.equal(j[0].u, 'kuat'); assert.equal((await getJSON('warga', 'kuat')).batu, 1);
-  assert.deepEqual(await A.tetapkanJuaraMinggu({ now: A.tutupMinggu(A.mingguKe(SIANG)) + 120000 }), []);
+  assert.deepEqual(await A.cekJuara({ now: SIANG + 7 * 864e5 + 180000 }), []);
+  assert.equal((await A.papanBeruntun(10)).find((x) => x.u === 'kuat'), undefined);
+  // kalah sekali → hitungan direset
+  const H8 = SIANG + 8 * 864e5;
+  await A.tantang('lemah', 'Kuat', { now: H8 }); await A.terima('kuat', '', { now: H8 + 1000 });
+  assert.equal((await A.papanBeruntun(10)).find((x) => x.u === 'kuat').menang, 1);
+  await add('dewa', 'Dewa', 5, 9);
+  await A.tantang('dewa', 'Kuat', { now: H8 + 2000 }); const d2 = await A.terima('kuat', '', { now: H8 + 3000 });
+  assert.equal(d2.menang, 'dewa');
+  b = await A.papanBeruntun(10);
+  assert.equal(b.find((x) => x.u === 'kuat'), undefined); assert.equal(b.find((x) => x.u === 'dewa').menang, 1);
+  assert.deepEqual((await A.cekJuara({ now: H8 + 7 * 864e5 + 5000 })).map((x) => x.u), ['dewa']);
 });
 
 test('Arena lewat komentar', async () => {
