@@ -39,16 +39,28 @@ test('calon dari luar wilayah: bayar 7 Biji Kopi, suara dihitung dari warga wila
   assert.equal(await c('kaya', 'Calon 5: salah nomor'), 'pw:luar-pilih-wilayah');
   // warga Wilayah 4 tetap gratis
   assert.equal(await c('w4a', 'Calon: jaga lahan baru'), 'pw:calon');
-  // memilih: hanya warga Wilayah 4
+  // memilih
   assert.equal(await c('w4b', 'Pilih: Rubi'), 'pw:pilih');
   assert.equal(await c('w4c', 'Pilih: Rubi'), 'pw:pilih');
-  assert.equal(await c('miskin', 'Pilih: Rubi'), 'pw:wilayah-tidak-memilih');
+  // wilayah baru: warga dari wilayah lain juga boleh memilih
+  assert.equal(await c('miskin', 'Pilih: Rubi'), 'pw:pilih');
+  assert.equal(await c('miskin', 'Pilih: Dragotyr', '2026-11-01T13:00:00.000Z'), 'pw:pilih-ganti');
+  assert.equal(await c('miskin', 'Pilih: Rubi', '2026-11-01T14:00:00.000Z'), 'pw:pilih-ganti');
+  assert.equal(await c('kaya', 'Pilih: Rubi'), 'pw:diri-sendiri');
   const h = await hasilWilayah();
   const k = h.wilayah[4].calon.find((x) => x.u === 'kaya');
-  assert.equal(k.suara, 2); assert.equal(k.luar, 1);
+  assert.equal(k.suara, 3); assert.equal(k.luar, 1);
   assert.equal(h.wilayah[4].calon[0].u, 'kaya');
   assert.equal(h.wilayah[1].calon.length, 0); // tidak muncul di wilayah asalnya
   const r = await tetapkanPemenang({ force: true });
   assert.equal(r.find((x) => x.wilayah === 4).pemenang, 'kaya');
   assert.equal((await getJSON('warga', 'kaya')).ketuaWilayah, 4);
+});
+
+test('hitung ulang suara dari komentar', async () => {
+  const W = await import('../lib/wilayah.js');
+  await setCfg({ jadwal: { 4: { buka: '2026-10-31T11:00:00.000Z', tutup: '2026-11-03T05:00:00.000Z', ditetapkan: false, post: null } }, tunda: [] });
+  // listComments gagal tanpa token → tidak ada komentar, tidak error
+  const r = await W.hitungUlangSuara(4, { posts: ['x1'] });
+  assert.equal(r.dicatat, 0);
 });

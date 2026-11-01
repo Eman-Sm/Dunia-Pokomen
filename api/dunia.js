@@ -28,6 +28,15 @@ export async function GET() {
       // wilayah baru (mis. Wilayah 4 saat warga ke-151 lahir) otomatis membuka usulan nama + pemilihan ketua
       if ((await redis('SET', 'pw_cek_baru', '1', 'NX', 'EX', '60')) === 'OK') {
         try { await bukaWilayahBaru(); } catch { /* ignore */ }
+        // 1 Nov: semua warga boleh memilih di wilayah baru → hitung ulang suara Wilayah 4 sekali, lalu umumkan di Obrolan
+        try {
+          if ((await redis('SET', 'pw_hitung_ulang_w4_v1', '1', 'NX')) === 'OK') {
+            const WL = await import('../lib/wilayah.js'); const r = await WL.hitungUlangSuara(4);
+            const ob = await import('../lib/obrolan.js');
+            await ob.sistem('📢 🗳️ Mulai sekarang SEMUA warga, dari wilayah mana pun, boleh memilih Ketua Wilayah 4! Komen "Pilih: nama calon". Suara yang sebelumnya ditolak sudah dihitung ulang ✅');
+            await redis('SET', 'pw_hitung_ulang_w4_hasil', JSON.stringify({ ...r, t: new Date().toISOString() }));
+          }
+        } catch { /* ignore */ }
         // Juara Arena: 7 hari tak terkalahkan → +1 Batu Evolusi (dicek tiap menit, tanpa menunggu ada yang membuka Arena)
         try { const AR = await import('../lib/arena.js'); if (await AR.aktif()) { const { log } = await import('../lib/rules.js'); const ob = await import('../lib/obrolan.js'); await AR.cekJuara({ umumkan: async (t, u) => { await log('arena', t, { u }); await ob.sistem(t); } }); } } catch { /* ignore */ }
       }
