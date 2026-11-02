@@ -258,6 +258,17 @@
   const TIER_W = ['#cfc6b0', '#6ec85a', '#5aaaff', '#c9a0ff', '#ffd23f', '#ff6a2a'];
   const F = (sz, wt = 700) => `${wt} ${sz}px Nunito, system-ui, sans-serif`;
   function potong(ctx, s, maxW) { s = String(s || ''); if (ctx.measureText(s).width <= maxW) return s; while (s.length > 1 && ctx.measureText(s + '…').width > maxW) s = s.slice(0, -1); return s + '…'; }
+  // gambar anime per warga (public/anime/<username>.jpg, daftar di anime/daftar.json); kalau belum ada → sprite pixel
+  const ANIME = {}; let animeDaftar = null;
+  function muatAnime() {
+    if (animeDaftar) return animeDaftar;
+    animeDaftar = fetch('anime/daftar.json?v=' + Math.floor(Date.now() / 36e5)).then((r) => (r.ok ? r.json() : [])).catch(() => []).then((l) => {
+      for (const u of l || []) { const im = new Image(); im.onload = () => { ANIME[u] = im; }; im.src = 'anime/' + encodeURIComponent(u) + '.jpg'; }
+      return l;
+    });
+    return animeDaftar;
+  }
+  muatAnime();
   function kartuWarga(ctx, o) {
     const w = wargaOf(o.u) || {}; const L = o.x - o.w / 2, T = o.y, tier = w.tier || 0;
     ctx.save(); ctx.textAlign = 'center';
@@ -266,11 +277,23 @@
     ctx.fillStyle = '#fff4dc'; ctx.fillRect(L, T, o.w, o.h);
     ctx.fillStyle = o.judul ? '#ffd23f' : (TIER_W[tier] || TIER_W[0]); ctx.fillRect(L, T, o.w, 30);
     ctx.fillStyle = '#2b1b17'; ctx.font = F(17); ctx.fillText(o.judul || String(w.tierNama || 'Regular').toUpperCase(), o.x, T + 21);
-    const PH = o.besar ? 128 : 110, py = T + 36;
+    const art = ANIME[o.u];
+    const PH = art ? (o.besar ? 190 : 160) : (o.besar ? 128 : 110), py = T + 36;
     const gr = ctx.createLinearGradient(0, py, 0, py + PH); gr.addColorStop(0, o.warna); gr.addColorStop(1, '#fff4dc');
     ctx.globalAlpha = .6; ctx.fillStyle = gr; ctx.fillRect(L + 10, py, o.w - 20, PH); ctx.globalAlpha = 1;
+    if (art) {
+      // ilustrasi anime: dipotong pas (cover), kilau hologram berjalan, sprite pixel kecil sebagai lencana
+      const bw = o.w - 20, sc = Math.max(bw / art.width, PH / art.height), aw = art.width * sc, ah = art.height * sc;
+      ctx.save(); ctx.beginPath(); ctx.rect(L + 10, py, bw, PH); ctx.clip(); ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(art, L + 10 + (bw - aw) / 2, py + (PH - ah) / 2, aw, ah);
+      const kx = L + 10 + ((((o.t || performance.now() / 1000) * .45) % 1.6) - .3) * bw;
+      const sh = ctx.createLinearGradient(kx - 60, py, kx + 60, py + PH); sh.addColorStop(0, 'rgba(255,255,255,0)'); sh.addColorStop(.5, 'rgba(255,255,255,.35)'); sh.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = sh; ctx.fillRect(L + 10, py, bw, PH); ctx.restore();
+      ctx.strokeStyle = o.warna; ctx.lineWidth = 6; ctx.strokeRect(L + 13, py + 3, bw - 6, PH - 6);
+    }
     ctx.strokeStyle = '#2b1b17'; ctx.lineWidth = 3; ctx.strokeRect(L + 10, py, o.w - 20, PH);
-    if (o.sp) { const sc = (PH - 14) / Math.max(o.sp.width, o.sp.height), sw = o.sp.width * sc, sh = o.sp.height * sc; ctx.imageSmoothingEnabled = !!o.sp.hd; ctx.drawImage(o.sp, o.x - sw / 2, py + PH - 6 - sh - (o.besar ? Math.abs(Math.sin((o.t || 0) * 5)) * 6 : 0), sw, sh); }
+    if (art && o.sp) { const s2 = 46 / Math.max(o.sp.width, o.sp.height); ctx.fillStyle = 'rgba(255,244,220,.9)'; ctx.fillRect(L + o.w - 70, py + PH - 58, 54, 52); ctx.strokeRect(L + o.w - 70, py + PH - 58, 54, 52); ctx.imageSmoothingEnabled = !!o.sp.hd; ctx.drawImage(o.sp, L + o.w - 43 - o.sp.width * s2 / 2, py + PH - 10 - o.sp.height * s2, o.sp.width * s2, o.sp.height * s2); }
+    else if (o.sp) { const sc = (PH - 14) / Math.max(o.sp.width, o.sp.height), sw = o.sp.width * sc, sh = o.sp.height * sc; ctx.imageSmoothingEnabled = !!o.sp.hd; ctx.drawImage(o.sp, o.x - sw / 2, py + PH - 6 - sh - (o.besar ? Math.abs(Math.sin((o.t || 0) * 5)) * 6 : 0), sw, sh); }
     if (o.judul) { ctx.fillStyle = TIER_W[tier] || TIER_W[0]; ctx.font = F(12); const tn = String(w.tierNama || 'Regular'); const tw = ctx.measureText(tn).width + 12; ctx.fillRect(L + 14, py + 4, tw, 18); ctx.fillStyle = '#2b1b17'; ctx.textAlign = 'left'; ctx.fillText(tn, L + 20, py + 17); ctx.textAlign = 'center'; }
     let yy = py + PH + 27;
     ctx.fillStyle = '#2b1b17'; ctx.font = F(o.besar ? 28 : 24); ctx.fillText(potong(ctx, o.nama, o.w - 20), o.x, yy);
@@ -304,12 +327,30 @@
     if (o.extra) { yy += 22; ctx.fillStyle = '#6b4a2e'; ctx.font = F(14); ctx.fillText(o.extra, o.x, yy); }
     ctx.restore();
   }
+  // tantangan yang ditolak / tidak dijawab: tidak ada pertarungan → tampilkan kedua kartu + cap W.O.
+  function layarWO(d, ctx, W, H) {
+    const t = (performance.now() - RP.t0) / 1000;
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#2a1d4a'); g.addColorStop(1, '#4a2f3f'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    const k = Math.min(1, t / .6), e = 1 - Math.pow(1 - k, 3);
+    kartuWarga(ctx, { x: -200 + 380 * e, y: 70, w: 300, h: 380, u: d.a, nama: d.namaA, sp: RP.spA, rek: rekOf(d, d.a), warna: '#ffd23f', judul: 'PENANTANG', t });
+    kartuWarga(ctx, { x: W + 200 - 380 * e, y: 70, w: 300, h: 380, u: d.b, nama: d.namaB, sp: RP.spB, rek: rekOf(d, d.b), warna: '#5aaaff', t });
+    if (t > .7) {
+      const s = Math.max(1, 2.2 - (t - .7) * 4);
+      ctx.save(); ctx.translate(540, 250); ctx.rotate(-.18); ctx.scale(s, s); ctx.globalAlpha = .92;
+      ctx.strokeStyle = '#e0321e'; ctx.lineWidth = 8; ctx.strokeRect(-95, -42, 190, 84);
+      ctx.fillStyle = '#e0321e'; ctx.font = F(64, 900); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('W.O.', 0, 4); ctx.restore();
+    }
+    ctx.textAlign = 'center'; ctx.fillStyle = '#fff4dc'; ctx.font = F(22, 800);
+    ctx.fillText(potong(ctx, (d.catatan && d.catatan[0]) || `${d.namaB} tidak menjawab tantangan.`, W - 40), W / 2, H - 70);
+    ctx.font = F(16, 600); ctx.fillStyle = '#e6d8ff'; ctx.fillText('Tidak ada pertarungan: yang ditantang dianggap kalah (−1 poin).', W / 2, H - 40);
+  }
   function rekOf(d, u) { return (d.riwayat && d.riwayat[u]) || { main: 0, menang: 0, beruntun: 0, daftar: [] }; }
   function mulaiUlang() { if (!RP) return; RP.t0 = performance.now(); RP.lastT = -1; RP.part = []; RP.pop = []; RP.ghost = null; RP.heboh = 0; }
   function loop() {
     if (!RP) return;
     RP.raf = requestAnimationFrame(loop);
     const { d, cv, ctx } = RP; const W = cv.width, H = cv.height;
+    if (d.wo || !Array.isArray(d.gerak)) { layarWO(d, ctx, W, H); return; }
     if (!RP.J) { RP.J = jadwal(d); RP.part = []; RP.pop = []; RP.lastT = -1; RP.heboh = 0; RP.cA = warnaOf(d.a, '#ffd23f'); RP.cB = warnaOf(d.b, '#5aaaff'); RP.stMax = {}; for (const k of ['nyawa', 'serang', 'tahan', 'cepat']) RP.stMax[k] = Math.max(Number((d.statA || {})[k]) || 1, Number((d.statB || {})[k]) || 1) * 1.15; }
     const { S, selesai: TEND } = RP.J;
     const now = performance.now(); const dtNyata = Math.min(.05, (now - (RP.prev || now)) / 1000); RP.prev = now;
