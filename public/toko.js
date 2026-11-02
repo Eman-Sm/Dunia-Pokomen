@@ -198,6 +198,7 @@
     document.body.appendChild(el);
     const cv = el.querySelector('.rp-cv'), ctx = cv.getContext('2d');
     RP = { el, d, cv, ctx, t0: performance.now(), cepat: 1, lastT: -1, part: [], pop: [], heboh: 0, spA: sprite(d.a, d.namaA), spB: sprite(d.b, d.namaB), raf: 0 };
+    animeOf(d.a); animeOf(d.b); // muat kartu anime lebih awal
     el.querySelector('.rp-x').onclick = tutupReplay;
     el.onclick = (e) => { if (e.target === el) tutupReplay(); };
     el.querySelector('.rp-ulang').onclick = () => { SFX.init(); mulaiUlang(); };
@@ -258,17 +259,14 @@
   const TIER_W = ['#cfc6b0', '#6ec85a', '#5aaaff', '#c9a0ff', '#ffd23f', '#ff6a2a'];
   const F = (sz, wt = 700) => `${wt} ${sz}px Nunito, system-ui, sans-serif`;
   function potong(ctx, s, maxW) { s = String(s || ''); if (ctx.measureText(s).width <= maxW) return s; while (s.length > 1 && ctx.measureText(s + '…').width > maxW) s = s.slice(0, -1); return s + '…'; }
-  // gambar anime per warga (public/anime/<username>.jpg, daftar di anime/daftar.json); kalau belum ada → sprite pixel
-  const ANIME = {}; let animeDaftar = null;
-  function muatAnime() {
-    if (animeDaftar) return animeDaftar;
-    animeDaftar = fetch('anime/daftar.json?v=' + Math.floor(Date.now() / 36e5)).then((r) => (r.ok ? r.json() : [])).catch(() => []).then((l) => {
-      for (const u of l || []) { const im = new Image(); im.onload = () => { ANIME[u] = im; }; im.src = 'anime/' + encodeURIComponent(u) + '.jpg'; }
-      return l;
-    });
-    return animeDaftar;
+  // gambar anime warga = kartu anime yang sudah dibuat dengan Gemini di Ruang Admin (field `art`); belum ada → sprite pixel
+  const ANIME = {}, ANIME_MUAT = {};
+  function animeOf(u) {
+    if (ANIME[u]) return ANIME[u];
+    const w = wargaOf(u);
+    if (w && w.art && !ANIME_MUAT[u]) { ANIME_MUAT[u] = 1; const im = new Image(); im.onload = () => { ANIME[u] = im; }; im.src = w.art; }
+    return null;
   }
-  muatAnime();
   function kartuWarga(ctx, o) {
     const w = wargaOf(o.u) || {}; const L = o.x - o.w / 2, T = o.y, tier = w.tier || 0;
     ctx.save(); ctx.textAlign = 'center';
@@ -277,7 +275,7 @@
     ctx.fillStyle = '#fff4dc'; ctx.fillRect(L, T, o.w, o.h);
     ctx.fillStyle = o.judul ? '#ffd23f' : (TIER_W[tier] || TIER_W[0]); ctx.fillRect(L, T, o.w, 30);
     ctx.fillStyle = '#2b1b17'; ctx.font = F(17); ctx.fillText(o.judul || String(w.tierNama || 'Regular').toUpperCase(), o.x, T + 21);
-    const art = ANIME[o.u];
+    const art = animeOf(o.u);
     const PH = art ? (o.besar ? 190 : 160) : (o.besar ? 128 : 110), py = T + 36;
     const gr = ctx.createLinearGradient(0, py, 0, py + PH); gr.addColorStop(0, o.warna); gr.addColorStop(1, '#fff4dc');
     ctx.globalAlpha = .6; ctx.fillStyle = gr; ctx.fillRect(L + 10, py, o.w - 20, PH); ctx.globalAlpha = 1;
