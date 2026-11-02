@@ -23,7 +23,7 @@ export async function GET(request) {
     return json({
       aktif, buka: A.buka(), jam: [A.JAM_BUKA, A.JAM_TUTUP],
       duel: aktif ? await A.duelTerbaru(12) : [], musim: A.musimDari(), klasemen: aktif ? await A.klasemenLiga() : [], poin: { menang: A.POIN_MENANG, kalah: A.POIN_KALAH }, terbuka: aktif ? await A.tantanganTerbuka() : [],
-      saya: aktif && u ? { u, tantangan: await A.tantanganUntuk(u) } : null,
+      saya: aktif && u ? { u, tantangan: await A.tantanganUntuk(u), sesi: await A.sesiUntuk(u) } : null, sekarang: Date.now(),
     }, 200, { 'Cache-Control': 'no-store' });
   } catch (e) { return json({ error: e.message }, 200); }
 }
@@ -39,8 +39,9 @@ export async function POST(request) {
       await sistem(`⚔️ ${t.namaDari} menantang ${t.namaKe} di Arena! Berlaku 12 jam.`).catch(() => {});
       return json({ ok: true, tantangan: t });
     }
-    if (b.aksi === 'terima') { const r = await A.terima(u, b.id, { umumkan, kartu: b.kartu }); return json(r.main ? { ok: true, main: r.setup } : { ok: true, duel: r }); }
-    if (b.aksi === 'selesai') return json({ ok: true, duel: await A.selesaiMain(u, b.id, b.taps, { umumkan }) });
+    if (b.aksi === 'terima') { const r = await A.terima(u, b.id, { umumkan, kartu: b.kartu }); return json({ ok: true, jadwal: r.setup, pukul: r.pukul, sekarang: Date.now() }); }
+    if (b.aksi === 'selesai') { const r = await A.selesaiMain(u, b.id, b.taps, { umumkan }); return json(r.menunggu ? { ok: true, menunggu: true, batas: r.batas } : { ok: true, duel: r }); }
+    if (b.aksi === 'hasil') { const d = await A.cariDuel(b.id); return json(d ? { ok: true, duel: d } : { ok: true, menunggu: true }); }
     if (b.aksi === 'tolak') return json(await A.tolak(u, b.id, { umumkan }));
     return json({ error: 'aksi tidak dikenal' });
   } catch (e) { return json({ error: e.message }, 200); }

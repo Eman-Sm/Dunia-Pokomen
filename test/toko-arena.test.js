@@ -9,6 +9,8 @@ const E = await import('../lib/ekonomi.js');
 const A = await import('../lib/arena.js');
 await redis('SET', 'tier_schema', '6'); await redis('SET', 'evolusi_cerita_1', 'selesai');
 const add = async (u, nama, tier, spot) => { const w = newWarga({ username: u, nama, hewan: ['Naga'], spot }); w.tier = tier; await setJSON('warga', u, w); return w; };
+// 2 Nov: duel dimulai 7 menit setelah diterima; tanpa ada yang main → tap rata-rata saat waktu habis
+const terimaOto = async (u, id, now) => { const r = await A.terima(u, id, { now }); const sw = await A.sapuSesi({ now: Date.parse(r.setup.batas) + 1 }); return sw.find((d) => d.id === r.setup.id); };
 const SIANG = Date.parse('2026-11-02T10:00:00+07:00'), MALAM = Date.parse('2026-11-02T22:00:00+07:00');
 
 test('statistik setara per tingkat, latihan naik & ada batasnya', () => {
@@ -49,7 +51,7 @@ test('Arena: jam buka, tantang, terima, duel, liga & juara musim', async () => {
   const t = await A.tantang('lemah', 'Kuat', { now: SIANG });
   assert.equal(t.ke, 'kuat');
   await assert.rejects(A.tantang('lemah', 'Kuat', { now: SIANG + 1000 }), /sudah bertemu/);
-  const d = await A.terima('kuat', '', { now: SIANG + 60000 });
+  const d = await terimaOto('kuat', '', SIANG + 60000);
   assert.equal(d.menang, 'kuat'); assert.ok(d.catatan.length >= 1);
   // replay is deterministic
   assert.deepEqual(A.simulasi(await getJSON('warga', 'lemah'), await getJSON('warga', 'kuat'), t.id).menang, d.menang);
@@ -62,7 +64,7 @@ test('Arena: jam buka, tantang, terima, duel, liga & juara musim', async () => {
   // diterima besok pagi → poin tetap pada hari tantangan
   const t2 = await A.tantang('lemah', 'Kuat', { now: SIANG + 864e5 });
   assert.equal(Date.parse(t2.sampai) - SIANG - 864e5, 12 * 36e5);
-  const d1 = await A.terima('kuat', '', { now: SIANG + 864e5 + 9 * 36e5 });
+  const d1 = await terimaOto('kuat', '', SIANG + 864e5 + 9 * 36e5);
   assert.equal(d1.tHitung, t2.t);
   assert.deepEqual((await getJSON('arena_poin', 'kuat')).ev.at(-1).slice(0, 2), [D(1), 1]);
   // menolak = kalah −2 (sudah bertanding di musim ini)
@@ -82,7 +84,7 @@ test('Arena: jam buka, tantang, terima, duel, liga & juara musim', async () => {
   assert.equal(rw.lemah.daftar[0].menang, 0); assert.equal(rw.c12.main, 0);
   k = await A.klasemenLiga(A.musimDari(SIANG));
   const L = k.find((x) => x.u === 'lemah'); assert.equal(L.kalah, 2); assert.equal(L.wo, 1);
-  await A.tantang('c11', 'Kuat', { now: SIANG + 2 * 864e5 }); assert.equal((await A.terima('kuat', '', { now: SIANG + 2 * 864e5 + 1000 })).menang, 'kuat');
+  await A.tantang('c11', 'Kuat', { now: SIANG + 2 * 864e5 }); assert.equal((await terimaOto('kuat', '', SIANG + 2 * 864e5 + 1000)).menang, 'kuat');
   // juara musim: Senin 9 Nov 09.00 WIB, sekali saja
   assert.deepEqual(await A.cekJuara({ now: Date.parse('2026-11-09T08:00:00+07:00') }), []);
   const j = await A.cekJuara({ now: Date.parse('2026-11-09T09:01:00+07:00') });
@@ -107,7 +109,8 @@ test('Arena lewat komentar', async () => {
   try {
     const k = (u, text, id) => processComment({ id, username: u, text, mediaId: 'p7', timestamp: new Date(Date.now()).toISOString() });
     assert.equal(await k('c1', 'Tantang: Bolu', 'a1'), 'arena:tantang');
-    assert.equal(await k('c2', 'Terima: Cimo', 'a2'), 'arena:duel');
+    assert.equal(await k('c2', 'Terima: Cimo', 'a2'), 'arena:terima');
+    assert.equal((await A.sapuSesi({ now: Date.now() + 14 * 6e4 })).length, 1);
     assert.equal(await k('c2', 'Terima: Cimo', 'a3'), 'arena:gagal');
   } finally { Date.now = realNow; }
 });
@@ -143,20 +146,28 @@ test('Kartu Jurus + Main Langsung: kartu, sesi, tap menentukan hasil, sesi ditin
   assert.deepEqual(t1.kartuDari, ['tahan', 'jurus', 'serang']);
   const r = await A.terima('m3', t1.id, { now: H + 2000, kartu: ['serang', 'tahan', 'jurus'] });
   assert.equal(r.main, true); assert.deepEqual(r.setup.A.kartu, ['tahan', 'jurus', 'serang']); assert.equal(r.setup.serangan, 18);
-  await assert.rejects(A.selesaiMain('m1', t1.id, []), /bukan duelmu/);
-  const d = await A.selesaiMain('m3', t1.id, Array(18).fill('sempurna'), { now: H + 30000 });
+  assert.equal(Date.parse(r.setup.mulai) - (H + 2000), 7 * 6e4); // mulai 7 menit setelah diterima
+  const ses = await A.sesiUntuk('m1'); assert.equal(ses[0].sisi, 'a'); assert.equal((await A.sesiUntuk('m3'))[0].sisi, 'b');
+  await assert.rejects(A.selesaiMain('m2', t1.id, []), /bukan duelmu/);
+  await assert.rejects(A.selesaiMain('m3', t1.id, [], { now: H + 3000 }), /baru dimulai pukul/);
+  const MULAI = Date.parse(r.setup.mulai);
+  // kedua pemilik main: penerima dulu (menunggu lawan), lalu penantang → duel selesai
+  assert.equal((await A.selesaiMain('m3', t1.id, Array(18).fill('sempurna'), { now: MULAI + 30000 })).menunggu, true);
+  const d = await A.selesaiMain('m1', t1.id, Array(18).fill('meleset'), { now: MULAI + 40000 });
   assert.equal(d.mode, 'main'); assert.deepEqual(d.kartuB, ['serang', 'tahan', 'jurus']);
-  const lokal = D.jalankan(t1.id, r.setup.A, r.setup.B, null, Array(18).fill('sempurna'));
-  assert.deepEqual(d.sisa, lokal.sisa); // hasil server = hasil di layar pemain
-  await assert.rejects(A.selesaiMain('m3', t1.id, []), /tidak ditemukan|sudah selesai/);
-  // sesi ditinggal → disapu dengan tap MELESET
+  const lokal = D.jalankan(t1.id, r.setup.A, r.setup.B, Array(18).fill('meleset'), Array(18).fill('sempurna'));
+  assert.deepEqual(d.sisa, lokal.sisa); // hasil server = gabungan tap kedua pemain
+  assert.equal((await A.selesaiMain('m3', t1.id, [])).id, d.id); // sudah selesai → kembalikan hasilnya
+  // hanya satu yang main → lawan memakai tap rata-rata saat waktu habis
   await add('m4', 'Mama', 2, 24);
   const t2 = await A.tantang('m4', 'Momo', { now: H + 60000 });
-  await A.terima('m2', t2.id, { now: H + 61000, kartu: ['serang', 'serang', 'serang'] });
-  assert.deepEqual(await A.sapuSesi({ now: H + 61000 + 5 * 6e4 }), []);
-  const sw = await A.sapuSesi({ now: H + 61000 + 11 * 6e4 });
-  assert.equal(sw.length, 1); assert.ok(sw[0].gerak.every((g) => g.tap.b === 'meleset'));
-  // lewat komentar (tanpa kartu) tetap otomatis
+  const r2 = await A.terima('m2', t2.id, { now: H + 61000, kartu: ['serang', 'serang', 'serang'] });
+  const M2 = Date.parse(r2.setup.mulai);
+  assert.equal((await A.selesaiMain('m2', t2.id, ['sempurna'], { now: M2 + 20000 })).menunggu, true);
+  assert.deepEqual(await A.sapuSesi({ now: M2 + 3 * 6e4 }), []);
+  const sw = await A.sapuSesi({ now: M2 + 7 * 6e4 });
+  assert.equal(sw.length, 1); assert.equal(sw[0].gerak[0].tap.b, 'sempurna'); assert.ok(sw[0].gerak.slice(1).every((g) => g.tap.b === 'meleset' && g.tap.a === 'bagus'));
+  // lewat komentar (tanpa kartu): tetap dijadwalkan, tak ada yang main → otomatis
   const t3 = await A.tantang('m1', 'Mama', { now: H + 2 * 36e5 });
-  const d3 = await A.terima('m4', t3.id, { now: H + 2 * 36e5 + 1000 }); assert.equal(d3.mode, 'otomatis');
+  const d3 = await terimaOto('m4', t3.id, H + 2 * 36e5 + 1000); assert.equal(d3.mode, 'otomatis');
 });
