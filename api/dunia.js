@@ -65,6 +65,18 @@ export async function GET() {
           await redis('SET', 'scan_daftar_v2', JSON.stringify(st));
         }
       } catch (e) { await redis('SET', 'scan_daftar_err', String(e.message || e)).catch(() => {}); }
+      // 2 Nov 16.15: cerita lama warga hasil scan (komentar sebelum lahir) dihitung untuk evolusi — sekali saja
+      try {
+        const st = JSON.parse((await redis('GET', 'scan_daftar_v2')) || '{}');
+        if (st.selesai && (await redis('SET', 'cerita_lama_v1', 'jalan', 'NX')) === 'OK') {
+          const { hgetallJSON } = await import('../lib/db.js'); const { listComments } = await import('../lib/ig.js'); const R = await import('../lib/rules.js');
+          const baru = new Set((await hgetallJSON('warga')).filter((w) => w.spot >= 180 && !w.mati).map((w) => w.username));
+          const per = {};
+          for (const m of st.media) for (const c of await listComments(m.id)) { const u = String(c.username || '').toLowerCase(); if (baru.has(u)) (per[u] = per[u] || []).push(c); }
+          const h = await R.evolusiCeritaLama(per, { sebelum: '2026-11-02T08:50:00Z' });
+          await redis('SET', 'cerita_lama_v1', JSON.stringify({ t: new Date().toISOString(), warga: baru.size, hasil: h }));
+        }
+      } catch (e) { await redis('SET', 'cerita_lama_err', String(e.message || e)).catch(() => {}); }
       await segarkanLike(10);
       pw = await hasilWilayah();
       const perlu = Object.values(pw.wilayah).some((x) => x.memilih && x.closed && !x.ditetapkan);
@@ -92,6 +104,7 @@ export async function GET() {
       dukunganUnit: process.env.TRAKTEER_UNIT_NAME || 'Kopi Admin',
       usulan: us,
       wajibFollow: process.env.REQUIRE_FOLLOW === '1',
+      ceritaLama: await (async () => { try { const v = await redis('GET', 'cerita_lama_v1'); return v && v !== 'jalan' ? JSON.parse(v) : v || (await redis('GET', 'cerita_lama_err')); } catch { return null; } })(),
       scanDaftar: await (async () => { try { const st = JSON.parse((await redis('GET', 'scan_daftar_v2')) || 'null'); return st && { video: st.media?.length || 0, sudah: Math.min(st.dari, st.media?.length || 0), komentar: st.komentar || 0, lahir: (st.lahir || []).length, menunggu: (st.menunggu || []).length, selesai: !!st.selesai, err: await redis('GET', 'scan_daftar_err') }; } catch { return null; } })(),
       trakteer: process.env.TRAKTEER_URL || null,
       dukungan,

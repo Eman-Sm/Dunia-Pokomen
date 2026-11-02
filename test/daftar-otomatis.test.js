@@ -32,3 +32,18 @@ test('ajakan tanpa hewan → hewan dipilihkan; obrolan biasa tidak melahirkan', 
   assert.equal((await getJSON('warga', 'cici')).namaDefault, undefined);
   assert.equal(namaDariUsername('@itsme_amm012'), 'Itsme_amm012');
 });
+
+test('cerita bebas saat daftar & komentar lama sebelum lahir dihitung untuk evolusi', async () => {
+  const { evolusiCeritaLama } = await import('../lib/rules.js');
+  assert.equal(await processComment(c('e1', 'eko', 'aku mau kucing naga yang suka tidur di atap rumah')), 'lahir:otomatis');
+  const w = await getJSON('warga', 'eko'); assert.equal(w.tier, 1); assert.equal(w.cerita[0].text, 'suka tidur di atap rumah');
+  const lama = [
+    { id: 'o1', text: 'kucing naga ku hobinya makan ikan asin tiap pagi', mediaId: 'm1', timestamp: '2026-10-30T00:00:00Z' }, // video sama → tanpa evolusi
+    { id: 'o2', text: 'dia suka terbang ke awan sambil bernyanyi', mediaId: 'm2', timestamp: '2026-10-31T00:00:00Z' },
+    { id: 'o3', text: 'keren banget min', mediaId: 'm3', timestamp: '2026-10-31T01:00:00Z' },
+    { id: 'o4', text: 'kebiasaannya mencuri kue dari dapur warga', mediaId: 'm4', timestamp: '2026-11-03T00:00:00Z' }, // sesudah lahir → diproses biasa
+  ];
+  const h = await evolusiCeritaLama({ eko: lama }, { sebelum: '2026-11-02T08:50:00Z' });
+  assert.equal(h[0].dari, 1); assert.equal(h[0].ke, 2);
+  assert.equal((await getJSON('warga', 'eko')).cerita.length, 3);
+});
