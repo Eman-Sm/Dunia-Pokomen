@@ -22,6 +22,9 @@
   "functions": {
     "api/admin.js": {
       "maxDuration": 120
+    },
+    "api/dunia.js": {
+      "maxDuration": 90
     }
   }
 }

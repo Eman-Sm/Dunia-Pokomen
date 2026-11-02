@@ -6,7 +6,7 @@ import { cekUnfollowOtomatis, bandingkanFollowers, parseFollowers } from '../lib
 import { generateArt, quota as geminiQuota } from '../lib/gemini.js';
 import { listStoryReplies, syncStoryReplies } from '../lib/story.js';
 import { papanKopi, cocokkan } from '../lib/sahabat.js';
-import { syncLatest, ownUsername } from '../lib/sync.js';
+import { syncLatest, ownUsername, scanDaftar } from '../lib/sync.js';
 import { refreshToken, subscribeWebhooks, listMedia, listComments, me, sendDM, replyToComment } from '../lib/ig.js';
 import { json, bearer, safeEqual, hariKe } from '../lib/http.js';
 import { katalog, pakaiItem, riwayatItem } from '../lib/item.js';
@@ -46,6 +46,7 @@ const actions = {
       trakteerReady: !!(process.env.TRAKTEER_URL && process.env.TRAKTEER_WEBHOOK_TOKEN),
     };
   },
+  async scan_daftar({ dari = 0, sampai = 100 }) { return scanDaftar({ dari, sampai }); },
   async cari_komentar({ username, posts = 5 }) {
     const u = key(username); if (!u) throw new Error('username kosong');
     const media = await listMedia(Math.min(10, Number(posts) || 5));

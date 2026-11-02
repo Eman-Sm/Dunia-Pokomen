@@ -38,7 +38,9 @@ test('lahir, evolusi, anti-spam, legenda', async () => {
   await processComment(c('6c', 'budi', 'Outfit: jubah ninja merah', 'post5'));
   // own comments ignored, unknown text goes to pending
   assert.equal(await processComment(c('7', 'duniapokomen', 'Nama: X | Hewan: A + B', 'post1'), { ownUsername: 'duniapokomen' }), 'skip:own');
-  assert.equal(await processComment(c('8', 'sari', 'aku mau ikut dong min, jadi apa ya', 'post1')), 'pending');
+  assert.equal(await processComment(c('8', 'sari', 'formatnya gimana ya min', 'post1')), 'pending');
+  // 2 Nov: ajakan bergabung yang jelas langsung lahir (nama = username)
+  assert.equal(await processComment(c('8b', 'sari2', 'aku mau ikut dong min, jadi apa ya', 'post1')), 'lahir:otomatis');
   // facility suggestion with likes
   assert.equal(await processComment({ ...c('9', 'rina', 'Usul: kolam minum', 'post1'), likeCount: 12 }), 'usul');
 });
@@ -57,7 +59,7 @@ test('webhook: verifikasi & tanda tangan', async () => {
 
 test('api publik & admin', async () => {
   const d = await (await dunia.GET()).json();
-  assert.equal(d.jumlahWarga, 2);
+  assert.equal(d.jumlahWarga, 3);
   assert.equal(d.warga[0].nama, 'Bolu');
   assert.equal(d.usulan[0].text, 'Kolam Minum');
   const call = (body, pw = 'admin123') => admin.POST(new Request('https://x/api/admin', { method: 'POST', body: JSON.stringify(body), headers: { authorization: 'Bearer ' + pw } }));
@@ -74,7 +76,7 @@ test('api publik & admin', async () => {
   const add = await (await call({ action: 'add_warga', username: '@tiktok_user', nama: 'Kiko', hewan: 'Rubah + Ikan' })).json();
   assert.deepEqual(add.data.hewan, ['Rubah', 'Ikan']);
   const d2 = await (await dunia.GET()).json();
-  assert.equal(d2.jumlahWarga, 3);
+  assert.equal(d2.jumlahWarga, 4);
   assert.ok(d2.log.some((l) => l.type === 'legenda'));
 });
 

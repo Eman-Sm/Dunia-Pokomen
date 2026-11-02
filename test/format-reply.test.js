@@ -15,30 +15,33 @@ await redis('SET', 'tier_schema', '6'); await redis('SET', 'evolusi_cerita_1', '
 const now = () => new Date().toISOString();
 const c = (id, username, text, extra = {}) => ({ id, username, text, mediaId: 'M1', timestamp: now(), ...extra });
 
-test('komentar tidak sesuai format dibalas dengan format yang benar, sekali per akun per postingan', async () => {
-  await processComment(c('1', 'andi', 'mau ikut dong min'));
+test('2 Nov: ajakan bergabung langsung dibuatkan hewannya (nama = username), dibalas sekali', async () => {
+  assert.equal(await processComment(c('1', 'andi', 'mau ikut dong min')), 'lahir:otomatis');
   assert.equal(replies.length, 1);
   assert.match(replies[0].msg, /^@andi /);
-  assert.match(replies[0].msg, /Nama: .*\| Hewan: .*\| Cerita:/);
+  assert.match(replies[0].msg, /LAHIR/);
+  assert.match(replies[0].msg, /Nama: nama baru/);
   await processComment(c('2', 'andi', 'gimana cara daftarnya?'));
-  assert.equal(replies.length, 1);
-  await processComment(c('3', 'andi', 'aku mau kucing naga', { mediaId: 'M2' }));
-  assert.equal(replies.length, 2);
+  assert.equal(replies.length, 1); // sudah jadi warga
+  assert.equal(await processComment(c('3', 'dodi', 'aku mau kucing naga', { mediaId: 'M2' })), 'lahir:otomatis');
+  assert.match(replies.at(-1).msg, /Kucing \+ Naga/);
 });
 
-test('yang tidak dibalas: emoji, tag teman, balasan, komentar lama, pendaftaran benar', async () => {
+test('yang tidak dibalas: emoji, tag teman, balasan obrolan, komentar lama, pendaftaran benar', async () => {
+  const n = replies.length;
   await processComment(c('10', 'b1', '🔥🔥🔥'));
   await processComment(c('11', 'b2', '@temanku @temanlain'));
   await processComment(c('12', 'b3', 'keren banget', { parentId: '99' }));
   await processComment(c('13', 'b4', 'keren banget', { timestamp: '2026-01-01T00:00:00Z' }));
   await processComment(c('14', 'b5', 'Nama: Bolu | Hewan: Kucing + Naga'));
   await processComment(c('15', 'duniapokomen', 'terima kasih semua'), { ownUsername: 'duniapokomen' });
-  assert.equal(replies.length, 2);
+  assert.equal(replies.length, n);
 });
 
-test('format sebagian: nama tanpa hewan dibalas khusus', async () => {
-  await processComment(c('20', 'cici', 'Nama: Mochi'));
-  assert.match(replies.at(-1).msg, /Mochi hampir lahir/);
+test('nama tanpa hewan: hewannya dipilihkan, nama tetap pilihan sendiri', async () => {
+  assert.equal(await processComment(c('20', 'cici', 'Nama: Mochi')), 'lahir:otomatis');
+  assert.match(replies.at(-1).msg, /Mochi si .+ \+ /);
+  assert.doesNotMatch(replies.at(-1).msg, /Nama: nama baru/);
 });
 
 test('komentar interaksi tidak dibalas format', async () => {

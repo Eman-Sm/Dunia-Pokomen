@@ -52,6 +52,19 @@ export async function GET() {
         // Juara Arena: 7 hari tak terkalahkan → +1 Batu Evolusi (dicek tiap menit, tanpa menunggu ada yang membuka Arena)
         try { const AR = await import('../lib/arena.js'); if (await AR.aktif()) { const { log } = await import('../lib/rules.js'); const ob = await import('../lib/obrolan.js'); await AR.cekJuara({ umumkan: async (t, u) => { await log('arena', t, { u }); await ob.sistem(t); } }); } } catch { /* ignore */ }
       }
+      // 2 Nov: scan komentar di SEMUA video → yang ingin ikut tapi hewannya belum lahir langsung dibuatkan (dicicil 4 video/menit)
+      try {
+        const st = JSON.parse((await redis('GET', 'scan_daftar_v1')) || '{"dari":0}');
+        if (!st.selesai && (await redis('SET', 'scan_daftar_lock', '1', 'NX', 'EX', '90')) === 'OK') {
+          const S = await import('../lib/sync.js');
+          if (!st.media) { const { listMedia } = await import('../lib/ig.js'); st.media = (await listMedia(100)).map((m) => ({ id: m.id })); }
+          const r = await S.scanDaftar({ dari: st.dari, sampai: st.dari + 4, media: st.media });
+          st.dari += 4; st.komentar = (st.komentar || 0) + r.komentar;
+          st.lahir = [...(st.lahir || []), ...r.lahir.map((x) => x.u)]; st.menunggu = [...(st.menunggu || []), ...r.menunggu.map((x) => x.u)];
+          st.selesai = st.dari >= st.media.length; st.t = new Date().toISOString();
+          await redis('SET', 'scan_daftar_v1', JSON.stringify(st));
+        }
+      } catch (e) { await redis('SET', 'scan_daftar_err', String(e.message || e)).catch(() => {}); }
       await segarkanLike(10);
       pw = await hasilWilayah();
       const perlu = Object.values(pw.wilayah).some((x) => x.memilih && x.closed && !x.ditetapkan);
@@ -79,6 +92,7 @@ export async function GET() {
       dukunganUnit: process.env.TRAKTEER_UNIT_NAME || 'Kopi Admin',
       usulan: us,
       wajibFollow: process.env.REQUIRE_FOLLOW === '1',
+      scanDaftar: await (async () => { try { const st = JSON.parse((await redis('GET', 'scan_daftar_v1')) || 'null'); return st && { video: st.media?.length || 0, sudah: Math.min(st.dari, st.media?.length || 0), komentar: st.komentar || 0, lahir: (st.lahir || []).length, menunggu: (st.menunggu || []).length, selesai: !!st.selesai, err: await redis('GET', 'scan_daftar_err') }; } catch { return null; } })(),
       trakteer: process.env.TRAKTEER_URL || null,
       dukungan,
       pemiluWilayah: pw ? publicHasil(pw) : null,
