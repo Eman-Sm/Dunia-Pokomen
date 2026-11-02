@@ -190,6 +190,8 @@
   async function bukaReplay(id, duel) {
     let d = duel;
     if (!d) { try { const r = await get('api/arena?duel=' + encodeURIComponent(id)); if (r.error) { toast(r.error); return; } d = r.riwayat ? { ...r.duel, riwayat: r.riwayat } : r.duel; } catch { return; } }
+    // link replay dibuka langsung: tunggu data warga termuat dulu, supaya sprite & kartu anime benar
+    for (let i = 0; i < 40 && !((window.Pokomen && window.Pokomen.data && window.Pokomen.data()) || {}).warga; i++) await new Promise((r) => setTimeout(r, 150));
     tutupReplay();
     const el = document.createElement('div'); el.className = 'rp-modal'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Replay duel');
     el.innerHTML = `<div class="rp-box"><div class="rp-head"><b>⚔️ ${esc(d.namaA)} vs ${esc(d.namaB)}</b><button class="btn ghost sq rp-x" type="button" aria-label="Tutup">×</button></div>
