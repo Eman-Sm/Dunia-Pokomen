@@ -115,9 +115,48 @@ test('Arena lewat komentar', async () => {
 test('replay tersimpan & prompt Google Flow', async () => {
   const { promptFlow } = await import('../lib/flowprompt.js');
   const d = (await A.duelTerbaru(5))[0];
-  assert.ok(d.gerak.length >= 2); assert.equal(d.gerak.at(-1).hp.includes(0), true);
+  assert.ok(d.gerak.length >= 2); assert.equal(d.ko ? d.gerak.at(-1).hp.includes(0) : d.gerak.length === 18, true);
   assert.equal((await A.cariDuel(d.id)).id, d.id);
   const a = { ...(await getJSON('warga', d.a)), hewan: ['Naga Hitam', 'Singa'], elemen: 'Api' }, b = await getJSON('warga', d.b);
   const p = promptFlow(d, a, b, { rasio: '16:9' });
   assert.match(p, /black dragon and lion hybrid/); assert.match(p, /fire aura/); assert.match(p, /widescreen 16:9/); assert.match(p, /KLIP 1/); assert.match(p, /MENANG/);
+});
+
+test('Kartu Jurus + Main Langsung: kartu, sesi, tap menentukan hasil, sesi ditinggal', async () => {
+  const D = await import('../public/duel-sim.js');
+  const st = { nyawa: 175, serang: 35, tahan: 35, cepat: 35 };
+  const P1 = { u: 'p1', nama: 'P1', stat: st, kartu: ['serang', 'serang', 'serang'], jurus: null };
+  const P2 = { u: 'p2', nama: 'P2', stat: st, kartu: ['jurus', 'jurus', 'jurus'], jurus: 'Api' };
+  // SERANG mengalahkan JURUS → P1 unggul di semua babak
+  const h = D.jalankan('x1', P1, P2); assert.equal(h.menang, 'p1');
+  assert.ok(h.gerak.some((g) => g.unggul === 'a'));
+  // tap sempurna membalik keadaan
+  const h2 = D.jalankan('x1', P1, P2, null, Array(18).fill('sempurna')); const h3 = D.jalankan('x1', P1, P2, null, Array(18).fill('meleset'));
+  assert.ok(h2.sisa.p2 > h3.sisa.p2 || h2.menang === 'p2');
+  // deterministik
+  assert.deepEqual(D.jalankan('x2', P1, P2, null, ['bagus']).sisa, D.jalankan('x2', P1, P2, null, ['bagus']).sisa);
+  // alur server
+  const H = SIANG + 20 * 864e5;
+  await add('m1', 'Mimi', 2, 21); await add('m2', 'Momo', 2, 22); await add('m3', 'Mumu', 2, 23);
+  await assert.rejects(A.tantang('m1', 'Momo', { now: H }).then((t) => A.terima('m2', t.id, { now: H + 1000, kartu: ['serang'] })), /3 kartu/);
+  const t1 = await A.tantang('m1', 'Mumu', { now: H, kartu: ['tahan', 'jurus', 'serang'] });
+  assert.deepEqual(t1.kartuDari, ['tahan', 'jurus', 'serang']);
+  const r = await A.terima('m3', t1.id, { now: H + 2000, kartu: ['serang', 'tahan', 'jurus'] });
+  assert.equal(r.main, true); assert.deepEqual(r.setup.A.kartu, ['tahan', 'jurus', 'serang']); assert.equal(r.setup.serangan, 18);
+  await assert.rejects(A.selesaiMain('m1', t1.id, []), /bukan duelmu/);
+  const d = await A.selesaiMain('m3', t1.id, Array(18).fill('sempurna'), { now: H + 30000 });
+  assert.equal(d.mode, 'main'); assert.deepEqual(d.kartuB, ['serang', 'tahan', 'jurus']);
+  const lokal = D.jalankan(t1.id, r.setup.A, r.setup.B, null, Array(18).fill('sempurna'));
+  assert.deepEqual(d.sisa, lokal.sisa); // hasil server = hasil di layar pemain
+  await assert.rejects(A.selesaiMain('m3', t1.id, []), /tidak ditemukan|sudah selesai/);
+  // sesi ditinggal → disapu dengan tap MELESET
+  await add('m4', 'Mama', 2, 24);
+  const t2 = await A.tantang('m4', 'Momo', { now: H + 60000 });
+  await A.terima('m2', t2.id, { now: H + 61000, kartu: ['serang', 'serang', 'serang'] });
+  assert.deepEqual(await A.sapuSesi({ now: H + 61000 + 5 * 6e4 }), []);
+  const sw = await A.sapuSesi({ now: H + 61000 + 11 * 6e4 });
+  assert.equal(sw.length, 1); assert.ok(sw[0].gerak.every((g) => g.tap.b === 'meleset'));
+  // lewat komentar (tanpa kartu) tetap otomatis
+  const t3 = await A.tantang('m1', 'Mama', { now: H + 2 * 36e5 });
+  const d3 = await A.terima('m4', t3.id, { now: H + 2 * 36e5 + 1000 }); assert.equal(d3.mode, 'otomatis');
 });

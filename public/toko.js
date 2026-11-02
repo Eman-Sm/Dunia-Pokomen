@@ -87,6 +87,7 @@
     const D = (window.Pokomen && window.Pokomen.data && window.Pokomen.data()) || {};
     const nama = (u) => ((D.warga || []).find((w) => w.u === u) || {}).nama || u;
     return `<p class="tk-info">${A.buka ? '🟢 Arena <b>BUKA</b>' : '🔴 Arena <b>TUTUP</b>'} · setiap hari pukul ${String(A.jam?.[0] ?? 7).padStart(2, '0')}.00–${A.jam?.[1] ?? 21}.00 WIB · maks. 5 tantangan per hari</p>
+      <p class="tk-info">🎮 <b>Main langsung!</b> Pilih <b>3 kartu jurus</b> (⚔️ Serang > ⚡ Jurus > 🛡️ Tahan > ⚔️ Serang). Saat menerima tantangan lewat website, kamu bertarung sendiri: tekan <b>TAP</b> tepat waktu untuk serangan <b>SEMPURNA</b> dan <b>tangkisan</b>. Terima lewat komentar = duel otomatis.</p>
       <p class="tk-info">🏆 <b>Liga Arena</b>: menang <b>+1 poin</b>, kalah <b>−1 poin</b> (poin terendah 0). Tantangan berlaku <b>12 jam</b>; menolak atau tidak menjawab = kalah. Poin sama? Ditentukan <b>head to head</b>. Lawan harus <b>setingkat</b> atau <b>selisih 1 tingkat</b>. Peringkat 1 di akhir musim dapat <b>💎 1 Batu Evolusi</b>.</p>
       ${masuk.length ? `<div class="tk-masuk"><b>⚔️ Kamu ditantang!</b>${masuk.map((t) => `<div><span>${esc(t.namaDari)} menantang ${esc(t.namaKe)} · sampai ${jam(t.sampai)}</span><button class="btn tk-terima" type="button" data-id="${esc(t.id)}">Terima & bertarung</button><button class="btn ghost tk-tolak" type="button" data-id="${esc(t.id)}">Tolak</button></div>`).join('')}</div>` : ''}
       ${keluar.length ? `<p class="muted">Menunggu jawaban: ${keluar.map((t) => esc(t.namaKe)).join(', ')}</p>` : ''}
@@ -134,11 +135,24 @@
     render();
   }
   async function arena(aksi, body, btn) {
+    const G = window.ArenaGame;
+    // pilih 3 kartu jurus sebelum menantang / menerima (game "Kartu Jurus + Main Langsung")
+    if (G && (aksi === 'tantang' || aksi === 'terima') && !body.kartu) {
+      const t = aksi === 'terima' ? ((AR.saya && AR.saya.tantangan) || []).find((x) => x.id === body.id) : null;
+      const kartu = await G.pilihKartu(aksi === 'tantang' ? { judul: 'Pilih kartu untuk tantanganmu', tombol: 'KIRIM TANTANGAN', lawan: body.lawan } : { judul: 'Pilih kartu, lalu bertarung!', tombol: 'MULAI DUEL!', lawan: t ? t.namaDari : '' });
+      if (!kartu) return;
+      body = { ...body, kartu };
+    }
     if (btn) btn.disabled = true;
     const r = await post('api/arena', { aksi, ...body });
     if (r.error) toast(r.error);
     else if (aksi === 'tantang') toast(`Tantangan untuk ${r.tantangan.namaKe} terkirim! Tunggu dia menerima (12 jam).`);
-    else if (aksi === 'terima') { bukaReplay(r.duel.id, r.duel); }
+    else if (aksi === 'terima' && r.main && G) {
+      G.mainkan(r.main, {
+        kirim: async (taps) => { const x = await post('api/arena', { aksi: 'selesai', id: r.main.id, taps }); if (x.error) throw new Error(x.error); muat(); return x.duel; },
+        replay: (duel) => bukaReplay(duel.id, duel),
+      });
+    } else if (aksi === 'terima') { bukaReplay(r.duel.id, r.duel); }
     await muat();
   }
 
@@ -483,7 +497,8 @@
       const n = ringan ? 18 : 46; for (let i = 0; i < n; i++) { const ph = ((k * .45 + i * .37) % 1); const x = (i * 151 + Math.sin(k * 3 + i) * 20) % W; ctx.save(); ctx.translate(x, ph * H); ctx.rotate(k * 4 + i); ctx.fillStyle = ['#ffd23f', '#ff6b6b', '#5aaaff', '#6ec85a', '#c9a0ff'][i % 5]; ctx.fillRect(-4, -6, 8, 12); ctx.restore(); }
     } else if (seg) {
       const g = seg.g, f = (t - seg.t0) / seg.dur, sesudah = t - seg.ti;
-      besar(`RONDE ${g.r}`, C, 100, '#fffaee', 20, 1);
+      if (g.kartu) { const IK = { serang: '⚔ SERANG', tahan: '🛡 TAHAN', jurus: '⚡ JURUS' }; besar(`BABAK ${g.r}`, C, 92, '#fffaee', 20, 1); besar(`${IK[g.kartu.a]}  vs  ${IK[g.kartu.b]}`, C, 118, '#ffe7a8', 17, 1); if (g.tap && d.mode === 'main' && f > seg.imp && f < seg.imp + .3) { const tq = g.tap.b; if (tq === 'sempurna') besar(g.p === d.b ? 'SEMPURNA!' : 'TANGKIS SEMPURNA!', C, 255, '#ffd23f', 28, 1); } }
+      else besar(`RONDE ${g.r}`, C, 100, '#fffaee', 20, 1);
       if (g.jurus && f < seg.imp + .1) { // spanduk jurus menyapu layar
         const k = ease(f / (seg.imp * .5)), wna = g.p === d.a ? RP.cA : RP.cB;
         ctx.save(); ctx.translate(C + (1 - k) * (g.p === d.a ? -W : W), 190); ctx.rotate(-.06); ctx.fillStyle = 'rgba(43,27,23,.9)'; ctx.fillRect(-W, -34, W * 2, 68); ctx.fillStyle = wna; ctx.fillRect(-W, -34, W * 2, 6); ctx.fillRect(-W, 28, W * 2, 6); ctx.restore();

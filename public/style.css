@@ -710,3 +710,18 @@ code,
 .tk-pb { display: flex; gap: 6px; margin: 6px 0; flex-wrap: wrap; }
 .tk-pb input { width: 110px; font: inherit; padding: 4px 8px; border: 2px solid var(--outline); }
 .tk-pb-lihat { display: block; margin-top: 8px; }
+
+/* Arena game: pemilih kartu + duel main langsung */
+.ag-modal { position: fixed; inset: 0; z-index: 70; background: rgba(20, 14, 10, .8); display: grid; place-items: center; padding: 12px; overflow: auto; }
+.ag-box { background: var(--parchment); border: var(--px) solid var(--outline); box-shadow: 0 var(--px) 0 var(--outline); width: min(720px, 100%); padding: 12px; display: grid; gap: 10px; }
+.ag-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 1.15rem; font-weight: 900; }
+.ag-sub { margin: 0; font-size: .92rem; }
+.ag-aturan { margin: 0; background: #fff8e7; border: 2px solid var(--outline); padding: 8px; font-size: .9rem; text-align: center; }
+.ag-babak { display: grid; grid-template-columns: 70px repeat(3, 1fr); gap: 6px; align-items: center; font-weight: 800; }
+.ag-kartu { font: inherit; font-size: 1.6rem; display: grid; gap: 2px; place-items: center; padding: 8px 4px; border: 3px solid var(--outline); background: #fffaf0; cursor: pointer; box-shadow: 0 3px 0 var(--outline); }
+.ag-kartu small { font-size: .78rem; font-weight: 900; letter-spacing: .02em; }
+.ag-kartu.on { background: var(--w); color: #fff; transform: translateY(-2px); }
+.ag-aksi { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; align-items: center; }
+.ag-cv { width: 100%; height: auto; display: block; border: var(--px) solid var(--outline); touch-action: manipulation; }
+.ag-tap { font-size: 1.6rem; padding: 14px; font-weight: 900; }
+@media (max-width: 520px) { .ag-babak { grid-template-columns: 1fr 1fr 1fr; } .ag-babak span { grid-column: 1 / -1; } }

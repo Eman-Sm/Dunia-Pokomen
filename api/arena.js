@@ -35,11 +35,12 @@ export async function POST(request) {
     const u = await userFromToken(b.token);
     if (!u) return json({ error: 'Link pribadimu tidak berlaku. DM "ARENA" ke @duniapokomen untuk link baru.' });
     if (b.aksi === 'tantang') {
-      const t = await A.tantang(u, b.lawan);
+      const t = await A.tantang(u, b.lawan, { kartu: b.kartu });
       await sistem(`⚔️ ${t.namaDari} menantang ${t.namaKe} di Arena! Berlaku 12 jam.`).catch(() => {});
       return json({ ok: true, tantangan: t });
     }
-    if (b.aksi === 'terima') return json({ ok: true, duel: await A.terima(u, b.id, { umumkan }) });
+    if (b.aksi === 'terima') { const r = await A.terima(u, b.id, { umumkan, kartu: b.kartu }); return json(r.main ? { ok: true, main: r.setup } : { ok: true, duel: r }); }
+    if (b.aksi === 'selesai') return json({ ok: true, duel: await A.selesaiMain(u, b.id, b.taps, { umumkan }) });
     if (b.aksi === 'tolak') return json(await A.tolak(u, b.id, { umumkan }));
     return json({ error: 'aksi tidak dikenal' });
   } catch (e) { return json({ error: e.message }, 200); }
