@@ -725,3 +725,8 @@ code,
 .ag-cv { width: 100%; height: auto; display: block; border: var(--px) solid var(--outline); touch-action: manipulation; }
 .ag-tap { font-size: 1.6rem; padding: 14px; font-weight: 900; }
 @media (max-width: 520px) { .ag-babak { grid-template-columns: 1fr 1fr 1fr; } .ag-babak span { grid-column: 1 / -1; } }
+/* 3 Nov: tombol "Dapatkan Biji Kopi" lebih panjang — kalau tidak muat, menu turun ke baris kedua (tidak terpotong) */
+@media (min-width: 861px) {
+  .topbar .wrap { flex-wrap: wrap; row-gap: 8px; }
+  .topbar nav.tabs { min-width: max-content; }
+}
