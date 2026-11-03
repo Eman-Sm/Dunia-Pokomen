@@ -41,6 +41,7 @@ export async function POST(request) {
     }
     if (b.aksi === 'terima') { const r = await A.terima(u, b.id, { umumkan, kartu: b.kartu }); return json({ ok: true, jadwal: r.setup, pukul: r.pukul, sekarang: Date.now() }); }
     if (b.aksi === 'selesai') { const r = await A.selesaiMain(u, b.id, b.taps, { umumkan }); return json(r.menunggu ? { ok: true, menunggu: true, batas: r.batas } : { ok: true, duel: r }); }
+    if (b.aksi === 'siap') return json({ ok: true, sesi: await A.siap(u, b.id), sekarang: Date.now() });
     if (b.aksi === 'hasil') { const d = await A.cariDuel(b.id); return json(d ? { ok: true, duel: d } : { ok: true, menunggu: true }); }
     if (b.aksi === 'tolak') return json(await A.tolak(u, b.id, { umumkan }));
     return json({ error: 'aksi tidak dikenal' });

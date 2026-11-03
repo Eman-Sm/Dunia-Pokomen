@@ -15,7 +15,7 @@
   function toast(m) { const t = $('toast'); if (!t) return; t.textContent = m; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 3200); }
   const jam = (iso) => new Date(iso).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
-  // ---- duel terjadwal: mulai 7 menit setelah diterima, kedua pemilik bisa main ----
+  // ---- duel terjadwal: mulai 5 menit setelah diterima, kedua pemilik bisa main ----
   let SKEW = 0; const DIMAINKAN = new Set();
   const kini = () => Date.now() + SKEW;
   const sisaTeks = (ms) => { const d = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(d / 60)}:${String(d % 60).padStart(2, '0')}`; };
@@ -30,6 +30,8 @@
       replay: (duel) => bukaReplay(duel.id, duel),
     });
   }
+  // duel terjadwal belum mulai → cek status lawan (Siap) tiap 4 detik
+  setInterval(() => { if (!document.hidden && !sec.hidden && tab === 'arena' && !(document.activeElement && sec.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') && sesiSaya().some((x) => Date.parse(x.mulai) > kini())) muat(); }, 4000);
   setInterval(() => {
     for (const x of sesiSaya()) {
       const sisa = Date.parse(x.mulai) - kini();
@@ -114,10 +116,12 @@
     const D = (window.Pokomen && window.Pokomen.data && window.Pokomen.data()) || {};
     const nama = (u) => ((D.warga || []).find((w) => w.u === u) || {}).nama || u;
     return `<p class="tk-info">${A.buka ? '🟢 Arena <b>BUKA</b>' : '🔴 Arena <b>TUTUP</b>'} · setiap hari pukul ${String(A.jam?.[0] ?? 7).padStart(2, '0')}.00–${A.jam?.[1] ?? 21}.00 WIB · maks. 5 tantangan per hari</p>
-      <p class="tk-info">🎮 <b>Main langsung!</b> Pilih <b>3 kartu jurus</b> (⚔️ Serang > ⚡ Jurus > 🛡️ Tahan > ⚔️ Serang). Setelah tantangan diterima, duel dimulai <b>7 menit kemudian</b> dan <b>kedua pemilik</b> bertarung sendiri: tekan <b>TAP</b> tepat waktu untuk serangan <b>SEMPURNA</b> dan <b>tangkisan</b>. Kalian berdua mendapat pemberitahuan. Tidak datang = hewanmu bertarung otomatis.</p>
+      <p class="tk-info">🎮 <b>Main langsung!</b> Pilih <b>3 kartu jurus</b> (⚔️ Serang > ⚡ Jurus > 🛡️ Tahan > ⚔️ Serang). Setelah tantangan diterima, duel dimulai <b>5 menit kemudian</b> (atau langsung, kalau kalian berdua menekan <b>Siap, mulai sekarang!</b>) dan <b>kedua pemilik</b> bertarung sendiri: tekan <b>TAP</b> tepat waktu untuk serangan <b>SEMPURNA</b> dan <b>tangkisan</b>. Kalian berdua mendapat pemberitahuan. Tidak datang = hewanmu bertarung otomatis.</p>
       <p class="tk-info">🏆 <b>Liga Arena</b>: menang <b>+1 poin</b>, kalah <b>−1 poin</b> (poin terendah 0). Tantangan berlaku <b>12 jam</b>; menolak atau tidak menjawab = kalah. Poin sama? Ditentukan <b>head to head</b>. Lawan harus <b>setingkat</b> atau <b>selisih 1 tingkat</b>. Peringkat 1 di akhir musim dapat <b>💎 1 Batu Evolusi</b>.</p>
       ${masuk.length ? `<div class="tk-masuk"><b>⚔️ Kamu ditantang!</b>${masuk.map((t) => `<div><span>${esc(t.namaDari)} menantang ${esc(t.namaKe)} · sampai ${jam(t.sampai)}</span><button class="btn tk-terima" type="button" data-id="${esc(t.id)}">Terima</button><button class="btn ghost tk-tolak" type="button" data-id="${esc(t.id)}">Tolak</button></div>`).join('')}</div>` : ''}
-      ${me && (me.sesi || []).length ? `<div class="tk-masuk tk-jadwal"><b>📅 Duel terjadwal · tetap di halaman ini, duel dimulai otomatis!</b>${me.sesi.map((x) => { const saya = x.sisi === 'a' ? x.A : x.B, lawan = x.sisi === 'a' ? x.B : x.A; return `<div><span><b>${esc(saya.nama)}</b> vs <b>${esc(lawan.nama)}</b> · pukul ${jam(x.mulai)} · <em data-hitung="${esc(x.id)}">…</em></span>${x.sudahMain ? '<span class="muted">Kamu sudah bertarung, menunggu lawan…</span>' : `<button class="btn tk-main" type="button" data-id="${esc(x.id)}" disabled>⚔️ MAIN!</button>`}</div>`; }).join('')}</div>` : ''}
+      ${me && (me.sesi || []).length ? `<div class="tk-masuk tk-jadwal"><b>📅 Duel terjadwal · tetap di halaman ini, duel dimulai otomatis!</b><small class="muted">Kalau kalian berdua menekan <b>Siap, mulai sekarang!</b>, duel langsung dimulai. Kalau tidak, duel mulai sesuai jadwal.</small>${me.sesi.map((x) => { const saya = x.sisi === 'a' ? x.A : x.B, lawan = x.sisi === 'a' ? x.B : x.A; const sy = x.siap || {}, aku = !!sy[x.sisi], dia = !!sy[x.sisi === 'a' ? 'b' : 'a'], belum = Date.parse(x.mulai) > kini();
+        const tombolSiap = belum && !x.sudahMain ? (aku ? `<span class="muted">✅ Kamu siap${dia ? '' : ' · menunggu lawan menekan Siap…'}</span>` : `<button class="btn green tk-siap" type="button" data-id="${esc(x.id)}">✅ Siap, mulai sekarang!</button>`) : '';
+        return `<div><span><b>${esc(saya.nama)}</b> vs <b>${esc(lawan.nama)}</b> · pukul ${jam(x.mulai)} · <em data-hitung="${esc(x.id)}">…</em>${belum && dia && !aku ? ' · <b>⚡ Lawan sudah siap!</b>' : ''}</span>${tombolSiap}${x.sudahMain ? '<span class="muted">Kamu sudah bertarung, menunggu lawan…</span>' : `<button class="btn tk-main" type="button" data-id="${esc(x.id)}" disabled>⚔️ MAIN!</button>`}</div>`; }).join('')}</div>` : ''}
       ${keluar.length ? `<p class="muted">Menunggu jawaban: ${keluar.map((t) => esc(t.namaKe)).join(', ')}</p>` : ''}
       ${me ? `<form class="tk-tantang" id="tkTantang" autocomplete="off"><input id="tkLawan" placeholder="Nama hewan lawan" maxlength="40" required><button class="btn" type="submit" ${A.buka ? '' : 'disabled'}>⚔️ Tantang</button></form>` : '<p class="muted">Bisa juga lewat komentar: <code>Tantang: nama hewan</code> lalu lawan membalas <code>Terima: nama penantang</code>.</p>'}
       <div class="tk-kolom"><div><h4>🏆 Klasemen Liga · ${esc(A.musim?.nama || 'Musim')}</h4><p class="muted tk-musim">${tglPendek(A.musim?.mulai)} – Minggu ${tglPendek(A.musim?.akhir)} · juara ditetapkan Senin 09.00 WIB</p>${(A.klasemen || []).length ? `<table class="tk-liga"><thead><tr><th>#</th><th>Hewan</th><th title="Menang">M</th><th title="Kalah">K</th><th>Poin</th></tr></thead><tbody>${A.klasemen.map((k, i) => `<tr${i === 0 && k.poin > 0 ? ' class="top"' : ''}><td>${i + 1}</td><td><b>${esc(nama(k.u))}</b></td><td>${k.menang}</td><td>${k.kalah + k.wo}</td><td><b>${k.poin}</b></td></tr>`).join('')}</tbody></table>` : '<p class="muted">Belum ada duel di musim ini. Jadilah yang pertama!</p>'}</div>
@@ -131,6 +135,14 @@
     for (const b of sec.querySelectorAll('.tk-beli')) b.onclick = () => beli(b.dataset.item);
     for (const b of sec.querySelectorAll('.tk-latih-btn')) b.onclick = () => latih(b.dataset.stat, b);
     for (const b of sec.querySelectorAll('.tk-terima')) b.onclick = () => arena('terima', { id: b.dataset.id }, b);
+    for (const b of sec.querySelectorAll('.tk-siap')) b.onclick = async () => {
+      b.disabled = true; const r = await post('api/arena', { aksi: 'siap', id: b.dataset.id });
+      if (r.error) { toast(r.error); b.disabled = false; return; }
+      if (r.sekarang) SKEW = r.sekarang - Date.now();
+      const x = sesiSaya().find((y) => y.id === b.dataset.id); if (x && r.sesi) { x.mulai = r.sesi.mulai; x.batas = r.sesi.batas; x.siap = r.sesi.siap; }
+      toast(r.sesi && r.sesi.siap.a && r.sesi.siap.b ? 'Kalian berdua siap! Duel dimulai sebentar lagi…' : 'Kamu siap! Kalau lawan juga menekan Siap, duel langsung dimulai.');
+      render();
+    };
     for (const b of sec.querySelectorAll('.tk-main')) b.onclick = () => { const x = sesiSaya().find((y) => y.id === b.dataset.id); if (x) mainSesi(x); };
     for (const b of sec.querySelectorAll('.tk-tolak')) b.onclick = () => arena('tolak', { id: b.dataset.id }, b);
     for (const b of sec.querySelectorAll('.tk-replay')) b.onclick = () => bukaReplay(b.dataset.id);
@@ -176,7 +188,7 @@
     const r = await post('api/arena', { aksi, ...body });
     if (r.error) toast(r.error);
     else if (aksi === 'tantang') toast(`Tantangan untuk ${r.tantangan.namaKe} terkirim! Tunggu dia menerima (12 jam).`);
-    else if (aksi === 'terima') { if (r.sekarang) SKEW = r.sekarang - Date.now(); toast(`Tantangan diterima! Duel dimulai pukul ${r.pukul} WIB (7 menit lagi). Tetap di halaman Arena ya!`); }
+    else if (aksi === 'terima') { if (r.sekarang) SKEW = r.sekarang - Date.now(); toast(`Tantangan diterima! Duel dimulai pukul ${r.pukul} WIB (5 menit lagi). Tetap di halaman Arena ya!`); }
     await muat();
   }
 
