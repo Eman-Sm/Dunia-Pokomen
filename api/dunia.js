@@ -8,8 +8,17 @@ import { cuacaAktif } from '../lib/dewa.js';
 import { publik as statPublik } from '../lib/statistik.js';
 import { hasilWilayah, publicHasil, tetapkanPemenang, wilayahOf, daftarUsulWilayah, segarkanLike, bukaWilayahBaru, jumlahWilayahBuka } from '../lib/wilayah.js';
 
-export async function GET() {
+export async function GET(request) {
   try {
+    // 3 Nov: ?usulscan=1 → daftar usulan fasilitas dari komentar bebas (disimpan 24 jam; ?usulscan=baru untuk scan ulang)
+    const qs = request ? new URL(request.url).searchParams : null;
+    if (qs && qs.get('usulscan')) {
+      const lama = qs.get('usulscan') !== 'baru' && (await redis('GET', 'usul_scan_v1'));
+      if (lama) return json(JSON.parse(lama), 200, { 'Cache-Control': 'no-store' });
+      if ((await redis('SET', 'usul_scan_lock', '1', 'NX', 'EX', '90')) !== 'OK') return json({ sedang: true }, 200, { 'Cache-Control': 'no-store' });
+      const { scanUsulan } = await import('../lib/usulscan.js');
+      return json(await scanUsulan(), 200, { 'Cache-Control': 'no-store' });
+    }
     await ensureTierSchema();
     const [warga, usulan, logRaw, start, dukRaw, makam] = await Promise.all([
       hgetallJSON('warga'), hgetallJSON('usulan'), redis('LRANGE', 'log', 0, 29), redis('GET', 'hari_pertama'), redis('LRANGE', 'dukungan', 0, 199), hgetallJSON('makam'),
