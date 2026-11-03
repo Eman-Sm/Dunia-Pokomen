@@ -56,7 +56,7 @@
     const D = (window.Pokomen && window.Pokomen.data && window.Pokomen.data()) || {};
     const bars = Object.keys(LABEL).map((k) => { const v = s.stat[k], mx = Math.max(v, (k === 'nyawa' ? 300 : 60)); return `<div class="tk-bar"><span>${LABEL[k]}</span><i><b style="width:${Math.round(v / mx * 100)}%"></b></i><em>${v}${s.stat.maks[k] ? ' · MAKS' : ''}</em></div>`; }).join('');
     return `<div class="tk-dompet">
-      <div class="tk-saldo"><small>Biji Kopi ${esc(s.nama)}</small><b>${s.saldo.biji}</b><span>☕ 1 Kopi Admin = 5 Biji</span>${D.trakteer ? `<a class="btn traktir" href="${esc(D.trakteer)}" target="_blank" rel="noopener">Tambah Biji Kopi</a>` : ''}</div>
+      <div class="tk-saldo"><small>Biji Kopi ${esc(s.nama)}</small><b>${s.saldo.biji}</b><span>☕ 1 Kopi Admin = 5 Biji</span>${D.trakteer ? `<a class="btn traktir" href="${esc(D.trakteer)}" target="_blank" rel="noopener">☕ Dapatkan Biji Kopi</a>` : ''}</div>
       <div class="tk-batu"><small>Batu Evolusi</small><b>💎 ${s.batu}</b>${s.syaratBatu ? `<span>Naik ke ${esc(s.tierBerikut || 'tingkat berikutnya')}: butuh <b>${s.syaratBatu} Batu Evolusi</b> + <b>1 cerita baru</b> (komen "Cerita: ...")${s.batu < s.syaratBatu ? ` · kurang ${s.syaratBatu - s.batu} batu` : ' · batu sudah cukup!'}</span>` : ''}</div>
       <div class="tk-stat"><small>Statistik · Kekuatan ${s.stat.kuat}</small>${bars}</div>
     </div>`;
