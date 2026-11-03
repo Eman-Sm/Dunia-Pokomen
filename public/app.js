@@ -150,8 +150,10 @@
   }
   const sleeping = () => { const h = jamWIB(); return h >= 22 || h < 5; };
   const EMO = ['♥', '♪', '!', '?', '✦'];
+  let KUMPUL = null;
   function stepActors(now, dt) {
     const slp = sleeping();
+    KUMPUL = berkumpul();
     for (const w of allWarga()) {
       if (w.mati) continue;
       const a = actor(w);
@@ -163,10 +165,15 @@
       }
       if (a.mode === 'walk') {
         const dx = a.tx - a.x, dy = a.ty - a.y, d = Math.hypot(dx, dy);
-        const sp = (10 + Math.min(4, w.tier || 0) * 1.5) * (w.tier >= 5 ? 2.2 : 1) * dt / 1000;
+        const sp = (10 + Math.min(4, w.tier || 0) * 1.5) * (w.tier >= 5 ? 2.2 : 1) * (a.cepat ? 4 : 1) * dt / 1000;
         if (d <= sp) { a.x = a.tx; a.y = a.ty; a.mode = 'idle'; a.until = now + rand(1500, 6000); }
         else { a.x += dx / d * sp; a.y += dy / d * sp; a.walk += dt / 1000 * 9; if (Math.abs(dx) > .3) a.face = dx < 0 ? -1 : 1; }
+      } else if (now > a.until && KUMPUL && KUMPUL.has(w.u)) {
+        // berkumpul di Tereuma: jalan ke lantai alun-alun, lalu berpindah tempat di sekitarnya
+        const T_ = tereuma(), ang = rand(0, Math.PI * 2), r = rand(8, 40);
+        a.tx = T_.x + Math.cos(ang) * r; a.ty = T_.y + 4 + Math.sin(ang) * r * .5; a.mode = 'walk'; a.cepat = Math.hypot(a.tx - a.x, a.ty - a.y) > 80;
       } else if (now > a.until) {
+        a.cepat = false;
         if (Math.random() < .72) {
           // roam freely across the open clearing: pick a nearby walkable tile
           const W = WORLD && WORLD.walk;
@@ -587,7 +594,30 @@
   // supporters: warm coffee steam over the creature for 24 h after sending a coffee
   // ---- Toko Pokomen & Arena di Pusat Koloni (muncul setelah dibuka)
   const BANGUNAN = [['toko', 935, 705, 'TOKO'], ['arena', 822, 776, 'ARENA']].map(([k, x, y, lab]) => { const im = new Image(); im.onload = () => draw(); im.src = `assets/${k}.png?v=1`; return { im, x, y, lab }; });
+  // 3 Nov: fasilitas usulan warga (satu per episode), daftar dari server: DATA.fasilitas.dibangun
+  const FAS_IMG = new Map();
+  function fasilitas() { return (DATA && DATA.fasilitas && DATA.fasilitas.dibangun) || []; }
+  function drawFasilitas() {
+    for (const f of fasilitas()) {
+      if (!f.img) continue;
+      let im = FAS_IMG.get(f.img); if (!im) { im = new Image(); im.onload = () => draw(); im.src = `assets/${f.img}.png?v=1`; FAS_IMG.set(f.img, im); }
+      if (!im.complete || !im.naturalWidth) continue;
+      const [x, y] = toScreen(f.x, f.y), z = cam.z, w = im.naturalWidth * z, h = im.naturalHeight * z;
+      if (x + w < 0 || x - w > box.clientWidth || y + h < 0 || y - h > box.clientHeight) continue;
+      ctx.imageSmoothingEnabled = false; ctx.drawImage(im, Math.round(x - f.ax * z), Math.round(y - f.ay * z), Math.round(w), Math.round(h));
+      if (z >= .8) {
+        const fs = Math.max(9, 7 * z); ctx.font = `800 ${fs}px Nunito, system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        const lab = f.nama.toUpperCase(), tw_ = ctx.measureText(lab).width + 10, ly = y + 40 * z;
+        ctx.fillStyle = '#2b1b17'; ctx.fillRect(x - tw_ / 2 - 1, ly - fs * .7 - 1, tw_ + 2, fs * 1.4 + 2); ctx.fillStyle = '#ffe7a8'; ctx.fillRect(x - tw_ / 2, ly - fs * .7, tw_, fs * 1.4);
+        ctx.fillStyle = '#2b1b17'; ctx.fillText(lab, x, ly); ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
+      }
+    }
+  }
+  // hewan yang ngobrol di Obrolan Warga dalam 20 menit terakhir berkumpul di Tereuma
+  function tereuma() { return fasilitas().find((f) => f.id === 'tereuma') || null; }
+  function berkumpul() { try { return tereuma() && window.PokoChat && window.PokoChat.aktif ? window.PokoChat.aktif(20 * 60e3) : null; } catch { return null; } }
   function drawBangunan() {
+    try { drawFasilitas(); } catch { /* ignore */ }
     if (!DATA || !DATA.evoBatu) return;
     for (const b of BANGUNAN) {
       if (!b.im.complete || !b.im.naturalWidth) continue;
@@ -1047,7 +1077,18 @@
   $('bookSearch').addEventListener('input', () => { shown = 60; renderBook(); });
   $('moreBtn').onclick = () => { shown += 60; renderBook(); };
 
+  function renderTebak() {
+    const F = DATA.fasilitas || {}, tb = $('tebakBox'), fl = $('fasList'); if (!tb || !fl) return;
+    const t = F.tebak;
+    tb.hidden = !t;
+    if (t) tb.innerHTML = `<b>🎯 Tebak fasilitas berikutnya!</b><p>Petunjuk: <i>“${esc(t.petunjuk)}”</i></p><p class="muted">Komen <code>Tebak: nama fasilitas</code> sebelum ${new Date(t.tutup).toLocaleString('id-ID', { weekday: 'long', hour: '2-digit', minute: '2-digit' })} WIB. Tebakan benar dapat <b>+${t.hadiah} Biji Kopi</b>!</p>`;
+    const d = F.dibangun || [];
+    fl.hidden = !d.length;
+    if (d.length) fl.innerHTML = `<b>✅ Sudah dibangun dari usulan warga</b><ul>${d.map((f) => `<li><button class="linkish fas-lihat" type="button" data-id="${esc(f.id)}">${esc(f.nama)}</button> · ${esc(f.sub || '')}${f.pengusul && f.pengusul.length ? ` <span class="muted">(usulan @${f.pengusul.map(esc).join(', @')})</span>` : ''}</li>`).join('')}</ul>`;
+    for (const b of fl.querySelectorAll('.fas-lihat')) b.onclick = () => { const f = d.find((x) => x.id === b.dataset.id); if (!f) return; cam.x = f.x; cam.y = f.y - 10; cam.z = Math.max(cam.z, 2.4); try { clampCam(); } catch { /* ignore */ } const m = $('peta') || box; if (m && m.scrollIntoView) m.scrollIntoView({ behavior: 'smooth' }); draw(); };
+  }
   function renderVotes() {
+    try { renderTebak(); } catch { /* ignore */ }
     const v = $('votes');
     const us = DATA.usulan || [];
     if (!us.length) { v.innerHTML = '<li class="empty">Belum ada usulan. Tulis <b>Usul: nama fasilitas</b> di komentar.</li>'; return; }

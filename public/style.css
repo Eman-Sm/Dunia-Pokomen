@@ -730,3 +730,8 @@ code,
   .topbar .wrap { flex-wrap: wrap; row-gap: 8px; }
   .topbar nav.tabs { min-width: max-content; }
 }
+.tebak-box { background: #fff3c4; border: var(--px) solid var(--outline); padding: 10px 12px; margin: 8px 0; }
+.tebak-box p { margin: 4px 0 0; }
+.fas-list { background: #e7f6dd; border: var(--px) solid var(--outline); padding: 10px 12px; margin: 8px 0; }
+.fas-list ul { margin: 6px 0 0; padding-left: 18px; }
+.linkish { background: none; border: 0; padding: 0; font: inherit; font-weight: 800; color: #2b6cb0; text-decoration: underline; cursor: pointer; }

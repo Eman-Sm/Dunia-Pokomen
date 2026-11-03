@@ -120,6 +120,8 @@
     loop();
     if (location.hash === '#obrolan') setTimeout(() => $('obrolan').scrollIntoView({ behavior: 'smooth' }), 800);
   }
-  window.PokoChat = { bubbles: () => { const now = Date.now(); state.bubbles = state.bubbles.filter((b) => now - b.at < 7000); return state.bubbles; } };
+  // siapa yang baru ngobrol (untuk berkumpul di Tereuma)
+  const aktif = (ms) => { const now = Date.now(), set = new Set(); for (const arr of Object.values(state.msgs)) for (const m of arr) if (!m.sistem && m.u && now - Date.parse(m.t) < ms) set.add(m.u); return set; };
+  window.PokoChat = { aktif, bubbles: () => { const now = Date.now(); state.bubbles = state.bubbles.filter((b) => now - b.at < 7000); return state.bubbles; } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

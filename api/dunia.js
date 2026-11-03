@@ -74,6 +74,9 @@ export async function GET(request) {
           await redis('SET', 'scan_daftar_v2', JSON.stringify(st));
         }
       } catch (e) { await redis('SET', 'scan_daftar_err', String(e.message || e)).catch(() => {}); }
+      // 3 Nov: fasilitas baru dibuka → umumkan + hadiah tebakan benar
+      try { const F = await import('../lib/fasilitas.js'); const { log } = await import('../lib/rules.js'); const ob = await import('../lib/obrolan.js'); const E = await import('../lib/ekonomi.js');
+        await F.umumkanYangBaru({ umumkan: async (t) => { await log('bangun', t); await ob.sistem(t); }, bonus: (u, n, ket) => E.bonusBiji(u, n, ket) }); } catch { /* ignore */ }
       // 2 Nov 16.15: cerita lama warga hasil scan (komentar sebelum lahir) dihitung untuk evolusi — sekali saja
       try {
         const st = JSON.parse((await redis('GET', 'scan_daftar_v2')) || '{}');
@@ -113,6 +116,7 @@ export async function GET(request) {
       dukunganUnit: process.env.TRAKTEER_UNIT_NAME || 'Kopi Admin',
       usulan: us,
       wajibFollow: process.env.REQUIRE_FOLLOW === '1',
+      fasilitas: (await import('../lib/fasilitas.js')).publik(),
       ceritaLama: await (async () => { try { const v = await redis('GET', 'cerita_lama_v1'); return v && v !== 'jalan' ? JSON.parse(v) : v || (await redis('GET', 'cerita_lama_err')); } catch { return null; } })(),
       scanDaftar: await (async () => { try { const st = JSON.parse((await redis('GET', 'scan_daftar_v2')) || 'null'); return st && { video: st.media?.length || 0, sudah: Math.min(st.dari, st.media?.length || 0), komentar: st.komentar || 0, lahir: (st.lahir || []).length, menunggu: (st.menunggu || []).length, selesai: !!st.selesai, err: await redis('GET', 'scan_daftar_err') }; } catch { return null; } })(),
       trakteer: process.env.TRAKTEER_URL || null,
