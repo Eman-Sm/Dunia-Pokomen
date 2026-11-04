@@ -769,3 +769,4 @@ nav.tabs a.nav-saran { background: #f4a8c8; color: #2b1b17; border-color: var(--
 .sr-float:hover { transform: translateY(-2px); }
 .sr-float.sembunyi { opacity: 0; pointer-events: none; transform: translateY(10px); }
 @media (max-width: 560px) { .sr-float { right: 10px; bottom: 10px; padding: 8px 11px; font-size: .9rem; } }
+#saran { scroll-margin-top: 96px; }
