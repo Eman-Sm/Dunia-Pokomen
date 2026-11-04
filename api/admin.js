@@ -79,6 +79,8 @@ const actions = {
     await sendDM(id, String(text));
     return { terkirim: true, igsid: id };
   },
+  async saran_list() { const S = await import('../lib/saran.js'); return S.daftar(300); },
+  async saran_dibaca() { const S = await import('../lib/saran.js'); return S.tandaiDibaca(); },
   async story_list() { return listStoryReplies(); },
   async story_sync({ max = 100 }) {
     let ownId = null; try { ownId = (await me()).user_id || null; } catch { /* ignore */ }

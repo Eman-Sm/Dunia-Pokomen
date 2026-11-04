@@ -207,6 +207,14 @@
     </section>
 
     <section class="parchment">
+      <h2>Saran Warga</h2>
+      <p id="srInfo" class="muted">Memuat…</p>
+      <div class="adm-row"><select id="srFilter"><option value="">Semua jenis</option><option value="kesan">💛 Kesan</option><option value="fitur">💡 Ide / fitur</option><option value="perbaikan">🔧 Perbaikan / error</option><option value="lain">💬 Lainnya</option></select><button class="btn ghost" type="button" id="srMuat">Muat ulang</button><button class="btn" type="button" id="srBaca">Tandai semua sudah dibaca</button></div>
+      <div class="tablewrap"><table><thead><tr><th>Waktu</th><th>Jenis</th><th>Saran</th><th>Dari</th><th>★</th></tr></thead><tbody id="srT"></tbody></table></div>
+      <p class="muted">Saran hanya terlihat di Ruang Admin. Nama boleh dikosongkan oleh warga; IP tidak disimpan.</p>
+    </section>
+
+    <section class="parchment">
       <h2>Kabar desa</h2>
       <form class="formgrid" id="newsForm">
         <label class="f">Tulis kabar<input type="text" id="newsText" placeholder="Festival panen dimulai besok!" required></label>
@@ -231,6 +239,6 @@
 <script src="creature.js?v=pal1"></script>
 <script src="artpal.js?v=pal1"></script>
 <script src="card.js?v=font1"></script>
-<script src="admin.js?v=font1"></script>
+<script src="admin.js?v=saran1"></script>
 </body>
 </html>

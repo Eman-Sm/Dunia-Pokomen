@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
-<link rel="stylesheet" href="style.css?v=kopi2">
+<link rel="stylesheet" href="style.css?v=saran1">
 </head>
 <body>
 <header class="topbar">
@@ -23,7 +23,7 @@
       <span><span class="name">DUNIA POKOMEN</span><span class="sub">Populasi Komentar</span></span>
     </a>
     <nav class="tabs" aria-label="Bagian halaman">
-      <a href="#peta">🗺️ Peta</a><a href="#obrolan">💬 Ngobrol</a><a href="#toko" hidden>🏪 Toko &amp; Arena</a><a href="#warga">📖 Warga</a><a href="#ikut">🐣 Cara Ikut</a>
+      <a href="#peta">🗺️ Peta</a><a href="#obrolan">💬 Ngobrol</a><a href="#toko" hidden>🏪 Toko &amp; Arena</a><a href="#warga">📖 Warga</a><a href="#ikut">🐣 Cara Ikut</a><a href="#saran" class="nav-saran">💌 Saran</a>
     </nav>
     <div class="chips">
       <span class="chip" id="chipHari">HARI KE-1</span>
@@ -70,6 +70,28 @@
         <div class="map-hint" id="mapHint">☝️ Geser peta pakai jari · cubit untuk zoom</div>
         <article class="card" id="card" hidden aria-live="polite"></article>
       </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="saran" aria-labelledby="srTitle" style="padding-top:26px">
+    <div class="parchment sr-box">
+      <h2 id="srTitle">💌 Saran &amp; Masukan Warga</h2>
+      <p>Admin ingin mendengar kamu! Tulis kesan, ide fitur baru, atau hal yang perlu diperbaiki supaya Dunia Pokomen makin seru. <b>Semua saran dibaca langsung oleh Admin</b> dan tidak ditampilkan ke publik.</p>
+      <form id="srForm" autocomplete="off">
+        <div class="sr-jenis" role="radiogroup" aria-label="Jenis saran">
+          <label><input type="radio" name="jenis" value="kesan" checked><span>💛 Kesan</span></label>
+          <label><input type="radio" name="jenis" value="fitur"><span>💡 Ide / fitur baru</span></label>
+          <label><input type="radio" name="jenis" value="perbaikan"><span>🔧 Ada yang error</span></label>
+          <label><input type="radio" name="jenis" value="lain"><span>💬 Lainnya</span></label>
+        </div>
+        <div class="sr-bintang" aria-label="Seberapa suka kamu dengan Dunia Pokomen? (boleh dilewati)"><span>Seberapa suka kamu dengan Dunia Pokomen?</span>
+          <span class="sr-stars"><button type="button" data-b="1" aria-label="1 bintang">☆</button><button type="button" data-b="2" aria-label="2 bintang">☆</button><button type="button" data-b="3" aria-label="3 bintang">☆</button><button type="button" data-b="4" aria-label="4 bintang">☆</button><button type="button" data-b="5" aria-label="5 bintang">☆</button></span></div>
+        <label class="sr-f">Saran / masukanmu<textarea id="srPesan" maxlength="600" rows="4" required placeholder="Contoh: Aku suka Arena! Usul ada mode turnamen mingguan…"></textarea><small id="srSisa">600</small></label>
+        <label class="sr-f">@username Instagram (boleh dikosongkan)<input id="srNama" maxlength="40" placeholder="@namakamu"></label>
+        <input type="text" name="web" id="srWeb" tabindex="-1" autocomplete="off" class="sr-hp" aria-hidden="true">
+        <button class="btn sr-kirim" type="submit">💌 Kirim ke Admin</button>
+        <p class="sr-hasil" id="srHasil" role="status" aria-live="polite"></p>
+      </form>
     </div>
   </section>
 
@@ -238,5 +260,7 @@
 <script src="obrolan.js?v=fas1"></script>
 <script type="module" src="arena-game.js?v=2"></script>
 <script src="toko.js?v=kopi3"></script>
+<script src="saran.js?v=1"></script>
+<a class="sr-float" href="#saran" id="srFloat">💌 Kasih Saran</a>
 </body>
 </html>

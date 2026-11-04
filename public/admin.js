@@ -115,7 +115,7 @@
     $('conn').innerHTML = conn.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
     if (S.hariPertama) $('hariPertama').value = S.hariPertama;
     renderPending(); renderWarga(); renderUsulan(); renderDukungan(); renderMenunggu();
-    loadPemilu(); loadUnfollow(); loadGemini();
+    loadPemilu(); loadUnfollow(); loadGemini(); loadSaran();
     if ($('admTabs').hidden) buildTabs();
     badge('Antrean komentar', S.pending.length); badge('Menunggu konfirmasi', S.menunggu.length);
     const stale = S.warga.filter((w) => w.artVer && !w.mati && (w.artTier ?? 0) < Math.min(3, w.tier)).length; badge('Warga', stale);
@@ -338,6 +338,22 @@
   $('gemStale').onclick = () => genBatch($('gemStale'), S.warga.filter((w) => w.artVer && !w.mati && !w.hidden && (w.artTier ?? 0) < Math.min(3, w.tier)), 'Perbarui gambar yang tertinggal');
 
   // ---------- unfollow = dead
+  let SR = [];
+  const SR_JENIS = { kesan: '💛 Kesan', fitur: '💡 Ide', perbaikan: '🔧 Perbaikan', lain: '💬 Lainnya' };
+  async function loadSaran() {
+    try {
+      const d = await api('saran_list'); SR = d.saran || [];
+      $('srInfo').textContent = `${d.total} saran tersimpan · ${d.baru} baru sejak terakhir dibaca.` + (SR.some((x) => x.bintang) ? ` Rata-rata bintang: ${(SR.filter((x) => x.bintang).reduce((a, x) => a + x.bintang, 0) / SR.filter((x) => x.bintang).length).toFixed(1)} / 5.` : '');
+      renderSaran(d.baru);
+    } catch (e) { $('srInfo').textContent = e.message; }
+  }
+  function renderSaran(baru = 0) {
+    const f = $('srFilter').value; const l = SR.filter((x) => !f || x.jenis === f);
+    $('srT').innerHTML = l.length ? l.map((x, i) => `<tr${SR.indexOf(x) < baru ? ' style="background:#fff3c4"' : ''}><td>${esc(new Date(x.t).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }))}</td><td>${esc(SR_JENIS[x.jenis] || x.jenis)}</td><td>${esc(x.pesan)}</td><td>${esc(x.nama || '–')}</td><td>${x.bintang ? '★'.repeat(x.bintang) : ''}</td></tr>`).join('')
+      : '<tr><td colspan="5" class="muted">Belum ada saran.</td></tr>';
+  }
+  $('srFilter').onchange = () => renderSaran(); $('srMuat').onclick = loadSaran;
+  $('srBaca').onclick = async () => { try { await api('saran_dibaca'); toast('Ditandai sudah dibaca.'); loadSaran(); } catch (e) { toast(e.message); } };
   async function loadUnfollow() {
     try {
       const d = await api('unfollow_status');
