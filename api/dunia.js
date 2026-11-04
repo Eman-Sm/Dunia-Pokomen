@@ -74,6 +74,11 @@ export async function GET(request) {
           await redis('SET', 'scan_daftar_v2', JSON.stringify(st));
         }
       } catch (e) { await redis('SET', 'scan_daftar_err', String(e.message || e)).catch(() => {}); }
+      // 4 Nov 16.00: pemilihan Ketua Wilayah 5 (belum ada calon) diperpanjang sampai Jumat 6 Nov 12.00 WIB + calon luar gratis
+      try { if ((await redis('SET', 'pw_w5_perpanjang_v1', '1', 'NX')) === 'OK') { const WL = await import('../lib/wilayah.js'); const cfg = await WL.getCfg(); const J = { ...(cfg.jadwal || {}) };
+        if (J[5] && !(await (await import('../lib/db.js')).hgetallJSON('warga')).some((w) => w.ketuaWilayah === 5)) { J[5] = { ...J[5], tutup: '2026-11-06T05:00:00.000Z', ditetapkan: false }; await WL.setCfg({ jadwal: J, ditetapkan: false });
+          const { log } = await import('../lib/rules.js'); const ob = await import('../lib/obrolan.js');
+          for (const t of ['🗳️ Kursi Ketua Wilayah 5 (WATEA) masih kosong! Pemilihan DIPERPANJANG sampai Jumat 6 Nov pukul 12.00 WIB. Calonkan dirimu: komen "Calon 5: janjimu".', '🎉 Mulai sekarang warga dari wilayah mana pun bisa mencalonkan diri jadi ketua wilayah baru secara GRATIS (tidak perlu 7 Biji Kopi lagi). Semua warga boleh memilih: "Pilih: nama calon".']) { await log('bangun', t); await ob.sistem(t); } } } } catch { /* ignore */ }
       // 4 Nov: aturan W.O. diganti duel otomatis → kembalikan semua -1 W.O. & umumkan (sekali)
       try { const AR = await import('../lib/arena.js'); const h = await AR.kembalikanPoinWO(); if (h) { const { log } = await import('../lib/rules.js'); const ob = await import('../lib/obrolan.js');
         for (const t of ['⚔️ ATURAN ARENA BARU: tantangan yang tidak dijawab kini jadi DUEL OTOMATIS, bukan kalah. Boleh "Lewati" 2x per hari tanpa akibat. Tiap hewan maks. 3 tantangan masuk per hari.', `⏰ Batas 12 jam kini hanya dihitung saat Arena buka (07.00–21.00). Semua poin yang hilang karena W.O. sudah DIKEMBALIKAN (${h.length} warga). Klasemen sudah dihitung ulang!`]) { await log('arena', t); await ob.sistem(t); } } } catch { /* ignore */ }

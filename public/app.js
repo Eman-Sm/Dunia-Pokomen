@@ -1157,7 +1157,7 @@
       list.innerHTML = `<li class="empty" style="display:block;cursor:default">${x.ketua ? `${esc(wilLabel(x.n))} dipimpin <b>Ketua ${esc(x.ketua.nama)}</b> (@${esc(x.ketua.u)}). Wilayah ini tidak ikut memilih sekarang.` : `Wilayah ${x.n} belum ikut pemilihan kali ini.`}</li>`;
       if (k) list.firstChild.onclick = () => { select(k); $('peta').scrollIntoView({ behavior: 'smooth' }); };
     } else if (!x.calon.length) {
-      list.innerHTML = `<li class="empty" style="display:block;cursor:default">Belum ada calon di Wilayah ${x.n}. Komen “Calon: janjimu” untuk mendaftar. Warga wilayah lain juga boleh, dengan biaya 7 Biji Kopi!</li>`;
+      list.innerHTML = `<li class="empty" style="display:block;cursor:default">Belum ada calon di Wilayah ${x.n}. Komen “Calon: janjimu” untuk mendaftar. Warga wilayah lain juga boleh, GRATIS: komen “Calon ${x.n}: janjimu”!</li>`;
     }
     if (x.memilih) x.calon.forEach((k, i) => {
       const w = DATA.warga.find((v) => v.u === k.u);

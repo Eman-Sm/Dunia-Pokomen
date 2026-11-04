@@ -18,7 +18,7 @@ test('parse "Calon 4: janji"', () => {
   assert.equal(parseComment('Calon: rajin').calonWil, undefined);
 });
 
-test('calon dari luar wilayah: bayar 7 Biji Kopi, suara dihitung dari warga wilayah tujuan', async () => {
+test('calon dari luar wilayah: gratis (sejak 4 Nov), suara dihitung dari warga wilayah tujuan', async () => {
   const J = { 4: { buka: '2026-10-31T11:00:00.000Z', tutup: '2026-11-03T05:00:00.000Z', ditetapkan: false, post: null } };
   await setCfg({ jadwal: J, tunda: [], ketuaOtomatis: { 2: 'hole' } });
   await add('hole', 'Hole', 71); await add('kaya', 'Rubi', 10); await add('miskin', 'Tikus', 12); await add('ketua1', 'Valtherion', 20, { ketuaWilayah: 1 });
@@ -28,12 +28,9 @@ test('calon dari luar wilayah: bayar 7 Biji Kopi, suara dihitung dari warga wila
   await redis('SET', 'evo_batu', '1');
   await E.bonusBiji('kaya', 10);
   assert.equal(await c('kaya', 'Calon: aku siap memimpin'), 'pw:calon-luar');
-  assert.equal((await E.saldo('kaya')).biji, 3);
-  assert.equal(await c('kaya', 'Calon: janji baru'), 'pw:calon-update'); // tidak bayar lagi
-  assert.equal((await E.saldo('kaya')).biji, 3);
+  assert.equal((await E.saldo('kaya')).biji, 10); // tidak bayar
+  assert.equal(await c('kaya', 'Calon: janji baru'), 'pw:calon-update');
   assert.equal((await getJSON('pw_calon', 'kaya')).janji, 'janji baru');
-  assert.equal(await c('miskin', 'Calon: ikut dong'), 'pw:luar-kurang-biji');
-  assert.equal(await getJSON('pw_calon', 'miskin'), null);
   assert.equal(await c('ketua1', 'Calon: dua wilayah'), 'pw:luar-sudah-ketua');
   assert.equal(await c('hole', 'Calon: aku juga'), 'pw:luar-sudah-ketua');
   assert.equal(await c('kaya', 'Calon 5: salah nomor'), 'pw:luar-pilih-wilayah');
