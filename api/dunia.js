@@ -74,6 +74,13 @@ export async function GET(request) {
           await redis('SET', 'scan_daftar_v2', JSON.stringify(st));
         }
       } catch (e) { await redis('SET', 'scan_daftar_err', String(e.message || e)).catch(() => {}); }
+      // 4 Nov 21.40: skill yang ditulis dengan salah ketik di cerita (mis. "Skili: amukan ular putih") → pasang sekali
+      try { if ((await redis('SET', 'skill_dari_cerita_v1', '1', 'NX')) === 'OK') { const { hgetallJSON, setJSON } = await import('../lib/db.js'); const { log } = await import('../lib/rules.js'); const hasil = [];
+        for (const w of await hgetallJSON('warga')) { if (w.mati || w.skill) continue;
+          for (const c of [...(w.cerita || [])].reverse()) { const m = /\b(?:skillnya|skilnya|skills|skill|skili|skiil|skil|sekil)\s*:\s*([^\n.!|()]+)/i.exec(String(c.text || '')); if (!m) continue;
+            const sk = m[1].replace(/[\p{Extended_Pictographic}\uFE0F]/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, 60); if (sk.length < 3) continue;
+            w.skill = sk; await setJSON('warga', w.username, w); hasil.push(w.username + ': ' + sk); if (w.tier >= 3) await log('evolusi', `${w.nama} milik @${w.username} kini punya skill: ${sk}!`, { u: w.username }); break; } }
+        await redis('SET', 'skill_dari_cerita_hasil', JSON.stringify(hasil)); } } catch { /* ignore */ }
       // 4 Nov 16.00: pemilihan Ketua Wilayah 5 (belum ada calon) diperpanjang sampai Jumat 6 Nov 12.00 WIB + calon luar gratis
       try { if ((await redis('SET', 'pw_w5_perpanjang_v1', '1', 'NX')) === 'OK') { const WL = await import('../lib/wilayah.js'); const cfg = await WL.getCfg(); const J = { ...(cfg.jadwal || {}) };
         if (J[5] && !(await (await import('../lib/db.js')).hgetallJSON('warga')).some((w) => w.ketuaWilayah === 5)) { J[5] = { ...J[5], tutup: '2026-11-06T05:00:00.000Z', ditetapkan: false }; await WL.setCfg({ jadwal: J, ditetapkan: false });
