@@ -64,6 +64,52 @@
     </div>`;
   }
 
+  // ---- Tab "Biji Kopi": cara mendapatkan + ajakan
+  function kopiTab() {
+    const D = (window.Pokomen && window.Pokomen.data && window.Pokomen.data()) || {};
+    const s = T.saya, url = D.trakteer || '';
+    const tombol = (teks) => url ? `<a class="btn traktir tk-kopi-cta" href="${esc(url)}" target="_blank" rel="noopener">${teks}</a>` : '';
+    const paket = [
+      ['1 Kopi', '5 Biji', 'Latihan 1 sesi + sisa 2 Biji'],
+      ['3 Kopi', '15 Biji', '1 Batu Evolusi 💎'],
+      ['6 Kopi', '30 Biji', '2 Batu = naik ke LEGENDARY ✨'],
+      ['20 Kopi', '100 Biji', 'POKOBOLL eksklusif (hanya 1!) 🏠'],
+    ];
+    return `<div class="tk-kopi">
+      <div class="tk-kopi-hero">
+        <b>☕ Bikin hewanmu makin kuat, makin keren!</b>
+        <p>Warga lain sudah berlatih tiap hari dan naik peringkat di Liga Arena. Jangan biarkan hewanmu tertinggal! Dengan <b>Biji Kopi</b> kamu bisa melatih statistik, membeli <b>Batu Evolusi</b> untuk naik ke Legendary, sampai memiliki <b>Pokoboll</b> yang cuma ada satu di dunia.</p>
+        ${s ? `<p class="tk-kopi-saldo">Biji Kopi ${esc(s.nama)} sekarang: <b>${s.saldo.biji}</b></p>` : ''}
+        ${tombol('☕ Dapatkan Biji Kopi sekarang')}
+      </div>
+      <h4>📖 Cara mendapatkan Biji Kopi</h4>
+      <ol class="tk-langkah">
+        <li><b>Klik tombol "Dapatkan Biji Kopi"</b> di halaman ini. Kamu akan dibawa ke halaman Trakteer Admin Pokomen.</li>
+        <li><b>Pilih jumlah Kopi Admin.</b> Setiap <b>1 Kopi = 5 Biji Kopi</b> untuk hewanmu.</li>
+        <li><b>PENTING: di kolom pesan, tulis @username Instagram-mu</b> (contoh: <code>@namakamu</code>) atau nama hewanmu, supaya Biji masuk ke hewan yang benar.</li>
+        <li><b>Selesaikan pembayaran</b> dengan metode yang tersedia di Trakteer.</li>
+        <li><b>Biji Kopi masuk otomatis</b> ke dompet hewanmu dalam beberapa menit. Cek saldonya di tab ini atau di Toko (pakai link pribadi dari DM "TOKO").</li>
+      </ol>
+      <h4>🛒 Biji Kopi bisa dipakai untuk</h4>
+      <div class="tk-paket">${paket.map(([a, b, c]) => `<div><b>${a}</b><span>= ${b}</span><em>${c}</em></div>`).join('')}</div>
+      <ul class="tk-guna">
+        <li>🏋️ <b>Tempat Latihan</b>: 3 Biji per sesi, sesi ke-5 LATIHAN SUPER 2x</li>
+        <li>💎 <b>Batu Evolusi</b>: 15 Biji, kunci naik ke Legendary (2 batu) & God Mode (3 batu)</li>
+        <li>🏷️ <b>Pengganti Nama / Rupa / Elemen / Kekuatan</b> di Toko</li>
+        <li>🏠 <b>Pokoboll</b> eksklusif: 100 Biji</li>
+      </ul>
+      <h4>🎁 Bonus setiap kopi</h4>
+      <ul class="tk-guna">
+        <li>🥉🥈🥇 <b>Lencana Pendukung</b> di kartu warga & Obrolan: Perunggu (1+ kopi), Perak (5+), Emas (10+)</li>
+        <li>✨ <b>Aura kopi 24 jam</b> di sekeliling hewanmu di peta</li>
+        <li>👑 Pendukung terbanyak jadi <b>Sahabat Admin</b> dengan mahkota khusus</li>
+        <li>💛 Setiap kopi juga membantu Admin terus membangun fasilitas usulan kalian setiap hari</li>
+      </ul>
+      <p class="tk-info">🆓 Mau gratis juga bisa: tebak fasilitas berikutnya dengan komen <code>Tebak: ...</code>, tebakan benar dapat <b>+2 Biji Kopi</b>!</p>
+      ${tombol('☕ Traktir Kopi Admin & dapatkan Biji Kopi')}
+    </div>`;
+  }
+
   function pokobollHTML() {
     const P = T.pokoboll; if (!P || !P.tampil) return '';
     const D = (window.Pokomen && window.Pokomen.data && window.Pokomen.data()) || {};
@@ -131,7 +177,7 @@
   function render() {
     $('tkDompet').innerHTML = dompet();
     for (const b of sec.querySelectorAll('.tk-tabs button')) b.setAttribute('aria-selected', String(b.dataset.tab === tab));
-    $('tkIsi').innerHTML = tab === 'toko' ? tokoTab() : tab === 'latihan' ? latihanTab() : arenaTab();
+    $('tkIsi').innerHTML = tab === 'kopi' ? kopiTab() : tab === 'toko' ? tokoTab() : tab === 'latihan' ? latihanTab() : arenaTab();
     for (const b of sec.querySelectorAll('.tk-beli')) b.onclick = () => beli(b.dataset.item);
     for (const b of sec.querySelectorAll('.tk-latih-btn')) b.onclick = () => latih(b.dataset.stat, b);
     for (const b of sec.querySelectorAll('.tk-terima')) b.onclick = () => arena('terima', { id: b.dataset.id }, b);
@@ -595,6 +641,11 @@
   for (const b of sec.querySelectorAll('.tk-tabs button')) b.onclick = () => { tab = b.dataset.tab; render(); };
   if (qs.get('duel')) { tab = 'arena'; setTimeout(() => bukaReplay(qs.get('duel')), 900); }
   if (location.hash === '#toko') tab = 'toko';
+  if (location.hash === '#bijikopi') tab = 'kopi';
+  // tombol "Dapatkan Biji Kopi" di atas → buka tutorial dulu (tautan Trakteer ada di dalamnya)
+  const bukaKopi = (e) => { if (sec.hidden) return; e.preventDefault(); tab = 'kopi'; render(); sec.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  for (const id of ['traktirTop']) { const el = $(id); if (el) el.addEventListener('click', bukaKopi); }
+  for (const b of sec.querySelectorAll('.tk-tabs button')) b.addEventListener('click', () => { if (b.dataset.tab === 'kopi') try { history.replaceState(null, '', '#bijikopi'); } catch { /* ignore */ } });
   muat();
   setInterval(() => { if (!document.hidden && !sec.hidden && tab === 'arena') muat(); }, 30000);
 })();

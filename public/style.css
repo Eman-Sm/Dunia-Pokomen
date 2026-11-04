@@ -735,3 +735,15 @@ code,
 .fas-list { background: #e7f6dd; border: var(--px) solid var(--outline); padding: 10px 12px; margin: 8px 0; }
 .fas-list ul { margin: 6px 0 0; padding-left: 18px; }
 .linkish { background: none; border: 0; padding: 0; font: inherit; font-weight: 800; color: #2b6cb0; text-decoration: underline; cursor: pointer; }
+/* 4 Nov: tab Biji Kopi */
+.tk-kopi h4 { margin: 14px 0 6px; }
+.tk-kopi-hero { background: #3a2a4a; color: #fff4dc; border: var(--px) solid var(--outline); padding: 12px 14px; }
+.tk-kopi-hero b { color: #ffd23f; font-size: 1.1em; }
+.tk-kopi-hero p { margin: 6px 0; }
+.tk-kopi-saldo b { color: #ffd23f; }
+.tk-kopi-cta { margin: 8px 0 4px; }
+.tk-langkah { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+.tk-paket { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.tk-paket div { background: #fff4dc; border: var(--px) solid var(--outline); padding: 8px; display: grid; gap: 2px; }
+.tk-paket b { font-size: 1.05em; } .tk-paket span { color: #a06c00; font-weight: 800; } .tk-paket em { font-style: normal; font-size: .9em; }
+.tk-guna { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
