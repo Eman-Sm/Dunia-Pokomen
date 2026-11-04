@@ -150,10 +150,10 @@
   }
   const sleeping = () => { const h = jamWIB(); return h >= 22 || h < 5; };
   const EMO = ['♥', '♪', '!', '?', '✦'];
-  let KUMPUL = null;
+  let KUMPUL = null, OASE = null;
   function stepActors(now, dt) {
     const slp = sleeping();
-    KUMPUL = berkumpul();
+    KUMPUL = berkumpul(); OASE = fasilitas().find((f) => f.id === 'oase') || null;
     for (const w of allWarga()) {
       if (w.mati) continue;
       const a = actor(w);
@@ -166,12 +166,16 @@
       if (a.mode === 'walk') {
         const dx = a.tx - a.x, dy = a.ty - a.y, d = Math.hypot(dx, dy);
         const sp = (10 + Math.min(4, w.tier || 0) * 1.5) * (w.tier >= 5 ? 2.2 : 1) * (a.cepat ? 4 : 1) * dt / 1000;
-        if (d <= sp) { a.x = a.tx; a.y = a.ty; a.mode = 'idle'; a.until = now + rand(1500, 6000); }
+        if (d <= sp) { a.x = a.tx; a.y = a.ty; a.mode = 'idle'; a.until = now + rand(1500, 6000); if (a.minum) { a.minum = false; a.emote = '💧'; a.emoteT = now; a.until = now + rand(6000, 12000); } }
         else { a.x += dx / d * sp; a.y += dy / d * sp; a.walk += dt / 1000 * 9; if (Math.abs(dx) > .3) a.face = dx < 0 ? -1 : 1; }
       } else if (now > a.until && KUMPUL && KUMPUL.has(w.u)) {
         // berkumpul di Tereuma: jalan ke lantai alun-alun, lalu berpindah tempat di sekitarnya
         const T_ = tereuma(), ang = rand(0, Math.PI * 2), r = rand(8, 40);
         a.tx = T_.x + Math.cos(ang) * r; a.ty = T_.y + 4 + Math.sin(ang) * r * .5; a.mode = 'walk'; a.cepat = Math.hypot(a.tx - a.x, a.ty - a.y) > 80;
+      } else if (now > a.until && OASE && !slp && Math.random() < .035 && w.tier < 5) {
+        // haus & lapar: mampir ke Oase Pokomen, lalu pulang lagi
+        const ang = rand(0, Math.PI * 2); a.tx = OASE.x - 6 + Math.cos(ang) * rand(44, 54); a.ty = OASE.y + 2 + Math.sin(ang) * rand(22, 28);
+        a.mode = 'walk'; a.cepat = Math.hypot(a.tx - a.x, a.ty - a.y) > 80; a.minum = true;
       } else if (now > a.until) {
         a.cepat = false;
         if (Math.random() < .72) {

@@ -70,6 +70,47 @@ def tereuma():
     im.save(OUT + 'tereuma.png')
     return im
 
+def oase():
+    W, H = 152, 100; cx, cy = 76, 54
+    im, d = clearing(W, H, cx, cy, 72, 40, seed=7)
+    R = random.Random(11)
+    # tepi pasir & kolam
+    ell(d, cx - 6, cy + 2, 46, 23, (226, 204, 150, 255), OL)
+    ell(d, cx - 6, cy + 1, 40, 19, (58, 140, 210, 255), OL)
+    ell(d, cx - 8, cy - 1, 34, 15, (90, 172, 232, 255))
+    for k in range(9):
+        x = cx - 6 + R.uniform(-28, 28); y = cy + R.uniform(-9, 9)
+        d.line((x - 3, y, x + 3, y), fill=(200, 236, 255, 255))
+    for lx, ly in ((cx - 26, cy + 4), (cx + 10, cy - 6)):  # daun teratai
+        ell(d, lx, ly, 5, 2.5, (86, 168, 70, 255), OL); d.point((lx + 2, ly - 1), fill=(255, 150, 190, 255))
+    # dermaga kayu kecil
+    d.polygon([(cx + 22, cy + 4), (cx + 38, cy - 2), (cx + 42, cy + 2), (cx + 26, cy + 8)], fill=(176, 120, 66, 255), outline=OL)
+    for k in range(3): d.line((cx + 26 + k * 5, cy + 6 - k * 2, cx + 30 + k * 5, cy + 1 - k * 2), fill=(130, 84, 44, 255))
+    # palung minum & tempat makan (jerami)
+    d.rectangle((cx + 36, cy + 16, cx + 58, cy + 23), fill=(150, 98, 52, 255), outline=OL); d.rectangle((cx + 38, cy + 17, cx + 56, cy + 19), fill=(90, 172, 232, 255))
+    d.rectangle((cx - 60, cy + 12, cx - 40, cy + 21), fill=(150, 98, 52, 255), outline=OL)
+    for k in range(8): d.line((cx - 58 + k * 2.4, cy + 13, cx - 57 + k * 2.4, cy + 9 - (k % 3)), fill=(236, 200, 90, 255))
+    for fx, fy in ((cx - 34, cy + 26), (cx - 24, cy + 29)):  # mangkuk buah
+        ell(d, fx, fy, 5, 2.5, (196, 140, 84, 255), OL); d.point((fx - 2, fy - 2), fill=(230, 70, 60, 255)); d.point((fx + 1, fy - 2), fill=(255, 200, 60, 255))
+    # pohon kelapa
+    for px, py in ((cx - 52, cy - 8), (cx + 50, cy - 14)):
+        d.line((px, py, px + 3, py - 26), fill=(150, 104, 60, 255), width=3); d.line((px - 1, py, px + 2, py - 26), fill=OL)
+        tx, ty = px + 3, py - 27
+        for a in (math.pi, -2.4, -1.57, -0.75, 0, 2.6, 0.5):
+            ex, ey = tx + math.cos(a) * 16, ty + math.sin(a) * 8 + 5
+            mx, my = (tx + ex) / 2, (ty + ey) / 2 - 4
+            nx, ny = -(ey - ty), (ex - tx); L = math.hypot(nx, ny) or 1; nx, ny = nx / L * 2.5, ny / L * 2.5
+            d.polygon([(tx, ty), (mx + nx, my + ny), (ex, ey), (mx - nx, my - ny)], fill=(70, 160, 64, 255), outline=OL)
+        ell(d, tx, ty + 2, 3, 2, (120, 80, 40, 255))
+    # batu & alang-alang
+    for bx, by in ((cx - 44, cy - 6), (cx + 30, cy + 18), (cx - 10, cy + 26)):
+        ell(d, bx, by, 4, 2.5, (150, 150, 158, 255), OL)
+    for rx_ in (cx - 40, cx - 37, cx + 18, cx + 21):
+        d.line((rx_, cy - 10, rx_ + 1, cy - 18), fill=(70, 130, 60, 255), width=1)
+    im.save(OUT + 'oase.png')
+    return im
+
 if __name__ == '__main__':
+    oase()
     tereuma()
     print('ok')
