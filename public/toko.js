@@ -117,8 +117,8 @@
     const nama = (u) => ((D.warga || []).find((w) => w.u === u) || {}).nama || u;
     return `<p class="tk-info">${A.buka ? '🟢 Arena <b>BUKA</b>' : '🔴 Arena <b>TUTUP</b>'} · setiap hari pukul ${String(A.jam?.[0] ?? 7).padStart(2, '0')}.00–${A.jam?.[1] ?? 21}.00 WIB · maks. 5 tantangan per hari</p>
       <p class="tk-info">🎮 <b>Main langsung!</b> Pilih <b>3 kartu jurus</b> (⚔️ Serang > ⚡ Jurus > 🛡️ Tahan > ⚔️ Serang). Setelah tantangan diterima, duel dimulai <b>5 menit kemudian</b> (atau langsung, kalau kalian berdua menekan <b>Siap, mulai sekarang!</b>) dan <b>kedua pemilik</b> bertarung sendiri: tekan <b>TAP</b> tepat waktu untuk serangan <b>SEMPURNA</b> dan <b>tangkisan</b>. Kalian berdua mendapat pemberitahuan. Tidak datang = hewanmu bertarung otomatis.</p>
-      <p class="tk-info">🏆 <b>Liga Arena</b>: menang <b>+1 poin</b>, kalah <b>−1 poin</b> (poin terendah 0). Tantangan berlaku <b>12 jam</b>; menolak atau tidak menjawab = kalah. Poin sama? Ditentukan <b>head to head</b>. Lawan harus <b>setingkat</b> atau <b>selisih 1 tingkat</b>. Peringkat 1 di akhir musim dapat <b>💎 1 Batu Evolusi</b>.</p>
-      ${masuk.length ? `<div class="tk-masuk"><b>⚔️ Kamu ditantang!</b>${masuk.map((t) => `<div><span>${esc(t.namaDari)} menantang ${esc(t.namaKe)} · sampai ${jam(t.sampai)}</span><button class="btn tk-terima" type="button" data-id="${esc(t.id)}">Terima</button><button class="btn ghost tk-tolak" type="button" data-id="${esc(t.id)}">Tolak</button></div>`).join('')}</div>` : ''}
+      <p class="tk-info">🏆 <b>Liga Arena</b>: menang <b>+1 poin</b>, kalah <b>−1 poin</b> (poin terendah 0). Tantangan berlaku <b>12 jam Arena buka</b> (jam tutup tidak dihitung). <b>Tidak dijawab = bertarung otomatis</b>, bukan kalah. Boleh <b>Lewati</b> 2x per hari tanpa akibat. Tiap hewan maks. <b>3 tantangan masuk</b> per hari. Poin sama? Ditentukan <b>head to head</b>. Lawan harus <b>setingkat</b> atau <b>selisih 1 tingkat</b>. Peringkat 1 di akhir musim dapat <b>💎 1 Batu Evolusi</b>.</p>
+      ${masuk.length ? `<div class="tk-masuk"><b>⚔️ Kamu ditantang!</b>${masuk.map((t) => `<div><span>${esc(t.namaDari)} menantang ${esc(t.namaKe)} · sampai ${new Date(t.sampai).toLocaleString("id-ID", { weekday: "short", hour: "2-digit", minute: "2-digit" })}</span><button class="btn tk-terima" type="button" data-id="${esc(t.id)}">Terima</button><button class="btn ghost tk-tolak" type="button" data-id="${esc(t.id)}">Lewati</button></div>`).join('')}</div>` : ''}
       ${me && (me.sesi || []).length ? `<div class="tk-masuk tk-jadwal"><b>📅 Duel terjadwal · tetap di halaman ini, duel dimulai otomatis!</b><small class="muted">Kalau kalian berdua menekan <b>Siap, mulai sekarang!</b>, duel langsung dimulai. Kalau tidak, duel mulai sesuai jadwal.</small>${me.sesi.map((x) => { const saya = x.sisi === 'a' ? x.A : x.B, lawan = x.sisi === 'a' ? x.B : x.A; const sy = x.siap || {}, aku = !!sy[x.sisi], dia = !!sy[x.sisi === 'a' ? 'b' : 'a'], belum = Date.parse(x.mulai) > kini();
         const tombolSiap = belum && !x.sudahMain ? (aku ? `<span class="muted">✅ Kamu siap${dia ? '' : ' · menunggu lawan menekan Siap…'}</span>` : `<button class="btn green tk-siap" type="button" data-id="${esc(x.id)}">✅ Siap, mulai sekarang!</button>`) : '';
         return `<div><span><b>${esc(saya.nama)}</b> vs <b>${esc(lawan.nama)}</b> · pukul ${jam(x.mulai)} · <em data-hitung="${esc(x.id)}">…</em>${belum && dia && !aku ? ' · <b>⚡ Lawan sudah siap!</b>' : ''}</span>${tombolSiap}${x.sudahMain ? '<span class="muted">Kamu sudah bertarung, menunggu lawan…</span>' : `<button class="btn tk-main" type="button" data-id="${esc(x.id)}" disabled>⚔️ MAIN!</button>`}</div>`; }).join('')}</div>` : ''}
@@ -187,7 +187,9 @@
     if (btn) btn.disabled = true;
     const r = await post('api/arena', { aksi, ...body });
     if (r.error) toast(r.error);
-    else if (aksi === 'tantang') toast(`Tantangan untuk ${r.tantangan.namaKe} terkirim! Tunggu dia menerima (12 jam).`);
+    else if (aksi === 'tolak' && r.lewati) toast(`Tantangan dilewati. Sisa jatah Lewati hari ini: ${r.sisaLewati}x.`);
+    else if (aksi === 'tolak' && r.otomatis) { toast('Jatah Lewati hari ini habis, jadi hewanmu bertarung otomatis!'); if (r.duel) bukaReplay(r.duel.id, r.duel); }
+    else if (aksi === 'tantang') toast(`Tantangan untuk ${r.tantangan.namaKe} terkirim! Kalau tidak dijawab, kalian bertarung otomatis.`);
     else if (aksi === 'terima') { if (r.sekarang) SKEW = r.sekarang - Date.now(); toast(`Tantangan diterima! Duel dimulai pukul ${r.pukul} WIB (5 menit lagi). Tetap di halaman Arena ya!`); }
     await muat();
   }
@@ -354,7 +356,7 @@
     }
     ctx.textAlign = 'center'; ctx.fillStyle = '#fff4dc'; ctx.font = F(22, 800);
     ctx.fillText(potong(ctx, (d.catatan && d.catatan[0]) || `${d.namaB} tidak menjawab tantangan.`, W - 40), W / 2, H - 70);
-    ctx.font = F(16, 600); ctx.fillStyle = '#e6d8ff'; ctx.fillText('Tidak ada pertarungan: yang ditantang dianggap kalah (−1 poin).', W / 2, H - 40);
+    ctx.font = F(16, 600); ctx.fillStyle = '#e6d8ff'; ctx.fillText('Aturan lama · sejak 4 Nov poin W.O. sudah dikembalikan.', W / 2, H - 40);
   }
   function rekOf(d, u) { return (d.riwayat && d.riwayat[u]) || { main: 0, menang: 0, beruntun: 0, daftar: [] }; }
   function mulaiUlang() { if (!RP) return; RP.t0 = performance.now(); RP.lastT = -1; RP.part = []; RP.pop = []; RP.ghost = null; RP.heboh = 0; }
