@@ -67,7 +67,8 @@
   // ---- Tab "Biji Kopi": cara mendapatkan + ajakan
   function kopiTab() {
     const D = (window.Pokomen && window.Pokomen.data && window.Pokomen.data()) || {};
-    const s = T.saya, url = D.trakteer || '';
+    const top_ = $('traktirTop'), s = T.saya, url = D.trakteer || (top_ && top_.getAttribute('href') && top_.getAttribute('href') !== '#' ? top_.getAttribute('href') : '');
+    if (!url && !kopiTab.tunggu) { kopiTab.tunggu = 1; setTimeout(() => { kopiTab.tunggu = 0; if (tab === 'kopi') render(); }, 1500); }
     const tombol = (teks) => url ? `<a class="btn traktir tk-kopi-cta" href="${esc(url)}" target="_blank" rel="noopener">${teks}</a>` : '';
     const paket = [
       ['1 Kopi', '5 Biji', 'Latihan 1 sesi + sisa 2 Biji'],
