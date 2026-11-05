@@ -110,7 +110,48 @@ def oase():
     im.save(OUT + 'oase.png')
     return im
 
+def taman():
+    W, H = 150, 96; cx, cy = 75, 54
+    im, d = clearing(W, H, cx, cy, 70, 38, seed=19)
+    R = random.Random(5)
+    ell(d, cx, cy + 1, 60, 30, (200, 170, 120, 255), OL)   # jalan setapak melingkar
+    ell(d, cx, cy, 52, 25, (112, 186, 82, 255))
+    FL = [(255, 96, 140), (255, 210, 64), (180, 120, 255), (255, 150, 60), (255, 255, 255), (110, 180, 255)]
+    # 4 petak bunga berbentuk setengah lingkaran
+    for a0 in (0, 1, 2, 3):
+        a = a0 * math.pi / 2 + math.pi / 4; bx, by = cx + math.cos(a) * 30, cy + math.sin(a) * 14
+        ell(d, bx, by, 17, 8, (96, 64, 40, 255), OL); ell(d, bx, by - 1, 15, 6.5, (120, 82, 50, 255))
+        for _ in range(70):
+            t_ = R.random() * math.tau; r_ = R.random() ** .5
+            x, y = bx + math.cos(t_) * 13 * r_, by - 1 + math.sin(t_) * 5 * r_
+            c = FL[(a0 * 2 + R.randrange(3)) % len(FL)]
+            d.rectangle((x, y - 1, x + 1, y), fill=c + (255,))
+    # air mancur di tengah
+    ell(d, cx, cy + 2, 12, 6, (150, 150, 158, 255), OL); ell(d, cx, cy + 1, 9, 4, (90, 172, 232, 255))
+    d.rectangle((cx - 2, cy - 10, cx + 2, cy + 1), fill=(176, 176, 186, 255), outline=OL)
+    for k in (-1, 1):
+        d.line((cx, cy - 12, cx + k * 6, cy - 6), fill=(160, 214, 255, 255)); d.line((cx + k * 6, cy - 6, cx + k * 7, cy - 2), fill=(160, 214, 255, 255))
+    d.point((cx, cy - 14), fill=(200, 236, 255, 255))
+    # gerbang lengkung bunga di tepi depan
+    gx, gy = cx, cy + 37
+    for px in (gx - 11, gx + 11): d.rectangle((px - 1, gy - 14, px + 1, gy), fill=(150, 98, 52, 255), outline=OL)
+    d.arc((gx - 13, gy - 26, gx + 13, gy - 4), 180, 360, fill=OL, width=4); d.arc((gx - 12, gy - 25, gx + 12, gy - 5), 180, 360, fill=(80, 160, 70, 255), width=2)
+    for k in range(7):
+        a = math.pi + k / 6 * math.pi; x, y = gx + math.cos(a) * 12, gy - 15 + math.sin(a) * 10
+        d.rectangle((x - 1, y - 1, x + 1, y + 1), fill=FL[k % len(FL)] + (255,))
+    # pagar tanaman di belakang & kupu-kupu
+    for k in range(7):
+        hx = cx - 42 + k * 14; ell(d, hx, cy - 24 - abs(k - 3) * -1, 8, 5, (62, 140, 62, 255), OL)
+    for bx, by, c in ((cx - 44, cy - 6, (255, 210, 64)), (cx + 46, cy - 10, (255, 120, 180)), (cx + 20, cy - 26, (180, 140, 255))):
+        d.polygon([(bx, by), (bx - 3, by - 3), (bx - 3, by + 1)], fill=c + (255,)); d.polygon([(bx, by), (bx + 3, by - 3), (bx + 3, by + 1)], fill=c + (255,))
+    # bangku
+    for bx, by in ((cx - 50, cy + 14), (cx + 50, cy + 14)):
+        d.rectangle((bx - 6, by - 3, bx + 6, by), fill=(150, 98, 52, 255), outline=OL); d.line((bx - 4, by + 1, bx - 4, by + 3), fill=OL); d.line((bx + 4, by + 1, bx + 4, by + 3), fill=OL)
+    im.save(OUT + 'taman.png')
+    return im
+
 if __name__ == '__main__':
+    taman()
     oase()
     tereuma()
     print('ok')
