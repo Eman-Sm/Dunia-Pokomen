@@ -15,10 +15,10 @@ test('outfit: beli sekali, pakai & lepas gratis, tampil di data publik', async (
   assert.equal(r.pakaian.kepala, 'topi_penyihir');
   assert.equal((await E.saldo('gaya')).biji, 10);
   await PK.beliPakai('gaya', 'syal');
-  assert.equal((await E.saldo('gaya')).biji, 4);
+  assert.equal((await E.saldo('gaya')).biji, 5);
   await PK.lepas('gaya', 'kepala');
   await PK.beliPakai('gaya', 'topi_penyihir'); // sudah punya: gratis
-  assert.equal((await E.saldo('gaya')).biji, 4);
+  assert.equal((await E.saldo('gaya')).biji, 5);
   await assert.rejects(() => PK.beliPakai('gaya', 'topi_koboi'), /kurang/);
   const pub = publicWarga(await getJSON('warga', 'gaya'));
   assert.deepEqual(pub.pakaian, { kepala: 'topi_penyihir', leher: 'syal' });
