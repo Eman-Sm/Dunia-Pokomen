@@ -80,7 +80,7 @@
     const all = hewan.join(' ');
     const tier = Number(w.tier || 0);
     const pal = w.pal && /^#[0-9a-f]{6}$/i.test(w.pal.body) ? w.pal : null; // colours taken from the anime card art
-    const k = (w.u || w.nama) + '|' + all + '|' + tier + '|' + (w.elemen || '') + '|' + (w.outfit || '') + '|' + (w.wujud || '') + (pal ? '|' + pal.body + (pal.acc || '') + (pal.acc2 || '') : '');
+    const k = (w.u || w.nama) + '|' + all + '|' + tier + '|' + (w.elemen || '') + '|' + (w.outfit || '') + '|' + (w.wujud || '') + (pal ? '|' + pal.body + (pal.acc || '') + (pal.acc2 || '') : '') + (w.pakaian && window.Pakaian ? '|p' + window.Pakaian.kunci(w.pakaian) : '');
     if (cache.has(k)) return cache.get(k);
     const seed = hash(k);
     const S = 26;
@@ -220,6 +220,8 @@
       f.fillStyle = steel; f.fillRect(X - 3, oy + 15, 7, 4);                          // chest plate
       fpx(X, oy + 16, elCol || '#5ff0ff');                                            // gem
     }
+    // outfit Toko (kepala / mata / leher), semua tingkat
+    if (w.pakaian && window.Pakaian) window.Pakaian.draw(f, X, oy + hy, 5.6, 4.8, { dx: 2.5, dy: -.4 }, w.pakaian);
     // halo (God Mode)
     if (tier >= 5) { f.strokeStyle = '#ffd23f'; f.lineWidth = 1; f.beginPath(); f.ellipse(X + .5, oy + 1.5, 5, 1.6, 0, 0, Math.PI * 2); f.stroke(); }
     // outline everything

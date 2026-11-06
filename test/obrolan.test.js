@@ -41,3 +41,23 @@ test('tulis & baca obrolan', async () => {
   assert.equal((await ob.lapor({ token: await ob.tokenFor('x3'), id })).disembunyikan, true);
   assert.equal((await ob.baca('semua')).length, 0);
 });
+
+test('Ruang Ketua: hanya ketua yang bisa membaca & menulis, tidak terbaca publik', async () => {
+  const W = await import('../lib/wilayah.js');
+  await setJSON('warga', 'ketsatu', newWarga({ username: 'ketsatu', nama: 'Raja', hewan: ['Singa'], spot: 3 }));
+  await setJSON('warga', 'biasa1', newWarga({ username: 'biasa1', nama: 'Rakyat', hewan: ['Kucing'], spot: 4 }));
+  await W.setCfg({ ketuaOtomatis: { 1: 'ketsatu' } });
+  const kk = await ob.tokenFor('ketsatu'), kb = await ob.tokenFor('biasa1');
+  assert.equal(await ob.isKetua('ketsatu'), true);
+  assert.equal(await ob.isKetua('biasa1'), false);
+  const r = await ob.tulis({ token: kk, ruang: 'ketua', text: 'rapat ketua jam 8' });
+  assert.equal(r.ok, true);
+  assert.match((await ob.tulis({ token: kb, ruang: 'ketua', text: 'boleh ikut?' })).error, /Ketua/);
+  assert.match((await ob.bacaKetua({ token: kb })).error, /Ketua/);
+  const baca = await ob.bacaKetua({ token: kk });
+  assert.equal(baca.pesan.at(-1).text, 'rapat ketua jam 8');
+  assert.ok(baca.anggota.some((a) => a.u === 'ketsatu'));
+  const { GET } = await import('../api/obrolan.js');
+  const res = await GET(new Request('https://x/api/obrolan?ruang=ketua'));
+  assert.equal(res.status, 403);
+});

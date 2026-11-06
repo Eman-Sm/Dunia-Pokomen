@@ -140,7 +140,29 @@
         <div class="harga">${x.biji} Biji</div>
         ${['nama', 'rupa', 'elemen', 'kekuatan'].includes(x.id) ? `<input class="tk-nilai" data-for="${x.id}" maxlength="60" placeholder="${{ nama: 'Nama baru', rupa: 'mis. Kucing + Naga', elemen: 'mis. Petir', kekuatan: 'Skill baru' }[x.id]}">` : ''}
         <button class="btn tk-beli" type="button" data-item="${x.id}" ${T.saya ? '' : 'disabled'}>${konfirm === x.id ? 'Yakin? Tekan lagi' : 'Beli'}</button></div>`).join('')}
-      <div class="tk-item segera"><div class="ik">👕</div><b>Outfit</b><span>Baju & aksesori untuk hewanmu</span><div class="harga">Segera</div></div></div>`;
+</div>` + outfitHTML();
+  }
+  // 6 Nov: Outfit Toko — beli sekali, pakai & lepas gratis, terlihat di peta untuk semua tingkat
+  function outfitHTML() {
+    const O = T.outfit; if (!O || !(O.katalog || []).length) return '';
+    const s = T.saya, punya = new Set((s && s.lemari) || []), pakai = (s && s.pakaian) || {};
+    return `<div class="tk-outfit"><h4>👕 Lemari Outfit</h4><p class="muted">Beli sekali, lalu pakai & lepas <b>gratis</b> kapan saja. Satu barang untuk tiap bagian (kepala, mata, leher). Terlihat di peta untuk <b>semua tingkat</b>.</p>
+      <div class="tk-grid">${O.katalog.map((x) => {
+        const dipakai = pakai[x.bagian] === x.id, ada = punya.has(x.id);
+        const lab = dipakai ? 'Lepas' : ada ? 'Pakai' : konfirm === 'of-' + x.id ? 'Yakin? Tekan lagi' : 'Beli & pakai';
+        return `<div class="tk-item${dipakai ? ' tk-dipakai' : ''}"><canvas class="tk-of-cv" width="80" height="80" data-id="${esc(x.id)}" data-bagian="${esc(x.bagian)}" aria-hidden="true"></canvas><b>${esc(x.label)}</b><span>${esc(O.bagian[x.bagian] || x.bagian)}${dipakai ? ' · sedang dipakai' : ''}</span>
+          <div class="harga">${ada ? 'Sudah punya' : x.biji + ' Biji'}</div>
+          <button class="btn tk-of" type="button" data-id="${esc(x.id)}" data-bagian="${esc(x.bagian)}" data-aksi="${dipakai ? 'lepas' : 'pakai'}" data-punya="${ada ? 1 : 0}" ${s ? '' : 'disabled'}>${lab}</button></div>`;
+      }).join('')}</div></div>`;
+  }
+  async function outfit(b) {
+    const id = b.dataset.id, beliBaru = b.dataset.aksi === 'pakai' && b.dataset.punya !== '1';
+    if (beliBaru && konfirm !== 'of-' + id) { konfirm = 'of-' + id; render(); setTimeout(() => { if (konfirm === 'of-' + id) { konfirm = null; render(); } }, 4000); return; }
+    konfirm = null; b.disabled = true;
+    const r = await post('api/toko', b.dataset.aksi === 'lepas' ? { aksi: 'outfit_lepas', bagian: b.dataset.bagian } : { aksi: 'outfit_pakai', id });
+    if (r.error) { toast(r.error); render(); return; }
+    toast(r.pesan); T.saya = r.saya; render();
+    if (window.Pokomen && window.Pokomen.reload) window.Pokomen.reload();
   }
 
   function latihanTab() {
@@ -180,6 +202,8 @@
     for (const b of sec.querySelectorAll('.tk-tabs button')) b.setAttribute('aria-selected', String(b.dataset.tab === tab));
     $('tkIsi').innerHTML = tab === 'kopi' ? kopiTab() : tab === 'toko' ? tokoTab() : tab === 'latihan' ? latihanTab() : arenaTab();
     for (const b of sec.querySelectorAll('.tk-beli')) b.onclick = () => beli(b.dataset.item);
+    for (const b of sec.querySelectorAll('.tk-of')) b.onclick = () => outfit(b);
+    if (window.Pakaian) for (const cv of sec.querySelectorAll('.tk-of-cv')) window.Pakaian.preview(cv, cv.dataset.id, cv.dataset.bagian);
     for (const b of sec.querySelectorAll('.tk-latih-btn')) b.onclick = () => latih(b.dataset.stat, b);
     for (const b of sec.querySelectorAll('.tk-terima')) b.onclick = () => arena('terima', { id: b.dataset.id }, b);
     for (const b of sec.querySelectorAll('.tk-siap')) b.onclick = async () => {

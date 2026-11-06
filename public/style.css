@@ -609,6 +609,11 @@ body.ringan .kartu .foil, body.ringan .kartu .glare { display: none; }
 .tk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
 .tk-item { background: #fff; border: var(--px) solid var(--outline); padding: 10px; display: grid; gap: 6px; align-content: start; text-align: center; }
 .tk-item .ik { font-size: 2rem; line-height: 1; }
+.tk-outfit { margin-top: 18px; }
+.tk-outfit h4 { margin: 0 0 4px; font-family: var(--font-display); }
+.tk-of-cv { width: 80px; height: 80px; margin: 0 auto; image-rendering: auto; }
+.tk-item.tk-dipakai { background: #fff6d8; }
+.ob-list .ketua-info span, #obList .ketua-info span { color: #7a3fb0; font-weight: 700; }
 .tk-item b { font-family: var(--font-display); font-size: 1.05rem; }
 .tk-item span { font-size: .88rem; color: var(--ink-soft); }
 .tk-item .harga { font-family: var(--font-display); font-size: 1.15rem; color: #8a4f12; }

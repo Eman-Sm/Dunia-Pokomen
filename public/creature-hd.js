@@ -404,6 +404,9 @@
       path(g, (c) => { c.moveTo(X + 2.5, HY + 6); c.lineTo(X + 4.6, HY + 10.5); c.lineTo(X + 2.6, HY + 10); c.lineTo(X + 1.5, HY + 6.4); c.closePath(); }, shade(oc, .85));
     }
 
+    // =============== OUTFIT TOKO (kepala / mata / leher)
+    if (w.pakaian && window.Pakaian) window.Pakaian.draw(g, X, HY, HRX, HRY, { dx: 2.65, dy: .1 }, w.pakaian);
+
     // =============== GOD MODE extras
     if (god === 'kaiju') for (let k = 0; k < 4; k++) poly(g, [[X - 3 + k * 2, HY - 5.2 + (k === 1 || k === 2 ? -.3 : 0)], [X - 2 + k * 2, HY - 8.8], [X - 1 + k * 2, HY - 5.2]], '#c8f06a', '#7aa040', .2);
     if (god === 'beast') for (let k = 0; k < 4; k++) poly(g, [[X - 3.5 + k * 2.3, BY - 4.6], [X - 2.4 + k * 2.3, BY - 7.4], [X - 1.3 + k * 2.3, BY - 4.6]], '#c8ced8', '#5c6678', .2);

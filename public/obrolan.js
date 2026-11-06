@@ -28,6 +28,7 @@
     const el = $('obTabs'); el.innerHTML = '';
     const rooms = [['semua', 'Semua warga']];
     for (const n of wilayahList()) { const l = ((window.Pokomen && window.Pokomen.data && window.Pokomen.data()) || {}).usulNamaWilayah || {}; const r = (l[n] || []).find((x) => x.status === 'resmi'); const nm = r ? ' · ' + r.nama : ''; rooms.push(['w' + n, state.me && state.me.wil === n ? `Wilayahku (${n}${nm})` : `Wilayah ${n}${nm}`]); }
+    if (state.me && state.me.ketua) rooms.push(['ketua', '👑 Ruang Ketua']);
     for (const [r, lab] of rooms) {
       const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.textContent = lab;
       b.setAttribute('aria-selected', String(r === state.ruang));
@@ -38,7 +39,7 @@
     canWrite();
   }
   function canWrite() {
-    const ok = !!state.me && (state.ruang === 'semua' || state.ruang === 'w' + state.me.wil) && !state.kunci;
+    const ok = !!state.me && (state.ruang === 'semua' || state.ruang === 'w' + state.me.wil || (state.ruang === 'ketua' && state.me.ketua)) && !state.kunci;
     $('obForm').hidden = !state.me;
     $('obJoin').hidden = !!state.me;
     $('obText').disabled = !ok; $('obSend').querySelector('button').disabled = !ok;
@@ -49,11 +50,12 @@
   function render() {
     const list = $('obList'); const msgs = state.msgs[state.ruang] || [];
     const atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 40;
-    list.innerHTML = msgs.length ? msgs.map((m) => m.sistem
+    const info = state.ruang === 'ketua' ? `<li class="sys ketua-info"><span>👑 Ruang rahasia para Ketua Koloni${(state.anggota || []).length ? ': ' + state.anggota.map((k) => esc(k.nama) + ' (W' + k.wil + ')').join(', ') : ''}. Warga biasa tidak bisa membaca ruang ini.</span></li>` : '';
+    list.innerHTML = info + (msgs.length ? msgs.map((m) => m.sistem
       ? `<li class="sys"><span>${esc(m.text)}</span><time>${jam(m.t)}</time></li>`
       : `<li${state.me && m.u === state.me.u ? ' class="me"' : ''}><button type="button" class="ob-name${(m.tier || 0) >= 4 ? ' emas' : ''}" data-u="${esc(m.u)}" style="color:${TIERC[Math.min(5, m.tier || 0)]}">${m.gelar ? '♛ ' : ''}${m.kopi ? '<span title="Pendukung Kopi Admin">☕</span> ' : ''}${esc(m.nama)}</button><span class="ob-wil">W${m.wil}</span><time>${jam(m.t)}</time>
          <button type="button" class="ob-flag" data-id="${m.id}" title="Laporkan pesan ini" aria-label="Laporkan">⚑</button><p>${esc(m.text)}</p></li>`).join('')
-      : `<li class="empty">Belum ada obrolan di sini. ${state.me ? 'Sapa duluan yuk!' : ''}</li>`;
+      : `<li class="empty">Belum ada obrolan di sini. ${state.me ? 'Sapa duluan yuk!' : ''}</li>`);
     list.querySelectorAll('.ob-name').forEach((b) => (b.onclick = () => window.Pokomen && window.Pokomen.focus(b.dataset.u)));
     list.querySelectorAll('.ob-flag').forEach((b) => (b.onclick = async () => {
       if (!TOKEN) { $('obJoin').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
@@ -65,14 +67,16 @@
   }
   async function fetchRoom(r) {
     const sejak = state.last[r] || 0;
-    const d = await fetch(`api/obrolan?ruang=${r}&sejak=${sejak}`, { cache: 'no-store' }).then((x) => x.json());
+    const rahasia = r === 'ketua';
+    const d = rahasia ? await api({ aksi: 'baca', ruang: 'ketua', token: TOKEN, sejak }) : await fetch(`api/obrolan?ruang=${r}&sejak=${sejak}`, { cache: 'no-store' }).then((x) => x.json());
     if (d.error) return;
+    if (rahasia) state.anggota = d.anggota || [];
     state.kunci = !!d.kunci;
     const arr = state.msgs[r] || (state.msgs[r] = []);
     for (const m of d.pesan) {
       if (arr.some((x) => x.id === m.id)) continue;
       arr.push(m); state.last[r] = Math.max(state.last[r] || 0, m.id);
-      if (!m.sistem && sejak && Date.now() - Date.parse(m.t) < 15000) state.bubbles.push({ u: m.u, text: m.text, at: Date.now() });
+      if (!rahasia && !m.sistem && sejak && Date.now() - Date.parse(m.t) < 15000) state.bubbles.push({ u: m.u, text: m.text, at: Date.now() });
     }
     if (arr.length > 200) arr.splice(0, arr.length - 200);
   }
@@ -95,7 +99,7 @@
     $('obErr').textContent = '';
     const r = await api({ token: TOKEN, ruang: state.ruang, text });
     if (r.error) { $('obErr').textContent = r.error; return false; }
-    state.bubbles.push({ u: r.pesan.u, text: r.pesan.text, at: Date.now() });
+    if (state.ruang !== 'ketua') state.bubbles.push({ u: r.pesan.u, text: r.pesan.text, at: Date.now() }); // Ruang Ketua: tidak muncul di peta
     await poll(true); return true;
   }
   async function init() {
@@ -111,7 +115,7 @@
     if (TOKEN) {
       try {
         const r = await api({ aksi: 'cek', token: TOKEN });
-        if (r.ok) { state.me = r; state.ruang = 'semua'; $('obWho').innerHTML = `Masuk sebagai <b>${esc(r.nama)}</b> · Wilayah ${r.wil}`; }
+        if (r.ok) { state.me = r; state.ruang = 'semua'; $('obWho').innerHTML = `Masuk sebagai <b>${esc(r.nama)}</b> · Wilayah ${r.wil}${r.ketua ? ' · 👑 Ketua' : ''}`; }
         else { TOKEN = ''; try { localStorage.removeItem('pokomen_k'); } catch { /* ignore */ } $('obWho').textContent = 'Link pribadi sudah tidak berlaku.'; }
       } catch { /* ignore */ }
     }
@@ -121,7 +125,7 @@
     if (location.hash === '#obrolan') setTimeout(() => $('obrolan').scrollIntoView({ behavior: 'smooth' }), 800);
   }
   // siapa yang baru ngobrol (untuk berkumpul di Tereuma)
-  const aktif = (ms) => { const now = Date.now(), set = new Set(); for (const arr of Object.values(state.msgs)) for (const m of arr) if (!m.sistem && m.u && now - Date.parse(m.t) < ms) set.add(m.u); return set; };
+  const aktif = (ms) => { const now = Date.now(), set = new Set(); for (const [r, arr] of Object.entries(state.msgs)) if (r !== 'ketua') for (const m of arr) if (!m.sistem && m.u && now - Date.parse(m.t) < ms) set.add(m.u); return set; };
   window.PokoChat = { aktif, bubbles: () => { const now = Date.now(); state.bubbles = state.bubbles.filter((b) => now - b.at < 7000); return state.bubbles; } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
