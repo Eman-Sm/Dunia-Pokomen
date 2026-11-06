@@ -131,7 +131,11 @@ export async function GET(request) {
       dukunganUnit: process.env.TRAKTEER_UNIT_NAME || 'Kopi Admin',
       usulan: us,
       wajibFollow: process.env.REQUIRE_FOLLOW === '1',
-      fasilitas: (await import('../lib/fasilitas.js')).publik(),
+      fasilitas: await (async () => { const f = (await import('../lib/fasilitas.js')).publik();
+        // 6 Nov: Klinik Pokomen → hewan yang kalah duel 6 jam terakhir beristirahat di sana
+        try { if (f.dibangun.some((x) => x.id === 'klinik')) { const { duelTerbaru } = await import('../lib/arena.js'); const batas = Date.now() - 6 * 3600e3;
+          f.pasien = [...new Set((await duelTerbaru(80)).filter((d) => d.kalah && Date.parse(d.t) > batas).map((d) => d.kalah))].slice(0, 30); } } catch { /* ignore */ }
+        return f; })(),
       ceritaLama: await (async () => { try { const v = await redis('GET', 'cerita_lama_v1'); return v && v !== 'jalan' ? JSON.parse(v) : v || (await redis('GET', 'cerita_lama_err')); } catch { return null; } })(),
       scanDaftar: await (async () => { try { const st = JSON.parse((await redis('GET', 'scan_daftar_v2')) || 'null'); return st && { video: st.media?.length || 0, sudah: Math.min(st.dari, st.media?.length || 0), komentar: st.komentar || 0, lahir: (st.lahir || []).length, menunggu: (st.menunggu || []).length, selesai: !!st.selesai, err: await redis('GET', 'scan_daftar_err') }; } catch { return null; } })(),
       trakteer: process.env.TRAKTEER_URL || null,

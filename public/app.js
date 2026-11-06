@@ -150,10 +150,11 @@
   }
   const sleeping = () => { const h = jamWIB(); return h >= 22 || h < 5; };
   const EMO = ['♥', '♪', '!', '?', '✦'];
-  let KUMPUL = null, OASE = null;
+  let KUMPUL = null, OASE = null, KLINIK = null, PASIEN = null;
   function stepActors(now, dt) {
     const slp = sleeping();
     KUMPUL = berkumpul(); OASE = fasilitas().find((f) => f.id === 'oase') || null;
+    KLINIK = fasilitas().find((f) => f.id === 'klinik') || null; PASIEN = KLINIK && DATA.fasilitas.pasien ? new Set(DATA.fasilitas.pasien) : null;
     for (const w of allWarga()) {
       if (w.mati) continue;
       const a = actor(w);
@@ -172,6 +173,11 @@
         // berkumpul di Tereuma: jalan ke lantai alun-alun, lalu berpindah tempat di sekitarnya
         const T_ = tereuma(), ang = rand(0, Math.PI * 2), r = rand(8, 40);
         a.tx = T_.x + Math.cos(ang) * r; a.ty = T_.y + 4 + Math.sin(ang) * r * .5; a.mode = 'walk'; a.cepat = Math.hypot(a.tx - a.x, a.ty - a.y) > 80;
+      } else if (now > a.until && PASIEN && PASIEN.has(w.u)) {
+        // kalah duel: beristirahat di halaman Klinik Pokomen sampai pulih (6 jam)
+        const ang = rand(0, Math.PI * 2), r = rand(10, 40);
+        a.tx = KLINIK.x + Math.cos(ang) * r; a.ty = KLINIK.y + 14 + Math.sin(ang) * r * .35; a.mode = 'walk'; a.cepat = Math.hypot(a.tx - a.x, a.ty - a.y) > 80;
+        a.emote = '🩹'; a.emoteT = now;
       } else if (now > a.until && OASE && !slp && Math.random() < .035 && w.tier < 5) {
         // haus & lapar: mampir ke Oase Pokomen, lalu pulang lagi
         const ang = rand(0, Math.PI * 2); a.tx = OASE.x - 6 + Math.cos(ang) * rand(44, 54); a.ty = OASE.y + 2 + Math.sin(ang) * rand(22, 28);

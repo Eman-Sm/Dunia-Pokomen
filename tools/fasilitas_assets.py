@@ -150,7 +150,44 @@ def taman():
     im.save(OUT + 'taman.png')
     return im
 
+
+def klinik():
+    W, H = 132, 100; cx, cy = 66, 58
+    im, d = clearing(W, H, cx, cy, 62, 38, seed=23)
+    ell(d, cx, cy + 12, 50, 18, (200, 170, 120, 255), OL)          # halaman
+    ell(d, cx, cy + 11, 46, 15, (220, 196, 150, 255))
+    # bangunan utama (dinding putih, atap hijau mint, isometrik sederhana)
+    bx0, bx1, by0, by1 = cx - 34, cx + 34, cy - 22, cy + 10
+    d.rectangle((bx0, by0, bx1, by1), fill=(246, 244, 236, 255), outline=OL)
+    d.rectangle((bx0 + 1, by1 - 4, bx1 - 1, by1 - 1), fill=(214, 210, 200, 255))
+    d.polygon([(bx0 - 6, by0 + 1), (cx, by0 - 22), (bx1 + 6, by0 + 1)], fill=(96, 200, 170, 255), outline=OL)
+    d.polygon([(cx, by0 - 22), (bx1 + 6, by0 + 1), (bx1 - 8, by0 + 1), (cx, by0 - 15)], fill=(64, 160, 136, 255))
+    d.line((bx0 - 6, by0 + 1, bx1 + 6, by0 + 1), fill=OL)
+    # palang merah di atap
+    px, py = cx, by0 - 9
+    d.rectangle((px - 6, py - 6, px + 6, py + 6), fill=(255, 255, 255, 255), outline=OL)
+    d.rectangle((px - 4, py - 1, px + 4, py + 1), fill=(222, 56, 56, 255)); d.rectangle((px - 1, py - 4, px + 1, py + 4), fill=(222, 56, 56, 255))
+    # pintu & jendela
+    d.rectangle((cx - 6, by1 - 16, cx + 6, by1), fill=(120, 190, 230, 255), outline=OL); d.line((cx, by1 - 16, cx, by1), fill=OL)
+    for wx in (bx0 + 8, bx1 - 20):
+        d.rectangle((wx, by0 + 7, wx + 12, by0 + 15), fill=(150, 214, 245, 255), outline=OL); d.line((wx + 6, by0 + 7, wx + 6, by0 + 15), fill=OL)
+    # papan nama
+    d.rectangle((cx - 16, by0 + 1, cx + 16, by0 + 6), fill=(222, 56, 56, 255), outline=OL)
+    # ranjang istirahat di halaman (kiri & kanan)
+    for kx in (cx - 46, cx + 38):
+        d.rectangle((kx, cy + 14, kx + 10, cy + 19), fill=(255, 255, 255, 255), outline=OL)
+        d.rectangle((kx, cy + 14, kx + 3, cy + 19), fill=(255, 170, 190, 255), outline=OL)
+        d.line((kx + 1, cy + 20, kx + 1, cy + 22), fill=OL); d.line((kx + 9, cy + 20, kx + 9, cy + 22), fill=OL)
+    # pot tanaman obat & tanda hati
+    for tx in (bx0 - 2, bx1 + 2):
+        d.rectangle((tx - 3, by1 - 4, tx + 3, by1 + 1), fill=(170, 100, 60, 255), outline=OL); ell(d, tx, by1 - 7, 4, 4, (80, 170, 80, 255), OL)
+    hx, hy = cx + 22, cy + 22
+    d.polygon([(hx, hy + 4), (hx - 4, hy), (hx - 2, hy - 2), (hx, hy), (hx + 2, hy - 2), (hx + 4, hy)], fill=(255, 96, 140, 255), outline=OL)
+    im.save(OUT + 'klinik.png')
+    return im
+
 if __name__ == '__main__':
+    klinik()
     taman()
     oase()
     tereuma()
