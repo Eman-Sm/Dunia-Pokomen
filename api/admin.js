@@ -91,6 +91,18 @@ const actions = {
     await sendDM(id, String(text));
     return { terkirim: true, igsid: id };
   },
+  async dm_cari({ q = '', max = 60 }) {
+    const { conversations, conversationMessages, userProfile } = await import('../lib/ig.js'); const out = []; let err = null;
+    try {
+      for await (const c of conversations(Number(max) || 60)) {
+        const ms = await conversationMessages(c.id).catch((e) => { err = String(e.message || e); return []; });
+        const ids = [...new Set(ms.map((x) => x.from?.id).filter(Boolean))];
+        const names = []; for (const fid of ids) names.push(ms.find((x) => x.from?.id === fid)?.from?.username || (await userProfile(fid).catch(() => ({}))).username || '?');
+        out.push({ c: c.id.slice(-6), t: c.updated_time, n: ms.length, names });
+      }
+    } catch (e) { err = String(e.message || e); }
+    return { err, jumlah: out.length, cocok: out.filter((o) => o.names.some((n) => n.toLowerCase().includes(String(q).toLowerCase()))), awal: out.slice(0, 5) };
+  },
   async tebak_audit({ id = 'klinik', apply = false }) {
     const F = await import('../lib/fasilitas.js'); const E = await import('../lib/ekonomi.js');
     const komentar = [];
