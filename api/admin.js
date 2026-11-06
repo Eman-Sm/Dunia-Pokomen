@@ -76,7 +76,15 @@ const actions = {
     if (!id && username) { const w = await getJSON('warga', key(username)); id = w?.igsid || ''; }
     if (!id && username) { // bukan warga: cari di percakapan DM terbaru (pesan masuk berisi from.username)
       const { conversations, conversationMessages } = await import('../lib/ig.js'); const u = key(username);
-      for await (const c of conversations(40)) { const ms = await conversationMessages(c.id).catch(() => []); const m = ms.find((x) => (x.from?.username || '').toLowerCase() === u); if (m) { id = m.from.id; break; } }
+      const { userProfile } = await import('../lib/ig.js');
+      for await (const c of conversations(40)) {
+        const ms = await conversationMessages(c.id).catch(() => []);
+        for (const fid of [...new Set(ms.map((x) => x.from?.id).filter(Boolean))]) {
+          const un = ms.find((x) => x.from?.id === fid)?.from?.username || (await userProfile(fid).catch(() => ({}))).username || '';
+          if (un.toLowerCase() === u) { id = fid; break; }
+        }
+        if (id) break;
+      }
     }
     if (!id) throw new Error('ID Instagram (igsid) belum diketahui');
     if (!text || String(text).length > 900) throw new Error('Isi pesan kosong / terlalu panjang');
