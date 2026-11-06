@@ -74,6 +74,10 @@ const actions = {
     // only works within 24 hours after the user's last message to the account (Instagram rule)
     let id = String(igsid || '').trim();
     if (!id && username) { const w = await getJSON('warga', key(username)); id = w?.igsid || ''; }
+    if (!id && username) { // bukan warga: cari di percakapan DM terbaru (pesan masuk berisi from.username)
+      const { conversations, conversationMessages } = await import('../lib/ig.js'); const u = key(username);
+      for await (const c of conversations(40)) { const ms = await conversationMessages(c.id).catch(() => []); const m = ms.find((x) => (x.from?.username || '').toLowerCase() === u); if (m) { id = m.from.id; break; } }
+    }
     if (!id) throw new Error('ID Instagram (igsid) belum diketahui');
     if (!text || String(text).length > 900) throw new Error('Isi pesan kosong / terlalu panjang');
     await sendDM(id, String(text));
