@@ -151,6 +151,42 @@
   const sleeping = () => { const h = jamWIB(); return h >= 22 || h < 5; };
   const EMO = ['♥', '♪', '!', '?', '✦'];
   let KUMPUL = null, OASE = null, KLINIK = null, PASIEN = null, LAPANGAN = null;
+  // 7 Nov: hewan God Mode yang sedang dikendalikan pemiliknya (dibagikan ke semua penonton)
+  let KENDALI = {}, KONTROL = false, kendaliKirim = 0, kendaliTujuan = null;
+  const tokenKu = () => { try { return new URLSearchParams(location.search).get('k') || localStorage.getItem('pokomen_k') || ''; } catch { return ''; } };
+  async function pollKendali() {
+    if (document.hidden) return;
+    try { const j = await fetch('api/obrolan?kendali=1', { cache: 'no-store' }).then((r) => r.json()); const k = j.kendali || {}; if (KONTROL && ME && kendaliTujuan) k[ME] = kendaliTujuan; KENDALI = k; } catch { /* ignore */ }
+  }
+  setInterval(pollKendali, 1500); setTimeout(pollKendali, 800);
+  async function kirimGerak(x, y) {
+    kendaliTujuan = { x, y, t: Date.now() }; KENDALI[ME] = kendaliTujuan;
+    const now = Date.now(); if (now - kendaliKirim < 220) { clearTimeout(kirimGerak.t); kirimGerak.t = setTimeout(() => kirimGerak(x, y), 240); return; }
+    kendaliKirim = now;
+    try { const r = await fetch('api/obrolan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ aksi: 'gerak', token: tokenKu(), x, y }) }).then((x_) => x_.json());
+      if (r.error) { toast(r.error); berhentiKendali(false); } } catch { /* ignore */ }
+  }
+  function mulaiKendali() {
+    const w = ME && DATA && DATA.warga.find((x) => x.u === ME);
+    if (!w || (w.tier || 0) < 5) return toast('Hanya hewan God Mode yang bisa dikendalikan.');
+    if (!tokenKu()) return toast('Buka website lewat link pribadimu dulu (DM "LINK" ke @' + IG_HANDLE + ').');
+    KONTROL = true; selected = null; $('card').hidden = true;
+    const [x, y] = posOf(w); kirimGerak(Math.round(x), Math.round(y)); flyTo(x, y, Math.max(cam.z, 3));
+    clearInterval(mulaiKendali.hb); mulaiKendali.hb = setInterval(() => { if (KONTROL && kendaliTujuan) { kendaliKirim = 0; kirimGerak(kendaliTujuan.x, kendaliTujuan.y); } }, 20000);
+    toast('🎮 Ketuk peta untuk memindahkan ' + w.nama + ' (atau pakai tombol panah / WASD).'); updateMeBar();
+  }
+  function berhentiKendali(kirim = true) {
+    KONTROL = false; kendaliTujuan = null; clearInterval(mulaiKendali.hb); if (ME) delete KENDALI[ME];
+    if (kirim) fetch('api/obrolan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ aksi: 'gerak_lepas', token: tokenKu() }) }).catch(() => {});
+    updateMeBar();
+  }
+  addEventListener('keydown', (e) => {
+    if (!KONTROL || !ME || /input|textarea|select/i.test((e.target && e.target.tagName) || '')) return;
+    const d = { ArrowUp: [0, -1], w: [0, -1], W: [0, -1], ArrowDown: [0, 1], s: [0, 1], S: [0, 1], ArrowLeft: [-1, 0], a: [-1, 0], A: [-1, 0], ArrowRight: [1, 0], d: [1, 0], D: [1, 0] }[e.key];
+    if (!d) return; e.preventDefault();
+    const w = DATA.warga.find((x) => x.u === ME); if (!w) return; const [x, y] = posOf(w);
+    kirimGerak(Math.round(x + d[0] * 28), Math.round(y + d[1] * 20));
+  });
   function stepActors(now, dt) {
     const slp = sleeping();
     KUMPUL = berkumpul(); OASE = fasilitas().find((f) => f.id === 'oase') || null;
@@ -158,6 +194,16 @@
     for (const w of allWarga()) {
       if (w.mati) continue;
       const a = actor(w);
+      const kd = KENDALI[w.u];
+      if (kd) { // dikendalikan pemilik (God Mode): berjalan ke titik tujuan, abaikan perilaku lain
+        if (Math.hypot(kd.x - a.x, kd.y - a.y) > 1) {
+          const dx = kd.x - a.x, dy = kd.y - a.y, d = Math.hypot(dx, dy), sp = 46 * dt / 1000;
+          if (d <= sp) { a.x = kd.x; a.y = kd.y; } else { a.x += dx / d * sp; a.y += dy / d * sp; a.walk += dt / 1000 * 9; if (Math.abs(dx) > .3) a.face = dx < 0 ? -1 : 1; }
+          a.mode = 'walk'; a.tx = kd.x; a.ty = kd.y;
+        } else { a.mode = 'idle'; }
+        if (now - (a.emoteT || 0) > 3500) { a.emote = '🎮'; a.emoteT = now; }
+        a.until = now + 1500; continue;
+      }
       if (w === selected || slp) { a.mode = 'idle'; a.until = now + 800; continue; }
       if (w.tier >= 3 && w.skill) {
         if (!a.skillNext) a.skillNext = now + rand(1500, 8000);
@@ -892,8 +938,9 @@
     const bar = $('meBar'); if (!bar || !DATA) return;
     const w = ME && DATA.warga.find((x) => x.u === ME);
     if (w) {
-      bar.innerHTML = `<span>★ Hewanku: <b>${esc(w.nama)}</b> @${esc(w.u)}</span><button type="button" class="linklike" id="meGo">Lihat</button><button type="button" class="linklike" id="meOff">Bukan saya</button>`;
-      $('meGo').onclick = () => select(w); $('meOff').onclick = () => setMe(null);
+      bar.innerHTML = `<span>★ Hewanku: <b>${esc(w.nama)}</b> @${esc(w.u)}</span><button type="button" class="linklike" id="meGo">Lihat</button><button type="button" class="linklike" id="meOff">Bukan saya</button>${(w.tier || 0) >= 5 ? `<button type="button" class="btn kendali-btn" id="meKendali" aria-pressed="${KONTROL}">${KONTROL ? '⏹ Berhenti mengendalikan' : '🎮 Kendalikan ' + esc(w.nama)}</button>` : ''}`;
+      $('meGo').onclick = () => select(w); $('meOff').onclick = () => { if (KONTROL) berhentiKendali(); setMe(null); };
+      if ($('meKendali')) $('meKendali').onclick = () => (KONTROL ? berhentiKendali() : mulaiKendali());
     } else {
       bar.innerHTML = `<form id="meForm"><label for="meU">Hewanmu yang mana?</label><input id="meU" type="text" placeholder="@username Instagram" autocomplete="off"><button class="btn" type="submit">Tandai</button></form><button type="button" class="linklike" id="meClose" aria-label="Tutup">×</button>`;
       $('meForm').onsubmit = (e) => { e.preventDefault(); const u = $('meU').value.toLowerCase().replace(/^@/, '').trim(); const ww = DATA.warga.find((x) => x.u === u); if (!ww) return toast('Belum ada hewan atas nama @' + u + '. Sudah komen di postingan terbaru?'); setMe(u); select(ww); };
@@ -942,6 +989,7 @@
       if (!moved) {
         const r = box.getBoundingClientRect(); const cx_ = e.clientX - r.left, cy_ = e.clientY - r.top;
         if (mePtr && cx_ >= mePtr.x && cx_ <= mePtr.x + mePtr.w && cy_ >= mePtr.y && cy_ <= mePtr.y + mePtr.h) { const mw = DATA.warga.find((x) => x.u === ME); if (mw) { select(mw); return; } }
+        if (KONTROL) { const [wx, wy] = toWorld(cx_, cy_); kirimGerak(Math.round(wx), Math.round(wy)); dragStart = null; return; }
         const w = pick(cx_, cy_);
         if (w) select(w, false); else closeCard();
       }
