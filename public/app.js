@@ -150,11 +150,11 @@
   }
   const sleeping = () => { const h = jamWIB(); return h >= 22 || h < 5; };
   const EMO = ['♥', '♪', '!', '?', '✦'];
-  let KUMPUL = null, OASE = null, KLINIK = null, PASIEN = null;
+  let KUMPUL = null, OASE = null, KLINIK = null, PASIEN = null, LAPANGAN = null;
   function stepActors(now, dt) {
     const slp = sleeping();
     KUMPUL = berkumpul(); OASE = fasilitas().find((f) => f.id === 'oase') || null;
-    KLINIK = fasilitas().find((f) => f.id === 'klinik') || null; PASIEN = KLINIK && DATA.fasilitas.pasien ? new Set(DATA.fasilitas.pasien) : null;
+    KLINIK = fasilitas().find((f) => f.id === 'klinik') || null; LAPANGAN = fasilitas().find((f) => f.id === 'lapangan') || null; PASIEN = KLINIK && DATA.fasilitas.pasien ? new Set(DATA.fasilitas.pasien) : null;
     for (const w of allWarga()) {
       if (w.mati) continue;
       const a = actor(w);
@@ -178,6 +178,10 @@
         const ang = rand(0, Math.PI * 2), r = rand(10, 40);
         a.tx = KLINIK.x + Math.cos(ang) * r; a.ty = KLINIK.y + 14 + Math.sin(ang) * r * .35; a.mode = 'walk'; a.cepat = Math.hypot(a.tx - a.x, a.ty - a.y) > 80;
         a.emote = '🩹'; a.emoteT = now;
+      } else if (now > a.until && LAPANGAN && !slp && Math.random() < .02 && w.tier < 5) {
+        // 7 Nov: main bola di Lapangan Pokomen
+        a.tx = LAPANGAN.x + rand(-56, 56); a.ty = LAPANGAN.y + rand(-22, 22); a.mode = 'walk'; a.cepat = true;
+        a.emote = '⚽'; a.emoteT = now;
       } else if (now > a.until && OASE && !slp && Math.random() < .035 && w.tier < 5) {
         // haus & lapar: mampir ke Oase Pokomen, lalu pulang lagi
         const ang = rand(0, Math.PI * 2); a.tx = OASE.x - 6 + Math.cos(ang) * rand(44, 54); a.ty = OASE.y + 2 + Math.sin(ang) * rand(22, 28);

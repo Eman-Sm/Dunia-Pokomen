@@ -186,7 +186,39 @@ def klinik():
     im.save(OUT + 'klinik.png')
     return im
 
+
+def lapangan():
+    W, H = 176, 118; cx, cy = 88, 62
+    im, d = clearing(W, H, cx, cy, 84, 52, seed=31)
+    # lapangan rumput bergaris (pandangan atas miring)
+    x0, x1, y0, y1 = cx - 64, cx + 64, cy - 30, cy + 30
+    for i in range(8):
+        a = x0 + i * 16
+        d.rectangle((a, y0, a + 15, y1), fill=(96, 178, 74, 255) if i % 2 else (112, 194, 86, 255))
+    d.rectangle((x0, y0, x1, y1), outline=OL)
+    WL = (250, 250, 240, 255)
+    d.rectangle((x0 + 3, y0 + 3, x1 - 3, y1 - 3), outline=WL)
+    d.line((cx, y0 + 3, cx, y1 - 3), fill=WL)
+    d.ellipse((cx - 11, cy - 9, cx + 11, cy + 9), outline=WL)
+    for sx in (-1, 1):
+        bx = cx + sx * 61
+        d.rectangle((min(bx, bx - sx * 16), cy - 15, max(bx, bx - sx * 16), cy + 15), outline=WL)
+        # gawang (tiang putih + jaring)
+        gx = cx + sx * 66
+        d.rectangle((min(gx, gx + sx * 6), cy - 9, max(gx, gx + sx * 6), cy + 9), fill=(220, 225, 230, 255), outline=OL)
+        for j in range(-6, 7, 3): d.line((min(gx, gx + sx * 6), cy + j, max(gx, gx + sx * 6), cy + j), fill=(170, 175, 185, 255))
+    # bola
+    ell(d, cx + 18, cy + 6, 3, 3, (255, 255, 255, 255), OL); d.point((cx + 18, cy + 6), fill=OL)
+    # bangku penonton (atas) dan bendera sudut
+    for k in range(3):
+        d.rectangle((cx - 40 + k * 28, y0 - 12, cx - 20 + k * 28, y0 - 6), fill=(201, 138, 75, 255), outline=OL)
+    for fx, fy in ((x0, y0), (x1, y0), (x0, y1), (x1, y1)):
+        d.line((fx, fy, fx, fy - 7), fill=OL); d.polygon([(fx, fy - 7), (fx + 5, fy - 5), (fx, fy - 3)], fill=(229, 83, 61, 255), outline=OL)
+    im.save(OUT + 'lapangan.png')
+    return im
+
 if __name__ == '__main__':
+    lapangan()
     klinik()
     taman()
     oase()
