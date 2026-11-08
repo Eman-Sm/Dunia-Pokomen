@@ -778,3 +778,6 @@ nav.tabs a.nav-saran { background: #f4a8c8; color: #2b1b17; border-color: var(--
 
 .mebar .kendali-btn { margin-left: auto; background: #7b45a8; color: #fff; min-height: 36px; }
 .mebar .kendali-btn[aria-pressed="true"] { background: #c0392b; }
+
+.ketua-info .dekor-pilih { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; align-items: center; }
+.ketua-info .dekor-btn { min-height: 36px; padding: 4px 10px; font-size: .85rem; }

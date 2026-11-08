@@ -143,6 +143,7 @@ export async function GET(request) {
       pemiluWilayah: pw ? publicHasil(pw) : null,
       usulNamaWilayah: namaWil,
       wilayahBuka: await jumlahWilayahBuka().catch(() => 3),
+      dekor: await (async () => { try { if (!(await import('../lib/fasilitas.js')).publik().dibangun.some((f) => f.id === 'dekor')) return null; return await (await import('../lib/dekor.js')).semua(await jumlahWilayahBuka().catch(() => 5)); } catch { return null; } })(),
       pokoboll: await import('../lib/pokoboll.js').then(async (PB) => PB.publik(await PB.getPB(), await PB.hargaBiji())).catch(() => ({ tampil: false })),
       log: (logRaw || []).map((s) => { try { return JSON.parse(s); } catch { return null; } }).filter((x) => x && !(x.type === 'dukung' && /^\s*\[.*test.*\]/i.test(x.text || ''))),
     }, 200, { 'Cache-Control': 's-maxage=20, stale-while-revalidate=60' });

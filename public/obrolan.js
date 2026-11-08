@@ -50,13 +50,18 @@
   function render() {
     const list = $('obList'); const msgs = state.msgs[state.ruang] || [];
     const atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 40;
-    const info = state.ruang === 'ketua' ? `<li class="sys ketua-info"><span>👑 Ruang rahasia para Ketua Koloni${(state.anggota || []).length ? ': ' + state.anggota.map((k) => esc(k.nama) + ' (W' + k.wil + ')').join(', ') : ''}. Warga biasa tidak bisa membaca ruang ini.</span></li>` : '';
+    const info = state.ruang === 'ketua' ? `<li class="sys ketua-info"><span>👑 Ruang rahasia para Ketua Koloni${(state.anggota || []).length ? ': ' + state.anggota.map((k) => esc(k.nama) + ' (W' + k.wil + ')').join(', ') : ''}. Warga biasa tidak bisa membaca ruang ini.</span>${state.dekorTema ? `<span class="dekor-pilih">🎀 Hiasan wilayahmu: ${Object.entries(state.dekorTema).map(([k, v]) => `<button type="button" class="btn dekor-btn" data-dekor="${k}">${esc(v)}</button>`).join('')}</span>` : ''}</li>` : '';
     list.innerHTML = info + (msgs.length ? msgs.map((m) => m.sistem
       ? `<li class="sys"><span>${esc(m.text)}</span><time>${jam(m.t)}</time></li>`
       : `<li${state.me && m.u === state.me.u ? ' class="me"' : ''}><button type="button" class="ob-name${(m.tier || 0) >= 4 ? ' emas' : ''}" data-u="${esc(m.u)}" style="color:${TIERC[Math.min(5, m.tier || 0)]}">${m.gelar ? '♛ ' : ''}${m.kopi ? '<span title="Pendukung Kopi Admin">☕</span> ' : ''}${esc(m.nama)}</button><span class="ob-wil">W${m.wil}</span><time>${jam(m.t)}</time>
          <button type="button" class="ob-flag" data-id="${m.id}" title="Laporkan pesan ini" aria-label="Laporkan">⚑</button><p>${esc(m.text)}</p></li>`).join('')
       : `<li class="empty">Belum ada obrolan di sini. ${state.me ? 'Sapa duluan yuk!' : ''}</li>`);
     list.querySelectorAll('.ob-name').forEach((b) => (b.onclick = () => window.Pokomen && window.Pokomen.focus(b.dataset.u)));
+    list.querySelectorAll('.dekor-btn').forEach((b) => (b.onclick = async () => {
+      b.disabled = true; const r = await api({ aksi: 'dekor', token: TOKEN, tema: b.dataset.dekor });
+      $('obErr').textContent = r.error || r.pesan || ''; b.disabled = false;
+      if (!r.error && window.Pokomen && window.Pokomen.reload) window.Pokomen.reload();
+    }));
     list.querySelectorAll('.ob-flag').forEach((b) => (b.onclick = async () => {
       if (!TOKEN) { $('obJoin').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
       if (!confirm('Laporkan pesan ini ke Admin?')) return;
@@ -71,6 +76,7 @@
     const d = rahasia ? await api({ aksi: 'baca', ruang: 'ketua', token: TOKEN, sejak }) : await fetch(`api/obrolan?ruang=${r}&sejak=${sejak}`, { cache: 'no-store' }).then((x) => x.json());
     if (d.error) return;
     if (rahasia) state.anggota = d.anggota || [];
+    if (rahasia && !state.dekorTema && window.Pokomen && window.Pokomen.data && (window.Pokomen.data() || {}).dekor) state.dekorTema = { bendera: 'Bendera', lampion: 'Lampion', bunga: 'Bunga', lampu: 'Lampu Hias', balon: 'Balon' };
     state.kunci = !!d.kunci;
     const arr = state.msgs[r] || (state.msgs[r] = []);
     for (const m of d.pesan) {

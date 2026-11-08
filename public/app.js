@@ -673,11 +673,60 @@
       }
     }
   }
+
+  // 8 Nov: DEKOR WILAYAH — hiasan di sepanjang pagar tiap wilayah (tema dipilih Ketua di Ruang Ketua)
+  function drawDekor(now) {
+    const D = DATA && DATA.dekor; if (!D || !WORLD || !WORLD.pagar) return;
+    const z = cam.z; if (z < .45) return;
+    const W_ = box.clientWidth, H_ = box.clientHeight;
+    for (const [n, tema] of Object.entries(D)) {
+      const P = WORLD.pagar[n]; if (!P) continue;
+      const pts = P.map((p) => (p ? toScreen(p[0], p[1]) : null));
+      for (let q = 0; q < pts.length; q += 3) {
+        const a = pts[q], b = pts[(q + 3) % pts.length];
+        if (!a || a[0] < -60 || a[0] > W_ + 60 || a[1] < -60 || a[1] > H_ + 60) continue;
+        const ax = a[0], ay = a[1] - 12 * z;
+        if (tema === 'bendera' && b && P[(q + 1) % P.length] && P[(q + 2) % P.length]) {
+          const bx = b[0], by = b[1] - 12 * z, mx = (ax + bx) / 2, my = (ay + by) / 2 + 6 * z;
+          ctx.strokeStyle = '#5a3a20'; ctx.lineWidth = Math.max(1, z * .8); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.quadraticCurveTo(mx, my, bx, by); ctx.stroke();
+          const C = ['#e5533d', '#ffd23f', '#3d8fd8', '#5fbf5c', '#ec5c96'];
+          for (let k = 1; k < 6; k++) {
+            const t = k / 6, x = (1 - t) * (1 - t) * ax + 2 * t * (1 - t) * mx + t * t * bx, y = (1 - t) * (1 - t) * ay + 2 * t * (1 - t) * my + t * t * by;
+            ctx.fillStyle = C[(k + q) % 5]; ctx.beginPath(); ctx.moveTo(x - 2.4 * z, y); ctx.lineTo(x + 2.4 * z, y); ctx.lineTo(x, y + 4.5 * z); ctx.closePath(); ctx.fill();
+          }
+        } else if (tema === 'lampion' && q % 6 === 0) {
+          const sw = Math.sin(now / 600 + q) * .8 * z;
+          ctx.strokeStyle = '#2b1b17'; ctx.lineWidth = Math.max(1, z * .6); ctx.beginPath(); ctx.moveTo(ax, ay - 4 * z); ctx.lineTo(ax + sw, ay); ctx.stroke();
+          ctx.fillStyle = '#d83a2e'; ctx.beginPath(); ctx.ellipse(ax + sw, ay + 3 * z, 3 * z, 3.8 * z, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#ffd23f'; ctx.fillRect(ax + sw - 2 * z, ay - .4 * z, 4 * z, 1 * z); ctx.fillRect(ax + sw - 2 * z, ay + 6.2 * z, 4 * z, 1 * z);
+          ctx.fillStyle = 'rgba(255,200,80,.25)'; ctx.beginPath(); ctx.arc(ax + sw, ay + 3 * z, 7 * z, 0, Math.PI * 2); ctx.fill();
+        } else if (tema === 'bunga') {
+          const C = ['#ec5c96', '#ffffff', '#b48cff', '#ffd23f'];
+          for (let k = 0; k < 3; k++) { const x = ax + (k - 1) * 3.2 * z, y = a[1] + 1 * z - (k % 2) * 1.5 * z; ctx.fillStyle = '#4e9c46'; ctx.fillRect(x - .5 * z, y - 3 * z, 1 * z, 3 * z); ctx.fillStyle = C[(k + q) % 4]; ctx.beginPath(); ctx.arc(x, y - 3.5 * z, 1.8 * z, 0, Math.PI * 2); ctx.fill(); }
+        } else if (tema === 'lampu') {
+          for (let k = 0; k < 3; k++) {
+            const t = k / 3, x = b ? ax + (b[0] - ax) * t : ax, y = b ? ay + 4 * z + (b[1] - 12 * z - ay) * t : ay;
+            const on = (Math.floor(now / 500) + k + q) % 3 !== 0;
+            ctx.fillStyle = on ? 'rgba(255,230,120,.35)' : 'rgba(255,230,120,.12)'; ctx.beginPath(); ctx.arc(x, y, 3.6 * z, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = on ? ['#fff3a0', '#ffb0d0', '#a0e0ff'][(k + q) % 3] : '#b8a880'; ctx.beginPath(); ctx.arc(x, y, 1.4 * z, 0, Math.PI * 2); ctx.fill();
+          }
+        } else if (tema === 'balon' && q % 6 === 0) {
+          const C = ['#e5533d', '#3d8fd8', '#ffd23f', '#ec5c96', '#5fbf5c'];
+          for (let k = 0; k < 2; k++) {
+            const bx = ax + (k ? 3 : -3) * z + Math.sin(now / 700 + q + k) * z, by = ay - 9 * z - k * 2 * z;
+            ctx.strokeStyle = '#2b1b17'; ctx.lineWidth = Math.max(1, z * .5); ctx.beginPath(); ctx.moveTo(ax, ay + 2 * z); ctx.lineTo(bx, by + 3.6 * z); ctx.stroke();
+            ctx.fillStyle = C[(k + q / 6) % 5]; ctx.beginPath(); ctx.ellipse(bx, by, 2.8 * z, 3.6 * z, 0, 0, Math.PI * 2); ctx.fill();
+          }
+        }
+      }
+    }
+  }
   // hewan yang ngobrol di Obrolan Warga dalam 20 menit terakhir berkumpul di Tereuma
   function tereuma() { return fasilitas().find((f) => f.id === 'tereuma') || null; }
   function berkumpul() { try { return tereuma() && window.PokoChat && window.PokoChat.aktif ? window.PokoChat.aktif(20 * 60e3) : null; } catch { return null; } }
   function drawBangunan() {
     try { drawFasilitas(); } catch { /* ignore */ }
+    try { drawDekor(performance.now()); } catch { /* ignore */ }
     if (!DATA || !DATA.evoBatu) return;
     for (const b of BANGUNAN) {
       if (!b.im.complete || !b.im.naturalWidth) continue;
@@ -1367,7 +1416,7 @@
   // peta bertahap: world-3 (Wilayah 1–3), world-4, world-5 — lahan wilayah baru baru muncul setelah dibuka
   let petaN = 3, gantiJalan = null;
   function gantiPeta() {
-    const n = Math.max(3, Math.min(5, Number(DATA && DATA.wilayahBuka) || 3));
+    const n = Math.max(3, Math.min(6, Number(DATA && DATA.wilayahBuka) || 3));
     if (n === petaN || gantiJalan === n) return;
     gantiJalan = n;
     Promise.all([

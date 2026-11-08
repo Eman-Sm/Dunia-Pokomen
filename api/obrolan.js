@@ -30,6 +30,7 @@ export async function POST(request) {
     }
     if (b.aksi === 'lapor') return json(await lapor(b));
     if (b.aksi === 'gerak') { try { return json(await KD.gerak(b), 200, { 'Cache-Control': 'no-store' }); } catch (e) { return json({ error: e.message }, 200); } }
+    if (b.aksi === 'dekor') { try { const DK = await import('../lib/dekor.js'); return json(await DK.pilih(b)); } catch (e) { return json({ error: e.message }, 200); } }
     if (b.aksi === 'gerak_lepas') { try { return json(await KD.lepas(b)); } catch (e) { return json({ error: e.message }, 200); } }
     if (b.aksi === 'baca' && b.ruang === 'ketua') return json(await bacaKetua({ token: b.token, sejak: b.sejak }), 200, { 'Cache-Control': 'no-store' });
     return json(await tulis({ token: b.token, ruang: b.ruang || 'semua', text: b.text }));
