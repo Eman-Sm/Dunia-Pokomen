@@ -721,11 +721,69 @@
       }
     }
   }
+
+  // 10 Nov: HIASAN DUNIA — detail kecil tersebar di seluruh jalan & padang (usulan @itsme_amm012)
+  let HIASAN = null;
+  function hiasanList() {
+    if (HIASAN || !WORLD || !WORLD.walk) return HIASAN;
+    let sd = 1109; const rnd = () => ((sd = (sd * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+    const hindari = [...(WORLD.spots || []), ...fasilitas().map((f) => [f.x, f.y]), WORLD.balai || [0, 0], WORLD.pk || [0, 0]];
+    const out = [];
+    for (const t of WORLD.walk) {
+      if (rnd() > 0.12) continue;
+      const x = t[0] + (rnd() - .5) * 14, y = t[1] + (rnd() - .5) * 8;
+      if (hindari.some((h) => h && Math.abs(h[0] - x) < 26 && Math.abs(h[1] - y) < 20)) continue;
+      if (out.some((o) => Math.abs(o.x - x) < 18 && Math.abs(o.y - y) < 12)) continue;
+      out.push({ x, y, k: Math.floor(rnd() * 7), c: Math.floor(rnd() * 4), f: rnd() * 6.28 });
+    }
+    return (HIASAN = out);
+  }
+  function drawHiasan(now) {
+    if (!fasilitas().some((f) => f.id === 'hiasan')) return;
+    const L = hiasanList(); if (!L) return;
+    const z = cam.z; if (z < .4) return;
+    const W_ = box.clientWidth, H_ = box.clientHeight;
+    const BUNGA = ['#ec5c96', '#ffd23f', '#b48cff', '#ffffff'], BAL = ['#e5533d', '#3d8fd8', '#ffd23f', '#5fbf5c'];
+    for (const o of L) {
+      const [x, y] = toScreen(o.x, o.y);
+      if (x < -30 || x > W_ + 30 || y < -40 || y > H_ + 30) continue;
+      const u = z;
+      if (o.k === 0) { // lentera tiang
+        ctx.fillStyle = '#3b2a20'; ctx.fillRect(x - .7 * u, y - 13 * u, 1.4 * u, 13 * u);
+        const on = Math.sin(now / 900 + o.f) > -.6;
+        ctx.fillStyle = on ? 'rgba(255,220,120,.28)' : 'rgba(255,220,120,.1)'; ctx.beginPath(); ctx.arc(x, y - 14 * u, 6 * u, 0, 6.28); ctx.fill();
+        ctx.fillStyle = on ? '#ffe58a' : '#c9b27a'; ctx.fillRect(x - 2 * u, y - 16 * u, 4 * u, 4 * u);
+        ctx.fillStyle = '#3b2a20'; ctx.fillRect(x - 2.6 * u, y - 17 * u, 5.2 * u, 1.2 * u);
+      } else if (o.k === 1) { // pot bunga
+        ctx.fillStyle = '#b5603a'; ctx.fillRect(x - 3 * u, y - 4 * u, 6 * u, 4 * u); ctx.fillStyle = '#8e4528'; ctx.fillRect(x - 3.4 * u, y - 4.6 * u, 6.8 * u, 1.2 * u);
+        for (let k = -1; k <= 1; k++) { ctx.fillStyle = '#4e9c46'; ctx.fillRect(x + k * 2 * u - .4 * u, y - 7 * u, .8 * u, 3 * u); ctx.fillStyle = BUNGA[(o.c + k + 4) % 4]; ctx.beginPath(); ctx.arc(x + k * 2 * u, y - 7.6 * u, 1.5 * u, 0, 6.28); ctx.fill(); }
+      } else if (o.k === 2) { // jamur
+        ctx.fillStyle = '#f3e6cf'; ctx.fillRect(x - .9 * u, y - 3.5 * u, 1.8 * u, 3.5 * u);
+        ctx.fillStyle = o.c % 2 ? '#d8402e' : '#a86ad8'; ctx.beginPath(); ctx.ellipse(x, y - 3.6 * u, 3.2 * u, 2.2 * u, 0, Math.PI, 0); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.fillRect(x - 1.6 * u, y - 4.8 * u, .9 * u, .9 * u); ctx.fillRect(x + .9 * u, y - 5.2 * u, .8 * u, .8 * u);
+      } else if (o.k === 3) { // kupu-kupu
+        const fx = x + Math.sin(now / 800 + o.f) * 6 * u, fy = y - 10 * u + Math.sin(now / 430 + o.f) * 2.5 * u, fl = Math.abs(Math.sin(now / 90 + o.f));
+        ctx.fillStyle = BAL[o.c]; ctx.fillRect(fx - 2.4 * u * fl, fy - 1.2 * u, 2.2 * u * fl, 2.4 * u); ctx.fillRect(fx + .2 * u, fy - 1.2 * u, 2.2 * u * fl, 2.4 * u);
+        ctx.fillStyle = '#2b1b17'; ctx.fillRect(fx - .3 * u, fy - 1.4 * u, .6 * u, 2.8 * u);
+      } else if (o.k === 4) { // batu bertumpuk
+        ctx.fillStyle = '#8b8f99'; ctx.beginPath(); ctx.ellipse(x, y - 1.4 * u, 3.6 * u, 1.8 * u, 0, 0, 6.28); ctx.fill();
+        ctx.fillStyle = '#a9adb7'; ctx.beginPath(); ctx.ellipse(x + .4 * u, y - 3.6 * u, 2.4 * u, 1.3 * u, 0, 0, 6.28); ctx.fill();
+        ctx.fillStyle = '#c4c8d0'; ctx.beginPath(); ctx.ellipse(x, y - 5.2 * u, 1.4 * u, .9 * u, 0, 0, 6.28); ctx.fill();
+      } else if (o.k === 5) { // kincir kertas
+        ctx.fillStyle = '#3b2a20'; ctx.fillRect(x - .5 * u, y - 10 * u, 1 * u, 10 * u);
+        const a = now / 300 + o.f;
+        for (let k = 0; k < 4; k++) { ctx.fillStyle = BAL[(o.c + k) % 4]; const aa = a + k * 1.5708; ctx.beginPath(); ctx.moveTo(x, y - 10 * u); ctx.lineTo(x + Math.cos(aa) * 3.6 * u, y - 10 * u + Math.sin(aa) * 3.6 * u); ctx.lineTo(x + Math.cos(aa + .7) * 2.4 * u, y - 10 * u + Math.sin(aa + .7) * 2.4 * u); ctx.closePath(); ctx.fill(); }
+      } else { // rumput berbunga kecil
+        for (let k = 0; k < 4; k++) { const xx = x + (k - 1.5) * 2 * u; ctx.fillStyle = '#5aa94e'; ctx.fillRect(xx - .4 * u, y - 3 * u, .8 * u, 3 * u); if (k % 2 === o.c % 2) { ctx.fillStyle = BUNGA[(o.c + k) % 4]; ctx.fillRect(xx - .8 * u, y - 4 * u, 1.6 * u, 1.6 * u); } }
+      }
+    }
+  }
   // hewan yang ngobrol di Obrolan Warga dalam 20 menit terakhir berkumpul di Tereuma
   function tereuma() { return fasilitas().find((f) => f.id === 'tereuma') || null; }
   function berkumpul() { try { return tereuma() && window.PokoChat && window.PokoChat.aktif ? window.PokoChat.aktif(20 * 60e3) : null; } catch { return null; } }
   function drawBangunan() {
     try { drawFasilitas(); } catch { /* ignore */ }
+    try { drawHiasan(performance.now()); } catch { /* ignore */ }
     try { drawDekor(performance.now()); } catch { /* ignore */ }
     if (!DATA || !DATA.evoBatu) return;
     for (const b of BANGUNAN) {
