@@ -165,24 +165,36 @@
     if (window.Pokomen && window.Pokomen.reload) window.Pokomen.reload();
   }
 
-  // 11 Nov: Pasar Pokomen — jual kembali barang dengan harga Toko
+  // 11 Nov: Pasar Pokomen — jual-beli outfit antar warga, harga ditentukan penjual
+  function ofCanvas(id) { const b = ((T.outfit.katalog || []).find((y) => y.id === id) || {}).bagian || ''; return `<canvas class="tk-of-cv" width="80" height="80" data-id="${esc(id)}" data-bagian="${esc(b)}" aria-hidden="true"></canvas>`; }
   function pasarTab() {
-    const s = T.saya, d = (s && s.dagangan) || [];
-    const isi = !s ? '<p class="muted">Kirim <b>DM: TOKO</b> ke @duniapokomen untuk link pribadimu, lalu buka lagi Pasar.</p>'
-      : !d.length ? '<p class="muted">Belum ada barang yang bisa dijual. Outfit yang kamu beli dan Batu Evolusi hasil belanja Toko akan muncul di sini.</p>'
-      : `<div class="tk-grid">${d.map((x) => { const k = 'ps-' + x.jenis + '-' + x.id; return `<div class="tk-item">${x.jenis === 'outfit' ? `<canvas class="tk-of-cv" width="80" height="80" data-id="${esc(x.id)}" data-bagian="${esc(((T.outfit.katalog || []).find((y) => y.id === x.id) || {}).bagian || '')}" aria-hidden="true"></canvas>` : '<div class="ik">💎</div>'}<b>${esc(x.label)}</b><span>${x.jenis === 'batu' ? `Punya ${x.jumlah} batu dari Toko` : x.dipakai ? 'Sedang dipakai, akan dilepas' : 'Di lemari'}</span>
-          <div class="harga">+${x.biji} Biji</div>
-          <button class="btn tk-jual" type="button" data-jenis="${esc(x.jenis)}" data-id="${esc(x.id)}">${konfirm === k ? 'Yakin? Tekan lagi' : 'Jual'}</button></div>`; }).join('')}</div>`;
-    return `<p class="tk-info">🧺 <b>Pasar Pokomen</b>: jual kembali barangmu dengan <b>harga yang sama seperti di Toko</b>. Biji Kopi langsung masuk lagi ke dompetmu. Batu Evolusi hadiah (Ketua, Juara Liga) tidak bisa dijual.</p>` + isi;
+    const P = T.pasar || {}, s = T.saya, me = s && s.u, L = P.lapak || [];
+    const punya = new Set((s && s.lemari) || []), lab = (id) => ((T.outfit.katalog || []).find((y) => y.id === id) || {}).label || id;
+    const milik = L.filter((l) => l.u === me), lain = L.filter((l) => l.u !== me);
+    const kartu = (l, mine) => { const k = 'ps-' + l.id; return `<div class="tk-item">${ofCanvas(l.item)}<b>${esc(l.label)}</b><span>${mine ? 'Lapakmu' : 'Dijual ' + esc(l.nama)}</span>
+      <div class="harga">${l.biji} Biji</div>
+      ${mine ? `<button class="btn ghost tk-ps" type="button" data-aksi="batal" data-id="${esc(l.id)}">Tarik</button>`
+        : `<button class="btn tk-ps" type="button" data-aksi="beli" data-id="${esc(l.id)}" ${s && !punya.has(l.item) ? '' : 'disabled'}>${punya.has(l.item) ? 'Sudah punya' : konfirm === k ? 'Yakin? Tekan lagi' : 'Beli'}</button>`}</div>`; };
+    const jualForm = !s ? '<p class="muted">Kirim <b>DM: TOKO</b> ke @duniapokomen untuk link pribadimu, lalu buka lagi Pasar untuk berjualan.</p>'
+      : !punya.size ? '<p class="muted">Lemarimu masih kosong. Outfit yang kamu punya bisa dijual di sini.</p>'
+      : `<form class="tk-tantang" id="psForm" autocomplete="off"><select id="psItem">${[...punya].map((id) => `<option value="${esc(id)}">${esc(lab(id))}</option>`).join('')}</select><input id="psHarga" type="number" inputmode="numeric" min="${P.hargaMin || 1}" max="${P.hargaMax || 100}" placeholder="Harga (Biji)" required><button class="btn" type="submit">🧺 Pajang</button></form>`;
+    return `<p class="tk-info">🧺 <b>Pasar Pokomen</b>: jual outfit dari lemarimu ke warga lain dengan <b>harga pilihanmu sendiri</b> (${P.hargaMin || 1}–${P.hargaMax || 100} Biji, maks. ${P.maks || 5} barang). Biji Kopi pembeli langsung masuk ke dompetmu. Selama dipajang, barang dititipkan di lapak; tekan <b>Tarik</b> untuk mengambilnya kembali. <b>Batu Evolusi tidak bisa dijual.</b></p>
+      <h4>🏷️ Jual barangmu</h4>${jualForm}
+      ${milik.length ? `<div class="tk-grid">${milik.map((l) => kartu(l, true)).join('')}</div>` : ''}
+      <h4>🛍️ Lapak warga</h4>${lain.length ? `<div class="tk-grid">${lain.map((l) => kartu(l, false)).join('')}</div>` : '<p class="muted">Belum ada barang dipajang. Jadilah pedagang pertama!</p>'}`;
   }
-  async function jual(b) {
-    const k = 'ps-' + b.dataset.jenis + '-' + b.dataset.id;
-    if (konfirm !== k) { konfirm = k; render(); setTimeout(() => { if (konfirm === k) { konfirm = null; render(); } }, 4000); return; }
-    konfirm = null; b.disabled = true;
-    const r = await post('api/toko', { aksi: 'pasar_jual', jenis: b.dataset.jenis, id: b.dataset.id });
+  async function pasarAksi(body, b) {
+    if (b) b.disabled = true;
+    const r = await post('api/toko', body);
     if (r.error) { toast(r.error); render(); return; }
-    toast(r.pesan); T.saya = r.saya; render();
+    toast(r.pesan); if (r.saya) T.saya = r.saya; if (r.lapak && T.pasar) T.pasar.lapak = r.lapak; render();
     if (window.Pokomen && window.Pokomen.reload) window.Pokomen.reload();
+  }
+  function pasarTombol(b) {
+    const id = b.dataset.id, k = 'ps-' + id;
+    if (b.dataset.aksi === 'batal') return pasarAksi({ aksi: 'pasar_batal', id }, b);
+    if (konfirm !== k) { konfirm = k; render(); setTimeout(() => { if (konfirm === k) { konfirm = null; render(); } }, 4000); return; }
+    konfirm = null; pasarAksi({ aksi: 'pasar_beli', id }, b);
   }
 
   function latihanTab() {
@@ -224,7 +236,8 @@
     $('tkIsi').innerHTML = tab === 'kopi' ? kopiTab() : tab === 'toko' ? tokoTab() : tab === 'pasar' ? pasarTab() : tab === 'latihan' ? latihanTab() : arenaTab();
     for (const b of sec.querySelectorAll('.tk-beli')) b.onclick = () => beli(b.dataset.item);
     for (const b of sec.querySelectorAll('.tk-of')) b.onclick = () => outfit(b);
-    for (const b of sec.querySelectorAll('.tk-jual')) b.onclick = () => jual(b);
+    for (const b of sec.querySelectorAll('.tk-ps')) b.onclick = () => pasarTombol(b);
+    const pf = $('psForm'); if (pf) pf.onsubmit = (e) => { e.preventDefault(); pasarAksi({ aksi: 'pasar_pasang', item: $('psItem').value, biji: Number($('psHarga').value) }, pf.querySelector('button')); };
     if (window.Pakaian) for (const cv of sec.querySelectorAll('.tk-of-cv')) window.Pakaian.preview(cv, cv.dataset.id, cv.dataset.bagian);
     for (const b of sec.querySelectorAll('.tk-latih-btn')) b.onclick = () => latih(b.dataset.stat, b);
     for (const b of sec.querySelectorAll('.tk-terima')) b.onclick = () => arena('terima', { id: b.dataset.id }, b);
@@ -697,5 +710,5 @@
   for (const id of ['traktirTop']) { const el = $(id); if (el) el.addEventListener('click', bukaKopi); }
   for (const b of sec.querySelectorAll('.tk-tabs button')) b.addEventListener('click', () => { if (b.dataset.tab === 'kopi') try { history.replaceState(null, '', '#bijikopi'); } catch { /* ignore */ } });
   muat();
-  setInterval(() => { if (!document.hidden && !sec.hidden && tab === 'arena') muat(); }, 30000);
+  setInterval(() => { if (!document.hidden && !sec.hidden && (tab === 'arena' || (tab === 'pasar' && !(document.activeElement && sec.contains(document.activeElement) && /INPUT|SELECT/.test(document.activeElement.tagName))))) muat(); }, 30000);
 })();

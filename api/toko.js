@@ -12,7 +12,7 @@ import * as PS from '../lib/pasar.js';
 async function dompet(u) {
   const w = await getJSON('warga', u);
   if (!w || w.mati) return null;
-  return { u, nama: w.nama, tier: w.tier, batu: w.batu || 0, saldo: await saldo(u), stat: publik(w), batas: Object.fromEntries(STAT.map((s) => [s, batasLatih(w, s)])), syaratBatu: CONFIG.batuEvolusi[w.tier] || null, tierBerikut: CONFIG.batuEvolusi[w.tier] ? CONFIG.tiers[w.tier + 1] : null, ...PK.lemariDari(w), dagangan: PS.daganganDari(w) };
+  return { u, nama: w.nama, tier: w.tier, batu: w.batu || 0, saldo: await saldo(u), stat: publik(w), batas: Object.fromEntries(STAT.map((s) => [s, batasLatih(w, s)])), syaratBatu: CONFIG.batuEvolusi[w.tier] || null, tierBerikut: CONFIG.batuEvolusi[w.tier] ? CONFIG.tiers[w.tier + 1] : null, ...PK.lemariDari(w) };
 }
 
 export async function GET(request) {
@@ -20,7 +20,7 @@ export async function GET(request) {
     const k = new URL(request.url).searchParams.get('k');
     const buka = await aktif();
     const u = k ? await userFromToken(k) : null;
-    return json({ buka, katalog: katalogToko(), outfit: { katalog: PK.KATALOG, bagian: PK.BAGIAN }, latihan: { harga: HARGA_LATIHAN, naik: NAIK, superTiap: SUPER_TIAP }, pasar: { buka: PS.buka() }, saya: buka && u ? await dompet(u) : null, pokoboll: PB.publik(await PB.getPB(), await PB.hargaBiji()) }, 200, { 'Cache-Control': 'no-store' });
+    return json({ buka, katalog: katalogToko(), outfit: { katalog: PK.KATALOG, bagian: PK.BAGIAN }, latihan: { harga: HARGA_LATIHAN, naik: NAIK, superTiap: SUPER_TIAP }, pasar: { buka: PS.buka(), lapak: PS.buka() ? await PS.publik() : [], hargaMin: PS.HARGA_MIN, hargaMax: PS.HARGA_MAX, maks: PS.MAKS_LAPAK }, saya: buka && u ? await dompet(u) : null, pokoboll: PB.publik(await PB.getPB(), await PB.hargaBiji()) }, 200, { 'Cache-Control': 'no-store' });
   } catch (e) { return json({ error: e.message }, 200); }
 }
 
@@ -35,7 +35,9 @@ export async function POST(request) {
       return json({ ok: true, ...(await PB.beli(u, b.cara, { umumkan })), saya: await dompet(u) });
     }
     if (b.aksi === 'outfit_pakai') { if (!(await aktif())) throw new Error('Toko Pokomen belum buka.'); return json({ ...(await PK.beliPakai(u, b.id)), saya: await dompet(u) }); }
-    if (b.aksi === 'pasar_jual') return json({ ...(await PS.jual(u, { jenis: b.jenis, id: b.id })), saya: await dompet(u) });
+    if (b.aksi === 'pasar_pasang') return json({ ...(await PS.pasang(u, { item: b.item, biji: b.biji })), saya: await dompet(u), lapak: await PS.publik() });
+    if (b.aksi === 'pasar_batal') return json({ ...(await PS.batal(u, b.id)), saya: await dompet(u), lapak: await PS.publik() });
+    if (b.aksi === 'pasar_beli') return json({ ...(await PS.beli(u, b.id)), saya: await dompet(u), lapak: await PS.publik() });
     if (b.aksi === 'outfit_lepas') return json({ ...(await PK.lepas(u, b.bagian)), saya: await dompet(u) });
     const r = await beli(u, { item: b.item, nilai: b.nilai, stat: b.stat });
     return json({ ...r, saya: await dompet(u) });
