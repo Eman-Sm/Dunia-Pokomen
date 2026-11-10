@@ -165,6 +165,26 @@
     if (window.Pokomen && window.Pokomen.reload) window.Pokomen.reload();
   }
 
+  // 11 Nov: Pasar Pokomen — jual kembali barang dengan harga Toko
+  function pasarTab() {
+    const s = T.saya, d = (s && s.dagangan) || [];
+    const isi = !s ? '<p class="muted">Kirim <b>DM: TOKO</b> ke @duniapokomen untuk link pribadimu, lalu buka lagi Pasar.</p>'
+      : !d.length ? '<p class="muted">Belum ada barang yang bisa dijual. Outfit yang kamu beli dan Batu Evolusi hasil belanja Toko akan muncul di sini.</p>'
+      : `<div class="tk-grid">${d.map((x) => { const k = 'ps-' + x.jenis + '-' + x.id; return `<div class="tk-item">${x.jenis === 'outfit' ? `<canvas class="tk-of-cv" width="80" height="80" data-id="${esc(x.id)}" data-bagian="${esc(((T.outfit.katalog || []).find((y) => y.id === x.id) || {}).bagian || '')}" aria-hidden="true"></canvas>` : '<div class="ik">💎</div>'}<b>${esc(x.label)}</b><span>${x.jenis === 'batu' ? `Punya ${x.jumlah} batu dari Toko` : x.dipakai ? 'Sedang dipakai, akan dilepas' : 'Di lemari'}</span>
+          <div class="harga">+${x.biji} Biji</div>
+          <button class="btn tk-jual" type="button" data-jenis="${esc(x.jenis)}" data-id="${esc(x.id)}">${konfirm === k ? 'Yakin? Tekan lagi' : 'Jual'}</button></div>`; }).join('')}</div>`;
+    return `<p class="tk-info">🧺 <b>Pasar Pokomen</b>: jual kembali barangmu dengan <b>harga yang sama seperti di Toko</b>. Biji Kopi langsung masuk lagi ke dompetmu. Batu Evolusi hadiah (Ketua, Juara Liga) tidak bisa dijual.</p>` + isi;
+  }
+  async function jual(b) {
+    const k = 'ps-' + b.dataset.jenis + '-' + b.dataset.id;
+    if (konfirm !== k) { konfirm = k; render(); setTimeout(() => { if (konfirm === k) { konfirm = null; render(); } }, 4000); return; }
+    konfirm = null; b.disabled = true;
+    const r = await post('api/toko', { aksi: 'pasar_jual', jenis: b.dataset.jenis, id: b.dataset.id });
+    if (r.error) { toast(r.error); render(); return; }
+    toast(r.pesan); T.saya = r.saya; render();
+    if (window.Pokomen && window.Pokomen.reload) window.Pokomen.reload();
+  }
+
   function latihanTab() {
     const L = T.latihan, s = T.saya;
     const ke = s ? s.stat.latihKe : 0, lagi = L.superTiap - (ke % L.superTiap);
@@ -199,10 +219,12 @@
 
   function render() {
     $('tkDompet').innerHTML = dompet();
-    for (const b of sec.querySelectorAll('.tk-tabs button')) b.setAttribute('aria-selected', String(b.dataset.tab === tab));
-    $('tkIsi').innerHTML = tab === 'kopi' ? kopiTab() : tab === 'toko' ? tokoTab() : tab === 'latihan' ? latihanTab() : arenaTab();
+    const pasarBuka = !!(T.pasar && T.pasar.buka); if (tab === 'pasar' && !pasarBuka) tab = 'toko';
+    for (const b of sec.querySelectorAll('.tk-tabs button')) { b.setAttribute('aria-selected', String(b.dataset.tab === tab)); if (b.dataset.tab === 'pasar') b.hidden = !pasarBuka; }
+    $('tkIsi').innerHTML = tab === 'kopi' ? kopiTab() : tab === 'toko' ? tokoTab() : tab === 'pasar' ? pasarTab() : tab === 'latihan' ? latihanTab() : arenaTab();
     for (const b of sec.querySelectorAll('.tk-beli')) b.onclick = () => beli(b.dataset.item);
     for (const b of sec.querySelectorAll('.tk-of')) b.onclick = () => outfit(b);
+    for (const b of sec.querySelectorAll('.tk-jual')) b.onclick = () => jual(b);
     if (window.Pakaian) for (const cv of sec.querySelectorAll('.tk-of-cv')) window.Pakaian.preview(cv, cv.dataset.id, cv.dataset.bagian);
     for (const b of sec.querySelectorAll('.tk-latih-btn')) b.onclick = () => latih(b.dataset.stat, b);
     for (const b of sec.querySelectorAll('.tk-terima')) b.onclick = () => arena('terima', { id: b.dataset.id }, b);
@@ -667,6 +689,9 @@
   if (qs.get('duel')) { tab = 'arena'; setTimeout(() => bukaReplay(qs.get('duel')), 900); }
   if (location.hash === '#toko') tab = 'toko';
   if (location.hash === '#bijikopi') tab = 'kopi';
+  if (location.hash === '#pasar') tab = 'pasar';
+  // pintasan dari bangunan di peta: TokoPokomen.buka('toko' | 'pasar' | 'latihan' | 'arena' | 'kopi')
+  window.TokoPokomen = { buka(t) { tab = t; if (T && !sec.hidden) render(); sec.scrollIntoView({ behavior: 'smooth', block: 'start' }); } };
   // tombol "Dapatkan Biji Kopi" di atas → buka tutorial dulu (tautan Trakteer ada di dalamnya)
   const bukaKopi = (e) => { if (sec.hidden) return; e.preventDefault(); tab = 'kopi'; render(); sec.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   for (const id of ['traktirTop']) { const el = $(id); if (el) el.addEventListener('click', bukaKopi); }

@@ -217,7 +217,42 @@ def lapangan():
     im.save(OUT + 'lapangan.png')
     return im
 
+def pasar():
+    W, H = 156, 108; cx, cy = 78, 60
+    im, d = clearing(W, H, cx, cy, 74, 44, seed=41)
+    ell(d, cx, cy + 8, 64, 26, (196, 170, 128, 255), OL)            # pelataran pasar
+    ell(d, cx, cy + 7, 60, 23, (216, 194, 152, 255))
+    for i in range(-3, 4):                                         # ubin batu
+        d.line((cx + i * 16 - 6, cy - 10, cx + i * 16 + 6, cy + 26), fill=(198, 176, 136, 255))
+    def lapak(x, y, c1, c2, isi):
+        # tiang + meja + atap belang
+        d.rectangle((x - 17, y - 2, x + 17, y + 6), fill=(150, 98, 58, 255), outline=OL)
+        d.rectangle((x - 17, y - 2, x + 17, y), fill=(178, 120, 72, 255))
+        d.line((x - 15, y - 22, x - 15, y - 2), fill=OL, width=2); d.line((x + 15, y - 22, x + 15, y - 2), fill=OL, width=2)
+        for k in range(6):
+            d.polygon([(x - 19 + k * 6.5, y - 30), (x - 12.5 + k * 6.5, y - 30), (x - 12.5 + k * 6.5, y - 21), (x - 19 + k * 6.5, y - 21)], fill=c1 if k % 2 == 0 else c2)
+        d.rectangle((x - 19, y - 30, x + 20, y - 21), outline=OL)
+        for k in range(6):
+            ell(d, x - 16 + k * 6.5, y - 20, 3.2, 2.2, c1 if k % 2 == 0 else c2, OL)
+        for k, col in enumerate(isi):
+            ell(d, x - 11 + k * 7, y - 4, 3, 2.4, col, OL)
+    lapak(cx - 36, cy + 2, (226, 74, 60, 255), (255, 244, 230, 255), [(255, 200, 60, 255), (120, 200, 90, 255), (240, 120, 40, 255), (200, 80, 160, 255)])
+    lapak(cx + 36, cy + 2, (60, 140, 220, 255), (255, 244, 230, 255), [(255, 140, 180, 255), (250, 220, 90, 255), (160, 110, 230, 255), (90, 200, 220, 255)])
+    lapak(cx, cy - 10, (255, 196, 40, 255), (255, 244, 230, 255), [(230, 90, 70, 255), (90, 170, 230, 255), (255, 210, 70, 255), (120, 200, 90, 255)])
+    # papan nama PASAR
+    d.rectangle((cx - 18, cy - 46, cx + 18, cy - 38), fill=(255, 231, 168, 255), outline=OL)
+    for k in range(4): ell(d, cx - 11 + k * 7.3, cy - 42, 2.2, 2.2, (240, 180, 40, 255), (150, 100, 30, 255))  # koin
+    d.line((cx, cy - 38, cx, cy - 32), fill=OL)
+    # karung & peti
+    for (x, y, col) in [(cx - 60, cy + 18, (190, 160, 110, 255)), (cx + 58, cy + 18, (190, 160, 110, 255))]:
+        ell(d, x, y, 6, 5, col, OL); d.line((x - 3, y - 4, x + 3, y - 4), fill=OL)
+    d.rectangle((cx - 8, cy + 18, cx + 8, cy + 26), fill=(170, 116, 64, 255), outline=OL); d.line((cx - 8, cy + 22, cx + 8, cy + 22), fill=OL)
+    im.save(OUT + 'pasar.png')
+    return im
+
+
 if __name__ == '__main__':
+    pasar()
     lapangan()
     klinik()
     taman()

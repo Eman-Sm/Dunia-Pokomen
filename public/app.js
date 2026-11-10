@@ -1073,7 +1073,8 @@
     if (!ptrs.has(e.pointerId)) {
       const r = box.getBoundingClientRect();
       const h = pick(e.clientX - r.left, e.clientY - r.top);
-      if (h !== hover) { hover = h; box.style.cursor = h ? 'pointer' : ''; draw(); }
+      if (h !== hover) { hover = h; draw(); }
+      box.style.cursor = h || pickBangunan(e.clientX - r.left, e.clientY - r.top) ? 'pointer' : '';
       return;
     }
     ptrs.set(e.pointerId, [e.clientX, e.clientY]);
@@ -1098,7 +1099,7 @@
         if (mePtr && cx_ >= mePtr.x && cx_ <= mePtr.x + mePtr.w && cy_ >= mePtr.y && cy_ <= mePtr.y + mePtr.h) { const mw = DATA.warga.find((x) => x.u === ME); if (mw) { select(mw); return; } }
         if (KONTROL) { const [wx, wy] = toWorld(cx_, cy_); kirimGerak(Math.round(wx), Math.round(wy)); dragStart = null; return; }
         const w = pick(cx_, cy_);
-        if (w) select(w, false); else closeCard();
+        if (w) select(w, false); else { const bg = pickBangunan(cx_, cy_); if (bg) selectBangunan(bg); else closeCard(); }
       }
       dragStart = null;
     } else { const [p] = [...ptrs.values()]; dragStart = { x: p[0], y: p[1], cx: cam.x, cy: cam.y }; }
@@ -1189,6 +1190,54 @@
     card.querySelector('#openKartu').after(mb);
     card.hidden = false;
     if (fly) { const [x, y] = posOf(w); flyTo(x, y - 10, Math.max(cam.z, 4)); } else draw();
+  }
+
+  // 10 Nov: setiap bangunan bisa diklik → kartu singkat + pintasan ke fiturnya
+  const PINTAS = {
+    toko: { nama: 'Toko Pokomen', ket: 'Belanja Batu Evolusi, outfit, Pokoboll dan item pengganti pakai Biji Kopi.', tombol: [['🏪 Buka Toko', () => bukaToko('toko')]] },
+    arena: { nama: 'Arena', ket: 'Tantang hewan lain, main langsung, dan kejar puncak Liga Arena. Buka 07.00–21.00 WIB.', tombol: [['⚔️ Buka Arena', () => bukaToko('arena')]] },
+    latihan: { nama: 'Tempat Latihan', ket: 'Naikkan Nyawa, Serang, Tahan dan Cepat hewanmu. Setiap sesi ke-5 jadi Latihan Super.', tombol: [['🏋️ Mulai Latihan', () => bukaToko('latihan')]] },
+    balai: { nama: 'Pusat Koloni', ket: 'Balai Warga, tempat pemilihan Ketua Koloni tiap wilayah.', tombol: [['🗳️ Pemilihan Ketua', () => keBagian('pemiluW', 'warga')], ['📖 Daftar Warga', () => keBagian('warga')]] },
+    tereuma: { tombol: [['💬 Ikut Ngobrol', () => keBagian('obrolan')]] },
+    klinik: { tombol: [['⚔️ Ke Arena', () => bukaToko('arena')]] },
+    pasar: { tombol: [['🧺 Buka Pasar', () => bukaToko('pasar')]] },
+  };
+  function bukaToko(t) { closeCard(); if (window.TokoPokomen) window.TokoPokomen.buka(t); else keBagian('toko'); }
+  function keBagian(id, cadangan) { closeCard(); let el = $(id); if ((!el || el.hidden) && cadangan) el = $(cadangan); if (el && !el.hidden) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  function pickBangunan(sx, sy) {
+    if (!DATA) return null;
+    const [wx, wy] = toWorld(sx, sy);
+    for (const f of fasilitas()) {
+      if (!f.img) continue; const im = FAS_IMG.get(f.img); if (!im || !im.naturalWidth) continue;
+      const x0 = f.x - f.ax, y0 = f.y - f.ay, w = im.naturalWidth, h = im.naturalHeight, ix = w * .14, iy = h * .14;
+      if (wx > x0 + ix && wx < x0 + w - ix && wy > y0 + iy && wy < y0 + h - iy) return { id: f.id, f };
+    }
+    if (DATA.evoBatu) {
+      for (const [id, x, y, r] of [['toko', 935, 700, 24], ['arena', 822, 770, 30], ['latihan', 950, 752, 24]]) if (Math.abs(wx - x) < r && Math.abs(wy - y) < r * .8) return { id };
+    }
+    const B = (WORLD && WORLD.balai) || [882, 724];
+    if (Math.abs(wx - B[0]) < 26 && Math.abs(wy - B[1] + 4) < 22) return { id: 'balai' };
+    return null;
+  }
+  function selectBangunan(b) {
+    selected = null;
+    const P = PINTAS[b.id] || {}, f = b.f || {};
+    const nama = f.nama || P.nama || b.id, ket = f.ket || P.ket || '';
+    const usul = (f.pengusul || []).length ? `<p class="muted">Usulan ${f.pengusul.map((u) => '@' + esc(u)).join(', ')}</p>` : '';
+    let extra = '';
+    if (b.id === 'klinik' && DATA.fasilitas && (DATA.fasilitas.pasien || []).length) {
+      const nm = DATA.fasilitas.pasien.map((u) => (DATA.warga.find((w) => w.u === u) || {}).nama).filter(Boolean);
+      if (nm.length) extra = `<p>🩹 Sedang beristirahat: <b>${nm.map(esc).join(', ')}</b></p>`;
+    }
+    const tombol = [...(P.tombol || []), ...(b.f ? [['🏗️ Semua fasilitas', () => keBagian('fasilitas')]] : [])];
+    const card = $('card');
+    card.innerHTML = `<button class="btn ghost sq close" type="button" aria-label="Tutup">×</button>
+      <div class="card-head"><div><h3>${esc(nama)}</h3>${f.sub ? `<span class="handle">${esc(f.sub)}</span>` : ''}</div></div>
+      ${ket ? `<p>${esc(ket)}</p>` : ''}${extra}${usul}
+      <div class="bg-pintas" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">${tombol.map(([t], i) => `<button class="btn" type="button" data-i="${i}">${esc(t)}</button>`).join('')}</div>`;
+    card.querySelector('.close').onclick = closeCard;
+    for (const el of card.querySelectorAll('.bg-pintas button')) el.onclick = () => tombol[+el.dataset.i][1]();
+    card.hidden = false; draw();
   }
   function closeCard() { selected = null; $('card').hidden = true; draw(); }
 
