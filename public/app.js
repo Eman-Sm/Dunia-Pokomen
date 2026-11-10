@@ -730,10 +730,10 @@
     const hindari = [...(WORLD.spots || []), ...fasilitas().map((f) => [f.x, f.y]), WORLD.balai || [0, 0], WORLD.pk || [0, 0]];
     const out = [];
     for (const t of WORLD.walk) {
-      if (rnd() > 0.12) continue;
+      if (rnd() > 0.3) continue;
       const x = t[0] + (rnd() - .5) * 14, y = t[1] + (rnd() - .5) * 8;
-      if (hindari.some((h) => h && Math.abs(h[0] - x) < 26 && Math.abs(h[1] - y) < 20)) continue;
-      if (out.some((o) => Math.abs(o.x - x) < 18 && Math.abs(o.y - y) < 12)) continue;
+      if (hindari.some((h) => h && Math.abs(h[0] - x) < 16 && Math.abs(h[1] - y) < 12)) continue;
+      if (out.some((o) => Math.abs(o.x - x) < 15 && Math.abs(o.y - y) < 10)) continue;
       out.push({ x, y, k: Math.floor(rnd() * 7), c: Math.floor(rnd() * 4), f: rnd() * 6.28 });
     }
     return (HIASAN = out);
@@ -747,7 +747,7 @@
     for (const o of L) {
       const [x, y] = toScreen(o.x, o.y);
       if (x < -30 || x > W_ + 30 || y < -40 || y > H_ + 30) continue;
-      const u = z;
+      const u = z * 1.4;
       if (o.k === 0) { // lentera tiang
         ctx.fillStyle = '#3b2a20'; ctx.fillRect(x - .7 * u, y - 13 * u, 1.4 * u, 13 * u);
         const on = Math.sin(now / 900 + o.f) > -.6;
