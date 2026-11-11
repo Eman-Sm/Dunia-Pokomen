@@ -187,6 +187,55 @@
     const w = DATA.warga.find((x) => x.u === ME); if (!w) return; const [x, y] = posOf(w);
     kirimGerak(Math.round(x + d[0] * 28), Math.round(y + d[1] * 20));
   });
+
+  // 11 Nov: JALAN SETAPAK — hewan hanya berjalan lewat jalur (dalam pagar wilayah, plaza, jalan setapak,
+  // jalan batu, jembatan & kavling Distrik Fasilitas). Tidak menembus hutan atau menyeberangi sungai sembarangan.
+  let NAVG = null;
+  function nav() {
+    if (NAVG && NAVG.src === WORLD) return NAVG;
+    const N = WORLD && WORLD.nav; if (!N) return null;
+    const ok = new Uint8Array(N.w * N.h); for (let k = 0; k < ok.length; k++) ok[k] = N.bits.charCodeAt(k) === 49;
+    NAVG = { src: WORLD, i0: N.i0, j0: N.j0, w: N.w, h: N.h, ok, fields: new Map() }; return NAVG;
+  }
+  const tileOfXY = (x, y) => [Math.floor(((x - 850) / 16 + (y - 804) / 8) / 2), Math.floor(((y - 804) / 8 - (x - 850) / 16) / 2)];
+  const tileMid = (i, j) => [850 + 16 * (i - j), 804 + 8 * (i + j) + 8];
+  function navIdx(g, i, j) { const a = i - g.i0, b = j - g.j0; return a < 0 || b < 0 || a >= g.w || b >= g.h ? -1 : b * g.w + a; }
+  function navOk(g, i, j) { const k = navIdx(g, i, j); return k >= 0 && g.ok[k] === 1; }
+  function navNearest(g, i, j) {
+    for (let r = 0; r <= 10; r++) for (let di = -r; di <= r; di++) for (let dj = -r; dj <= r; dj++) {
+      if (Math.max(Math.abs(di), Math.abs(dj)) !== r) continue; if (navOk(g, i + di, j + dj)) return navIdx(g, i + di, j + dj);
+    }
+    return -1;
+  }
+  const NB8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+  function navField(g, goal) {
+    let f = g.fields.get(goal); if (f) return f;
+    f = new Int32Array(g.w * g.h).fill(-1); f[goal] = 0; const q = new Int32Array(g.w * g.h); let h = 0, t = 0; q[t++] = goal;
+    while (h < t) { const k = q[h++], a = k % g.w, b = (k / g.w) | 0;
+      for (const [da, db] of NB8) { const A = a + da, B = b + db; if (A < 0 || B < 0 || A >= g.w || B >= g.h) continue; const n = B * g.w + A; if (g.ok[n] !== 1 || f[n] >= 0) continue; f[n] = f[k] + 1; q[t++] = n; } }
+    if (g.fields.size > 80) g.fields.delete(g.fields.keys().next().value);
+    g.fields.set(goal, f); return f;
+  }
+  function navClear(g, x0, y0, x1, y1) {
+    const d = Math.hypot(x1 - x0, y1 - y0), n = Math.max(1, Math.ceil(d / 5));
+    for (let k = 0; k <= n; k++) { const [i, j] = tileOfXY(x0 + (x1 - x0) * k / n, y0 + (y1 - y0) * k / n); if (!navOk(g, i, j)) return false; }
+    return true;
+  }
+  function navRoute(x0, y0, x1, y1) {
+    const g = nav(); if (!g) return null;
+    if (navClear(g, x0, y0, x1, y1)) return null; // jalan lurus sudah aman
+    const s = navNearest(g, ...tileOfXY(x0, y0)), e = navNearest(g, ...tileOfXY(x1, y1)); if (s < 0 || e < 0) return null;
+    const f = navField(g, e); if (f[s] < 0) return null;
+    const pts = []; let k = s, guard = 0;
+    while (f[k] > 0 && guard++ < 4000) { const a = k % g.w, b = (k / g.w) | 0; let best = -1, bv = f[k];
+      for (const [da, db] of NB8) { const A = a + da, B = b + db; if (A < 0 || B < 0 || A >= g.w || B >= g.h) continue; const n = B * g.w + A; if (f[n] >= 0 && f[n] < bv) { bv = f[n]; best = n; } }
+      if (best < 0) break; k = best; pts.push(tileMid(k % g.w + g.i0, ((k / g.w) | 0) + g.j0)); }
+    // haluskan: lompati titik yang masih terlihat lurus, tetap di atas jalur
+    const out = []; let ax = x0, ay = y0, q = 0;
+    while (q < pts.length) { let far = q; for (let r = pts.length - 1; r > q; r--) if (navClear(g, ax, ay, pts[r][0], pts[r][1])) { far = r; break; }
+      out.push(pts[far]); [ax, ay] = pts[far]; q = far + 1; }
+    return out;
+  }
   function stepActors(now, dt) {
     const slp = sleeping();
     KUMPUL = berkumpul(); OASE = fasilitas().find((f) => f.id === 'oase') || null;
@@ -211,9 +260,16 @@
         if (now - (a.skillT || -1e9) < SKILL_MS) continue;
       }
       if (a.mode === 'walk') {
-        const dx = a.tx - a.x, dy = a.ty - a.y, d = Math.hypot(dx, dy);
+        if (!(w.tier >= 5)) { // God Mode terbang bebas; yang lain lewat jalan
+          const key = Math.round(a.tx) + ',' + Math.round(a.ty);
+          if (a.pkey !== key) { a.pkey = key; a.path = navRoute(a.x, a.y, a.tx, a.ty); if (a.path && a.path.length > 3) a.cepat = true; }
+        } else a.path = null;
+        const wp = a.path && a.path.length ? a.path[0] : null;
+        const gx = wp ? wp[0] : a.tx, gy = wp ? wp[1] : a.ty;
+        const dx = gx - a.x, dy = gy - a.y, d = Math.hypot(dx, dy);
         const sp = (10 + Math.min(4, w.tier || 0) * 1.5) * (w.tier >= 5 ? 2.2 : 1) * (a.cepat ? 4 : 1) * dt / 1000;
-        if (d <= sp) { a.x = a.tx; a.y = a.ty; a.mode = 'idle'; a.until = now + rand(1500, 6000); if (a.minum) { a.minum = false; a.emote = '💧'; a.emoteT = now; a.until = now + rand(6000, 12000); } }
+        if (wp && d <= sp) { a.x = gx; a.y = gy; a.path.shift(); }
+        else if (d <= sp) { a.x = a.tx; a.y = a.ty; a.mode = 'idle'; a.path = null; a.until = now + rand(1500, 6000); if (a.minum) { a.minum = false; a.emote = '💧'; a.emoteT = now; a.until = now + rand(6000, 12000); } }
         else { a.x += dx / d * sp; a.y += dy / d * sp; a.walk += dt / 1000 * 9; if (Math.abs(dx) > .3) a.face = dx < 0 ? -1 : 1; }
       } else if (now > a.until && KUMPUL && KUMPUL.has(w.u)) {
         // berkumpul di Tereuma: jalan ke lantai alun-alun, lalu berpindah tempat di sekitarnya
@@ -1504,7 +1560,7 @@
   };
 
   // bump when the map changes so browsers do not keep the old cached image
-  const WORLD_VER = '2026-11-11-distrik';
+  const WORLD_VER = '2026-11-11-jalan';
   // ---------------------------------------------------------------- boot
   window.addEventListener('resize', resize);
   // ~30 fps animation loop (tick keeps the old 420 ms rhythm for lights and fireflies)

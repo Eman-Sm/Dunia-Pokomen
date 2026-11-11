@@ -314,6 +314,18 @@ centre = {n: Wd.iso(*c) for n, c in CENTRES.items()}
 spots = json.load(open(os.environ.get('SPOTS_SRC', f'{OUT}/world-6.json')))['spots']
 homes = spots
 REGION_POS = {str(n): list(centre[n]) for n in REGB}
+# v7: peta jalan (nav) — hewan hanya boleh berjalan di sini: dalam pagar wilayah, plaza, jalan setapak, jalan batu, jalan raya/jembatan, kavling
+I0, J0 = min(t[0] for t in tiles), min(t[1] for t in tiles); I1, J1 = max(t[0] for t in tiles), max(t[1] for t in tiles)
+def nav_ok(i, j):
+    k = K.get((i, j))
+    if k is None or k == 'water': return False
+    if k in ('road', 'bridge'): return True
+    if (i, j) in PATH or (i, j) in STONE or in_pad(i, j): return True
+    if in_blobs(i, j, [PKB], False): return True
+    return any(math.hypot(i + .5 - c[0], j + .5 - c[1]) < R_WIL - .1 for c in CENTRES.values())
+NAV = {'i0': I0, 'j0': J0, 'w': I1 - I0 + 1, 'h': J1 - J0 + 1,
+       'bits': ''.join('1' if nav_ok(i, j) else '0' for j in range(J0, J1 + 1) for i in range(I0, I1 + 1))}
+print('nav tiles', NAV['bits'].count('1'))
 json.dump({'w': Wd.W, 'h': Wd.H, 'center': list(Wd.iso(*PKC)), 'walk': walk, 'spots': homes, 'open': OPEN_BLOBS, 'wilayah': REGION_POS, 'pk': list(Wd.iso(*PKC)),
-           'lights': [[hx + 12, hy + 10, 26], [hx - 14, hy + 16, 18]], 'balai': [hx, hy], 'pagar': FENCE, 'gerbang': {str(n): list(Wd.iso(*g)) for n, g in GATES.items()}, 'papan': PAPAN, 'ukuranWilayah': 50, 'nBuka': N_BUKA, 'kavling': {k: [x, y] for k, (x, y, r) in KAVLING.items()}, 'gapuraDistrik': [round(GAPURA_D[0]), round(GAPURA_D[1])]}, open(f'{OUT}/world-{N_BUKA}.json', 'w'))
+           'lights': [[hx + 12, hy + 10, 26], [hx - 14, hy + 16, 18]], 'balai': [hx, hy], 'pagar': FENCE, 'gerbang': {str(n): list(Wd.iso(*g)) for n, g in GATES.items()}, 'papan': PAPAN, 'ukuranWilayah': 50, 'nBuka': N_BUKA, 'kavling': {k: [x, y] for k, (x, y, r) in KAVLING.items()}, 'gapuraDistrik': [round(GAPURA_D[0]), round(GAPURA_D[1])], 'nav': NAV, 'iso': [850, 804, 16, 8]}, open(f'{OUT}/world-{N_BUKA}.json', 'w'))
 print('walk tiles', len(walk), 'items', len(items))
