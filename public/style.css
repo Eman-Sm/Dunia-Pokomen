@@ -781,3 +781,28 @@ nav.tabs a.nav-saran { background: #f4a8c8; color: #2b1b17; border-color: var(--
 
 .ketua-info .dekor-pilih { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; align-items: center; }
 .ketua-info .dekor-btn { min-height: 36px; padding: 4px 10px; font-size: .85rem; }
+
+/* 11 Nov: Profil Evolusi 360° */
+.p3d-modal { position: fixed; inset: 0; z-index: 61; display: grid; place-items: center; background: rgba(20, 12, 8, .82); padding: 16px; overflow: auto; }
+.p3d-modal[hidden] { display: none; }
+.p3d-box { position: relative; width: min(440px, calc(100vw - 32px)); box-sizing: border-box; background: var(--parchment, #fdf0cd); border: 4px solid #3b2416; border-radius: 14px; padding: 16px; box-shadow: 0 18px 40px rgba(0,0,0,.5); }
+.p3d-x { position: absolute; top: 10px; right: 10px; }
+.p3d-head h3 { margin: 0 44px 2px 0; font-size: 1.3rem; }
+.p3d-stage { position: relative; margin: 10px 0; border: 3px solid #3b2416; border-radius: 10px; background: radial-gradient(circle at 50% 40%, #fff6dc, #f1d9a6 70%, #e2c084); overflow: hidden; }
+.p3d-cv { display: block; width: 100%; height: auto; aspect-ratio: 1; image-rendering: pixelated; touch-action: pan-y; cursor: grab; }
+.p3d-cv:active { cursor: grabbing; }
+.p3d-hint { position: absolute; top: 8px; left: 10px; font-size: .75rem; font-weight: 700; color: #7a5a40; background: rgba(255,255,255,.7); padding: 2px 8px; border-radius: 99px; pointer-events: none; }
+.p3d-ctl { display: flex; justify-content: center; gap: 6px; padding: 0 0 8px; }
+.p3d-ctl .btn { padding: 4px 10px; font-size: .85rem; }
+.p3d-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+.p3d-tab { flex: 0 0 auto; display: grid; justify-items: center; gap: 2px; padding: 4px 6px; border: 3px solid #3b2416; border-radius: 8px; background: #fff8e6; cursor: pointer; font: inherit; color: inherit; }
+.p3d-tab canvas { width: 56px; height: 56px; image-rendering: pixelated; }
+.p3d-tab small { font-size: .68rem; font-weight: 700; white-space: nowrap; }
+.p3d-tab.on { background: #ffd23f; box-shadow: 0 3px 0 #3b2416; }
+.p3d-tab.kunci { opacity: .75; }
+.p3d-info { margin-top: 10px; font-size: .92rem; }
+.p3d-info p { margin: 6px 0; }
+.p3d-tname { font-weight: 800; font-size: 1.1rem; color: #c0462f; }
+.p3d-now { font-size: .7rem; background: #2e9d4f; color: #fff; padding: 1px 8px; border-radius: 99px; vertical-align: middle; }
+.p3d-cer { background: #fff; border-left: 4px solid #ffd23f; padding: 6px 10px; border-radius: 6px; font-style: italic; }
+.p3d-syarat { background: #3b2416; color: #ffe6a8; padding: 8px 10px; border-radius: 8px; }

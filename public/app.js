@@ -1179,11 +1179,13 @@
       ${w.skill ? `<p class="skill">✦ Skill: <b>${esc(w.skill)}</b></p>` : w.tier >= 3 ? '<p class="muted">Skill belum diisi. Pemiliknya bisa menulis <b>Skill: ...</b> di komentar.</p>' : ''}
       ${(w.cerita || []).length ? `<ul class="stories">${w.cerita.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>` : '<p class="muted">Belum ada cerita. Ceritakan kebiasaan uniknya di postingan berikutnya untuk berevolusi.</p>'}
       <p class="muted">Lahir ${esc(lahir)} · kavling #${w.spot + 1}</p>
-      <button class="btn" type="button" id="openKartu" style="margin-top:10px">Lihat Kartu Warga</button>`;
+      <button class="btn" type="button" id="open3d" style="margin-top:10px">🔄 Evolusi 360°</button>
+      <button class="btn ghost" type="button" id="openKartu" style="margin-top:10px">Lihat Kartu Warga</button>`;
     if (w.art) { const im = new Image(); im.src = w.art; im.alt = w.nama; im.className = 'art'; card.querySelector('#cardSprite').replaceWith(im); }
     else card.querySelector('#cardSprite').replaceWith(spriteNode(w, 88));
     card.querySelector('.close').onclick = closeCard;
     card.querySelector('#openKartu').onclick = () => openKartu(w);
+    card.querySelector('#open3d').onclick = () => { if (window.Profil3D) window.Profil3D.open(w, { tiers: TIERS, benefits: BENEFITS, batuSyarat: DATA.batuSyarat }); };
     const mb = document.createElement('button'); mb.type = 'button'; mb.className = 'btn ghost'; mb.style.marginLeft = '8px'; mb.style.marginTop = '10px';
     mb.textContent = w.u === ME ? '★ Hewanku' : 'Ini hewanku';
     mb.onclick = () => { setMe(w.u === ME ? null : w.u); mb.textContent = w.u === ME ? '★ Hewanku' : 'Ini hewanku'; };
