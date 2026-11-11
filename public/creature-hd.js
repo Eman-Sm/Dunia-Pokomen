@@ -38,7 +38,7 @@
   };
 
   function paint(w, o) {
-    const R = RES[Math.max(0, Math.min(5, o.tier | 0))];
+    const R = o.res || RES[Math.max(0, Math.min(5, o.tier | 0))];
     const L = o.tier | 0; // detail level
     const has = (k) => SP[k].test(o.all);
     const first = (k) => SP[k].test(o.hewan[0] || '');

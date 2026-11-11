@@ -18,56 +18,78 @@
     'Lingkar emas di atas kepala, wujud baru, terbang bebas dan punya patung.',
   ];
 
-  // ---------- voxelizer ----------
+  // ---------- voxelizer (resolusi tinggi, permukaan membulat) ----------
+  const K = 2.6; // voxel per piksel peta
   const cache = new Map();
   function model(w, tier) {
     const key = w.u + '|' + tier + '|' + (w.pakaian ? JSON.stringify(w.pakaian) : '');
     if (cache.has(key)) return cache.get(key);
-    const src = window.Creature.make({ ...w, tier, art: null });
-    const grow = src.grow || 1, n = Math.min(64, Math.round(36 * grow));
+    const src = window.Creature.make({ ...w, tier, art: null }, { hd: true, res: 5 });
+    const grow = src.grow || 1, n = Math.min(132, Math.round(36 * grow * K));
     const c = document.createElement('canvas'); c.width = c.height = n;
-    const g = c.getContext('2d'); g.imageSmoothingEnabled = !!src.hd; g.imageSmoothingQuality = 'high';
+    const g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
     g.drawImage(src, 0, 0, n, n);
     const d = g.getImageData(0, 0, n, n).data;
     const on = new Uint8Array(n * n), col = new Array(n * n);
-    for (let i = 0; i < n * n; i++) if (d[i * 4 + 3] >= 110) { on[i] = 1; col[i] = [d[i * 4], d[i * 4 + 1], d[i * 4 + 2]]; }
-    { const drop = []; for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const i = y * n + x; if (!on[i]) continue; const c = col[i]; if (c[0] + c[1] + c[2] >= 170) continue; const tepi = x === 0 || y === 0 || x === n - 1 || y === n - 1 || !on[i - 1] || !on[i + 1] || !on[i - n] || !on[i + n]; if (tepi) drop.push(i); } for (const i of drop) on[i] = 0; }
-    // jarak ke tepi (chamfer) -> ketebalan tubuh
-    const dist = new Float32Array(n * n); for (let i = 0; i < n * n; i++) dist[i] = on[i] ? 1e9 : 0;
-    const pass = (xs, ys, nb) => { for (const y of ys) for (const x of xs) { const i = y * n + x; if (!on[i]) continue; for (const [dx, dy, wgt] of nb) { const X = x + dx, Y = y + dy; const v = X < 0 || Y < 0 || X >= n || Y >= n ? 0 : dist[Y * n + X]; if (v + wgt < dist[i]) dist[i] = v + wgt; } } };
-    const R = [...Array(n).keys()], RR = [...R].reverse();
-    pass(R, R, [[-1, 0, 1], [0, -1, 1], [-1, -1, 1.4], [1, -1, 1.4]]);
-    pass(RR, RR, [[1, 0, 1], [0, 1, 1], [1, 1, 1.4], [-1, 1, 1.4]]);
-    const maxH = Math.max(3, Math.round(n * .24));
-    const h = new Int8Array(n * n); for (let i = 0; i < n * n; i++) if (on[i]) h[i] = Math.max(1, Math.min(maxH, Math.round(dist[i] * .8)));
-    // warna punggung: warna dominan di sekitar (fitur kecil seperti mata & mulut hilang)
-    const cnt = new Map(); const ck = (p) => p[0] >> 5 << 6 | p[1] >> 5 << 3 | p[2] >> 5;
+    for (let i = 0; i < n * n; i++) if (d[i * 4 + 3] >= 120) { on[i] = 1; col[i] = [d[i * 4], d[i * 4 + 1], d[i * 4 + 2]]; }
     const dark = (p) => p[0] + p[1] + p[2] < 170;
-    for (let i = 0; i < n * n; i++) if (on[i] && !dark(col[i])) cnt.set(ck(col[i]), (cnt.get(ck(col[i])) || 0) + 1);
-    const tot = [...cnt.values()].reduce((a, b) => a + b, 0) || 1;
-    let dom = null, dv = -1; const rep = new Map();
-    for (let i = 0; i < n * n; i++) if (on[i] && !dark(col[i])) { const k = ck(col[i]); if (!rep.has(k)) rep.set(k, col[i]); if (cnt.get(k) > dv) { dv = cnt.get(k); dom = col[i]; } }
-    const back = new Array(n * n);
+    // garis tepi bawaan sprite dibuang dari volume (digambar ulang mengikuti sudut pandang)
+    for (let pass = 0; pass < 2; pass++) {
+      const drop = [];
+      for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const i = y * n + x; if (!on[i] || !dark(col[i])) continue; if (x === 0 || y === 0 || x === n - 1 || y === n - 1 || !on[i - 1] || !on[i + 1] || !on[i - n] || !on[i + n]) drop.push(i); }
+      for (const i of drop) on[i] = 0;
+    }
+    // jarak ke tepi -> ketebalan membulat (penampang seperti elips)
+    const dist = new Float32Array(n * n); for (let i = 0; i < n * n; i++) dist[i] = on[i] ? 1e9 : 0;
+    const R = [...Array(n).keys()], RR = [...R].reverse();
+    const pass = (ys, xs, nb) => { for (const y of ys) for (const x of xs) { const i = y * n + x; if (!on[i]) continue; for (const [dx, dy, wg] of nb) { const X = x + dx, Y = y + dy; const v = X < 0 || Y < 0 || X >= n || Y >= n ? 0 : dist[Y * n + X]; if (v + wg < dist[i]) dist[i] = v + wg; } } };
+    pass(R, R, [[-1, 0, 1], [0, -1, 1], [-1, -1, 1.41], [1, -1, 1.41]]);
+    pass(RR, RR, [[1, 0, 1], [0, 1, 1], [1, 1, 1.41], [-1, 1, 1.41]]);
+    const maxH = n * .2;
+    const hf = new Float32Array(n * n);
+    for (let i = 0; i < n * n; i++) if (on[i]) { const r = Math.min(dist[i], maxH * 1.25); hf[i] = Math.min(maxH, Math.sqrt(Math.max(0, 2 * maxH * 1.25 * r - r * r)) * .8) + .6; }
+    // haluskan medan ketebalan
+    const hs = new Float32Array(n * n);
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const i = y * n + x; if (!on[i]) continue; let s_ = 0, k_ = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= n || Y >= n) continue; const j = Y * n + X; s_ += on[j] ? hf[j] : 0; k_++; } hs[i] = Math.max(.6, s_ / k_); }
+    const h = new Int16Array(n * n); for (let i = 0; i < n * n; i++) if (on[i]) h[i] = Math.max(1, Math.round(hs[i]));
+    // warna punggung: warna dominan di sekitar (mata, mulut, perisai di dada tidak ikut ke belakang)
+    const ck = (p) => p[0] >> 5 << 6 | p[1] >> 5 << 3 | p[2] >> 5;
+    const cnt = new Map(), rep = new Map(); let tot = 0;
+    for (let i = 0; i < n * n; i++) if (on[i] && !dark(col[i])) { const k = ck(col[i]); cnt.set(k, (cnt.get(k) || 0) + 1); if (!rep.has(k)) rep.set(k, col[i]); tot++; }
+    let dom = null, dv = -1; for (const [k, v] of cnt) if (v > dv) { dv = v; dom = rep.get(k); }
+    const rad = Math.max(3, Math.round(n / 14)), back = new Array(n * n);
     for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
       const i = y * n + x; if (!on[i]) continue;
-      const tepi = x === 0 || y === 0 || x === n - 1 || y === n - 1 || !on[i - 1] || !on[i + 1] || !on[i - n] || !on[i + n];
-      if (dark(col[i]) && tepi) { back[i] = col[i]; continue; }
       const loc = new Map(); let best = null, bv = -1;
-      for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= n || Y >= n) continue; const j = Y * n + X; if (!on[j] || dark(col[j])) continue; const k = ck(col[j]); if ((cnt.get(k) || 0) / tot < .04) continue; const v = (loc.get(k) || 0) + 1; loc.set(k, v); if (v > bv) { bv = v; best = rep.get(k); } }
-      back[i] = (best || dom || col[i]).map((v) => v * .9);
+      for (let dy = -rad; dy <= rad; dy += 2) for (let dx = -rad; dx <= rad; dx += 2) { const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= n || Y >= n) continue; const j = Y * n + X; if (!on[j] || dark(col[j])) continue; const k = ck(col[j]); if ((cnt.get(k) || 0) / tot < .05) continue; const v = (loc.get(k) || 0) + 1; loc.set(k, v); if (v > bv) { bv = v; best = k; } }
+      const base = best != null ? rep.get(best) : dom || col[i];
+      back[i] = [(base[0] * 7 + col[i][0]) / 8 * .92, (base[1] * 7 + col[i][1]) / 8 * .92, (base[2] * 7 + col[i][2]) / 8 * .92];
+      if (dark(col[i])) back[i] = base.map((v) => v * .9);
     }
-    const vox = [];
-    const cx = n / 2;
+    // dinding samping garis gelap di dalam tubuh memakai warna tetangganya (tidak jadi belang hitam saat diputar)
+    const sideC = new Array(n * n);
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      const i = y * n + x; if (!on[i]) continue; if (!dark(col[i])) { sideC[i] = col[i]; continue; }
+      let f = null; for (let r = 1; r <= 4 && !f; r++) for (let dy = -r; dy <= r && !f; dy++) for (let dx = -r; dx <= r && !f; dx++) { const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= n || Y >= n) continue; const j = Y * n + X; if (on[j] && !dark(col[j])) f = col[j]; }
+      sideC[i] = f || col[i];
+    }
+    // normal permukaan dari kemiringan ketebalan -> bayangan membulat
+    const vox = [], cx = n / 2;
+    const nh = (X, Y) => (X < 0 || Y < 0 || X >= n || Y >= n ? 0 : h[Y * n + X]);
+    const hv = (X, Y) => (X < 0 || Y < 0 || X >= n || Y >= n ? 0 : hs[Y * n + X]);
     for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
       const i = y * n + x; if (!on[i]) continue; const H = h[i];
-      const nh = (X, Y) => (X < 0 || Y < 0 || X >= n || Y >= n ? 0 : h[Y * n + X]);
+      const gx = (hv(x + 1, y) - hv(x - 1, y)) / 2, gy = (hv(x, y + 1) - hv(x, y - 1)) / 2;
+      const ln = Math.hypot(gx, gy, 1);
       for (let z = -H; z <= H; z++) {
-        const az = Math.abs(z);
-        const sideL = nh(x - 1, y) < az + 1 && az < H, sideR = nh(x + 1, y) < az + 1 && az < H, sideU = nh(x, y - 1) < az + 1 && az < H, sideD = nh(x, y + 1) < az + 1 && az < H;
-        if (az !== H && !sideL && !sideR && !sideU && !sideD) continue;
-        let c = z === H ? col[i] : z === -H ? back[i] : (z > 0 ? col[i] : back[i]).map((v) => v * .82);
-        const nx = sideL ? -1 : sideR ? 1 : 0, nz = z === H ? 1 : z === -H ? -1 : 0;
-        vox.push({ x: x - cx + .5, y, z: z * .9, c, nx, nz, ny: sideU ? -1 : sideD ? 1 : 0 });
+        const az = Math.abs(z), cap = az === H;
+        if (!cap && nh(x - 1, y) > az && nh(x + 1, y) > az && nh(x, y - 1) > az && nh(x, y + 1) > az) continue;
+        const front = z > 0;
+        let N;
+        const rimP = !on[i - 1] || !on[i + 1] || !on[i - n] || !on[i + n] || x === 0 || x === n - 1;
+        if (cap || !rimP) N = [-gx / ln, -gy / ln, (front ? 1 : -1) / ln];
+        else { const sx = (nh(x + 1, y) <= az ? 1 : 0) - (nh(x - 1, y) <= az ? 1 : 0), sy = (nh(x, y + 1) <= az ? 1 : 0) - (nh(x, y - 1) <= az ? 1 : 0), l2 = Math.hypot(sx, sy, .3) || 1; N = [sx / l2, sy / l2, (front ? .3 : -.3) / l2]; }
+        vox.push({ x: x - cx + .5, y, z: z, c: (front || (z === 0 && cap)) ? (cap ? col[i] : sideC[i]) : back[i], N });
       }
     }
     const m = { n, vox, grow };
@@ -77,38 +99,55 @@
   function render(cv, m, ang, opt = {}) {
     const g = cv.getContext('2d'), W = cv.width, H = cv.height;
     g.clearRect(0, 0, W, H);
-    const n = m.n, Wd = Math.ceil(n * 1.7) + 4, Hd = n + 4, c0 = Wd / 2;
+    const n = m.n, Wd = Math.ceil(n * 1.6) + 8, Hd = n + 8, c0 = Wd / 2;
     const zb = new Float32Array(Wd * Hd).fill(-1e9), buf = new Uint8ClampedArray(Wd * Hd * 4);
-    const c = Math.cos(ang), sn = Math.sin(ang), L = [-.55, -.35, .76];
+    const c = Math.cos(ang), sn = Math.sin(ang);
+    const L = [-.45, -.55, .7], ll = Math.hypot(...L); L[0] /= ll; L[1] /= ll; L[2] /= ll;
     for (const v of m.vox) {
       const X = v.x * c + v.z * sn, D = -v.x * sn + v.z * c;
-      const fx = c0 + X - .5, p0 = Math.floor(fx), py = v.y + 2;
-      const nxr = v.nx * c + v.nz * sn, nzr = -v.nx * sn + v.nz * c;
-      const k = .62 + .45 * Math.max(0, nxr * L[0] + v.ny * L[1] + nzr * L[2]);
-      const col = opt.siluet ? [40 + k * 18, 30 + k * 14, 52 + k * 20] : [v.c[0] * k, v.c[1] * k, v.c[2] * k];
+      const N = v.N, nx = N[0] * c + N[2] * sn, nz = -N[0] * sn + N[2] * c, ny = N[1];
+      const dif = Math.max(0, nx * L[0] + ny * L[1] + nz * L[2]);
+      const rim = Math.pow(Math.max(0, 1 - Math.abs(nz)), 3) * .25;
+      const spec = Math.pow(Math.max(0, nz * .85 + dif * .15), 24) * .18;
+      const k = .5 + .62 * dif;
+      const col = opt.siluet ? [42 + k * 22, 32 + k * 16, 56 + k * 24] : [v.c[0] * k + 255 * (spec + rim * .35), v.c[1] * k + 255 * (spec + rim * .35), v.c[2] * k + 255 * (spec + rim * .3)];
+      const fx = c0 + X - .5, p0 = Math.floor(fx), py = v.y + 4;
       for (const px of (fx - p0 < .25 ? [p0] : fx - p0 > .75 ? [p0 + 1] : [p0, p0 + 1])) {
         if (px < 0 || px >= Wd) continue;
         const j = py * Wd + px; if (D <= zb[j]) continue; zb[j] = D;
         buf[j * 4] = col[0]; buf[j * 4 + 1] = col[1]; buf[j * 4 + 2] = col[2]; buf[j * 4 + 3] = 255;
       }
     }
-    // tambal lubang kecil akibat pembulatan rotasi
     for (let y = 1; y < Hd - 1; y++) for (let x = 1; x < Wd - 1; x++) {
       const j = y * Wd + x; if (buf[j * 4 + 3]) continue;
       const a = buf[(j - 1) * 4 + 3] && buf[(j + 1) * 4 + 3] ? [j - 1, j + 1] : buf[(j - Wd) * 4 + 3] && buf[(j + Wd) * 4 + 3] ? [j - Wd, j + Wd] : null;
       if (a) { for (let q = 0; q < 3; q++) buf[j * 4 + q] = (buf[a[0] * 4 + q] + buf[a[1] * 4 + q]) / 2; buf[j * 4 + 3] = 255; }
     }
-    // garis tepi 1 piksel mengikuti siluet dari sudut pandang saat ini
+    // haluskan warna permukaan (tanpa mengaburkan siluet)
+    if (!opt.kasar) {
+      const sm = new Uint8ClampedArray(buf);
+      for (let y = 1; y < Hd - 1; y++) for (let x = 1; x < Wd - 1; x++) {
+        const j = y * Wd + x; if (!buf[j * 4 + 3]) continue;
+        let r = 0, gg = 0, b = 0, wsum = 0;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const q = (j + dy * Wd + dx) * 4; if (!buf[q + 3]) continue; const wt = dx === 0 && dy === 0 ? 4 : dx === 0 || dy === 0 ? 2 : 1; r += buf[q] * wt; gg += buf[q + 1] * wt; b += buf[q + 2] * wt; wsum += wt; }
+        sm[j * 4] = r / wsum; sm[j * 4 + 1] = gg / wsum; sm[j * 4 + 2] = b / wsum;
+      }
+      buf.set(sm);
+    }
+    // garis tepi lembut 2 piksel mengikuti siluet
     const out = new Uint8ClampedArray(buf);
     for (let y = 0; y < Hd; y++) for (let x = 0; x < Wd; x++) {
       const j = y * Wd + x; if (buf[j * 4 + 3]) continue;
-      if ((x > 0 && buf[(j - 1) * 4 + 3]) || (x < Wd - 1 && buf[(j + 1) * 4 + 3]) || (y > 0 && buf[(j - Wd) * 4 + 3]) || (y < Hd - 1 && buf[(j + Wd) * 4 + 3])) { out[j * 4] = OL[0]; out[j * 4 + 1] = OL[1]; out[j * 4 + 2] = OL[2]; out[j * 4 + 3] = 255; }
+      let near = 0;
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { if (dx * dx + dy * dy > 5) continue; const X = x + dx, Y = y + dy; if (X >= 0 && Y >= 0 && X < Wd && Y < Hd && buf[(Y * Wd + X) * 4 + 3]) { near = Math.max(near, dx * dx + dy * dy <= 1 ? 255 : 170); } }
+      if (near) { out[j * 4] = OL[0]; out[j * 4 + 1] = OL[1]; out[j * 4 + 2] = OL[2]; out[j * 4 + 3] = near; }
     }
     const off = document.createElement('canvas'); off.width = Wd; off.height = Hd; off.getContext('2d').putImageData(new ImageData(out, Wd, Hd), 0, 0);
-    const s = opt.fit ? Math.max(1, Math.floor(Math.min(W / Wd * 1.25, H / Hd) * .95)) : Math.max(1, Math.floor(Math.min(W, H) * .9 / 58 * (opt.zoom || 1)));
-    const ox = W / 2, oy = (opt.fit ? H * .99 : H * .84) - (n * .87 + 2) * s;
-    g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.ellipse(ox, oy + (n * .87 + 2) * s, n * s * .3, n * s * .07, 0, 0, Math.PI * 2); g.fill();
-    g.imageSmoothingEnabled = false; g.drawImage(off, Math.round(ox - Wd * s / 2), Math.round(oy), Wd * s, Hd * s);
+    const s = opt.fit ? Math.min(W / Wd * 1.3, H / Hd) * .97 : Math.min(W, H) * .9 / (58 * K) * (opt.zoom || 1);
+    const ox = W / 2, oy = (opt.fit ? H * .99 : H * .86) - (n * .87 + 4) * s;
+    g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.ellipse(ox, oy + (n * .87 + 4) * s, n * s * .3, n * s * .07, 0, 0, Math.PI * 2); g.fill();
+    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+    g.drawImage(off, ox - Wd * s / 2, oy, Wd * s, Hd * s);
   }
 
   // ---------- modal ----------
@@ -119,7 +158,7 @@
     el.innerHTML = `<div class="p3d-box">
       <button class="btn ghost sq p3d-x" type="button" aria-label="Tutup">×</button>
       <div class="p3d-head"><h3 class="p3d-nama"></h3><span class="p3d-sub muted"></span></div>
-      <div class="p3d-stage"><canvas width="360" height="360" class="p3d-cv" aria-label="Model 360°, geser untuk memutar"></canvas>
+      <div class="p3d-stage"><canvas width="720" height="720" class="p3d-cv" aria-label="Model 360°, geser untuk memutar"></canvas>
         <div class="p3d-hint">↔ geser untuk memutar 360°</div>
         <div class="p3d-ctl"><button class="btn ghost sq" type="button" data-r="-1" aria-label="Putar kiri">⟲</button><button class="btn ghost" type="button" data-auto>⏸ Putar</button><button class="btn ghost sq" type="button" data-r="1" aria-label="Putar kanan">⟳</button></div></div>
       <div class="p3d-tabs" role="tablist"></div>
@@ -140,7 +179,7 @@
   function syncAuto() { el.querySelector('[data-auto]').textContent = st.auto ? '⏸ Berhenti' : '▶ Putar'; }
   function spinTo(a) { const a0 = st.ang, t0 = performance.now(); const f = (t) => { const k = Math.min(1, (t - t0) / 350); st.ang = a0 + (a - a0) * (1 - (1 - k) ** 3); draw(); if (k < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); }
   function draw() { if (!st) return; const terkunci = st.tier > st.w.tier; render(el.querySelector('.p3d-cv'), model(st.w, st.tier), st.ang, { siluet: terkunci }); }
-  function loop() { if (!st || !st.auto || el.hidden) return; st.ang += .014; draw(); requestAnimationFrame(loop); }
+  function loop() { if (!st || !st.auto || el.hidden) return; st.ang += .018; draw(); requestAnimationFrame(loop); }
   function close() { if (el) el.hidden = true; st = null; }
 
   function info() {
@@ -166,7 +205,7 @@
     const max = Math.min(5, Math.max(w.tier + 1, 3));
     for (let i = 0; i <= max; i++) {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'p3d-tab' + (i === st.tier ? ' on' : '') + (i > w.tier ? ' kunci' : ''); b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(i === st.tier));
-      const cv = document.createElement('canvas'); cv.width = cv.height = 72; render(cv, model(w, i), -.5, { siluet: i > w.tier, fit: true });
+      const cv = document.createElement('canvas'); cv.width = cv.height = 112; render(cv, model(w, i), -.5, { siluet: i > w.tier, fit: true });
       const sm = document.createElement('small'); sm.textContent = (i > w.tier ? '🔒 ' : '') + o.tiers[i].replace(' Evolution', '');
       b.append(cv, sm); b.onclick = () => { st.tier = i; tabs(); info(); draw(); };
       box.appendChild(b);

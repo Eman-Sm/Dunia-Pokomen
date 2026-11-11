@@ -75,12 +75,13 @@
     [/oren|oranye|orange|jingga/, '#f08a24'], [/coklat|cokelat|brown/, '#8a5a34'], [/abu|grey|gray|perak|silver/, '#9aa3ad']];
   function adjColor(word) { const t = String(word || '').toLowerCase(); for (const [re, c] of ADJ) if (re.test(t)) return c; return null; }
 
-  function make(w) {
+  function make(w, opt) {
+    opt = opt || {};
     const hewan = (w.hewan || []).map((h) => String(h).toLowerCase());
     const all = hewan.join(' ');
     const tier = Number(w.tier || 0);
     const pal = w.pal && /^#[0-9a-f]{6}$/i.test(w.pal.body) ? w.pal : null; // colours taken from the anime card art
-    const k = (w.u || w.nama) + '|' + all + '|' + tier + '|' + (w.elemen || '') + '|' + (w.outfit || '') + '|' + (w.wujud || '') + (pal ? '|' + pal.body + (pal.acc || '') + (pal.acc2 || '') : '') + (w.pakaian && window.Pakaian ? '|p' + window.Pakaian.kunci(w.pakaian) : '');
+    const k = (w.u || w.nama) + '|' + all + '|' + tier + '|' + (w.elemen || '') + '|' + (w.outfit || '') + '|' + (w.wujud || '') + (pal ? '|' + pal.body + (pal.acc || '') + (pal.acc2 || '') : '') + (w.pakaian && window.Pakaian ? '|p' + window.Pakaian.kunci(w.pakaian) : '') + (opt.hd ? '|hd' + (opt.res || '') : '');
     if (cache.has(k)) return cache.get(k);
     const seed = hash(k);
     const S = 26;
@@ -109,7 +110,7 @@
       belly = body === '#34303a' ? '#5a5560' : shade(body, 1.18);
     }
     // Mega Evolution and up: finer painter; every higher tier adds resolution and detail
-    if (tier >= 2 && window.CreatureHD) {
+    if ((tier >= 2 || opt.hd) && window.CreatureHD) {
       // colour words in the comment ("Naga Ungu", "Ular Emas", "macan tutul hitam") are honoured in HD
       if (!god && !pal) {
         const b0 = adjColor(hewan[0]), a1 = adjColor(hewan[1]), a2 = adjColor(hewan[2]);
@@ -117,8 +118,8 @@
         if (a1) acc = a1; if (a2) acc2 = a2;
       }
       const hd = window.CreatureHD.paint(w, { hewan, all, tier, seed, god, body, acc, acc2, belly,
-        elCol: w.elemen ? elementColor(w.elemen) : null, outfitCol: outfitColor(w.outfit) });
-      hd.grow = tier >= 3 ? 1.5 : 1.3;
+        elCol: w.elemen && tier >= 2 ? elementColor(w.elemen) : null, outfitCol: outfitColor(w.outfit), res: opt.res });
+      hd.grow = tier >= 3 ? 1.5 : tier >= 1 ? 1.3 : 1;
       cache.set(k, hd);
       return hd;
     }
