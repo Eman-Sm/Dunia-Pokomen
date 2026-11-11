@@ -48,6 +48,28 @@
     const maxH = n * .2;
     const hf = new Float32Array(n * n);
     for (let i = 0; i < n * n; i++) if (on[i]) { const r = Math.min(dist[i], maxH * 1.25); hf[i] = Math.min(maxH, Math.sqrt(Math.max(0, 2 * maxH * 1.25 * r - r * r)) * .8) + .6; }
+    // sayap, ekor & jubah yang menjulur ke samping dibuat tipis (bukan bantal)
+    {
+      const cnt2 = new Map(), rep2 = new Map();
+      for (let y = Math.round(n * .45); y < Math.round(n * .8); y++) for (let x = Math.round(n * .38); x < Math.round(n * .62); x++) { const i = y * n + x; if (!on[i] || dark(col[i])) continue; const k = col[i][0] >> 5 << 6 | col[i][1] >> 5 << 3 | col[i][2] >> 5; cnt2.set(k, (cnt2.get(k) || 0) + 1); if (!rep2.has(k)) rep2.set(k, col[i]); }
+      let bk = null, bv = -1; for (const [k, v] of cnt2) if (v > bv) { bv = v; bk = k; }
+      const bc = bk != null ? rep2.get(bk) : null;
+      if (bc) {
+        const isB = (c) => Math.abs(c[0] - bc[0]) + Math.abs(c[1] - bc[1]) + Math.abs(c[2] - bc[2]) < 95;
+        const MN = new Int16Array(n).fill(n), MX = new Int16Array(n).fill(-1);
+        for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const i = y * n + x; if (on[i] && isB(col[i])) { MN[y] = Math.min(MN[y], x); MX[y] = Math.max(MX[y], x); } }
+        const win = Math.max(2, Math.round(n * .08)), pad = Math.round(n * .03);
+        for (let y = 0; y < n; y++) {
+          let mn = n, mx = -1;
+          for (let yy = Math.max(0, y - win); yy <= Math.min(n - 1, y + win); yy++) if (MX[yy] >= 0) { mn = Math.min(mn, MN[yy]); mx = Math.max(mx, MX[yy]); }
+          if (mx < 0) continue;
+          for (let x = 0; x < n; x++) {
+            const i = y * n + x; if (!on[i]) continue;
+            if ((x < mn - pad || x > mx + pad) && !isB(col[i])) hf[i] = Math.min(hf[i], Math.max(1.2, n * .022));
+          }
+        }
+      }
+    }
     // haluskan medan ketebalan
     const hs = new Float32Array(n * n);
     for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const i = y * n + x; if (!on[i]) continue; let s_ = 0, k_ = 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= n || Y >= n) continue; const j = Y * n + X; s_ += on[j] ? hf[j] : 0; k_++; } hs[i] = Math.max(.6, s_ / k_); }
