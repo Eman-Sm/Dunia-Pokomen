@@ -253,6 +253,7 @@
         if (now - (a.emoteT || 0) > 3500) { a.emote = '🎮'; a.emoteT = now; }
         a.until = now + 1500; continue;
       }
+      if (slp && w.sahabat && w !== selected) { a.x = PAV.x + 10; a.y = PAV.y + 12; a.mode = 'idle'; a.until = now + 800; continue; }
       if (w === selected || slp) { a.mode = 'idle'; a.until = now + 800; continue; }
       if (w.tier >= 3 && w.skill) {
         if (!a.skillNext) a.skillNext = now + rand(1500, 8000);
@@ -842,10 +843,28 @@
   // hewan yang ngobrol di Obrolan Warga dalam 20 menit terakhir berkumpul di Tereuma
   function tereuma() { return fasilitas().find((f) => f.id === 'tereuma') || null; }
   function berkumpul() { try { return tereuma() && window.PokoChat && window.PokoChat.aktif ? window.PokoChat.aktif(20 * 60e3) : null; } catch { return null; } }
+  // 12 Nov: PAVILIUN SAHABAT — rumah Sohabat Admin di samping Balai Warga
+  const PAV = { x: 838, y: 703 };
+  const PAV_IM = ['paviliun', 'paviliun_malam', 'jembatan_sahabat'].reduce((o, k) => { const im = new Image(); im.onload = () => draw(); im.src = `assets/${k}.png?v=1`; o[k] = im; return o; }, {});
+  const sahabatW = () => (DATA && DATA.warga ? DATA.warga.find((w) => w.sahabat && !w.mati) : null);
+  function drawPaviliun() {
+    const im = PAV_IM[sleeping() ? 'paviliun_malam' : 'paviliun'], jb = PAV_IM.jembatan_sahabat;
+    if (!im.complete || !im.naturalWidth) return;
+    const z = cam.z; ctx.imageSmoothingEnabled = false;
+    if (jb.complete && jb.naturalWidth) { const [bx, by] = toScreen(PAV.x + 14, PAV.y - 26); ctx.drawImage(jb, Math.round(bx), Math.round(by), Math.round(jb.naturalWidth * z), Math.round(jb.naturalHeight * z)); }
+    const [x, y] = toScreen(PAV.x - 32, PAV.y - 90); ctx.drawImage(im, Math.round(x), Math.round(y), Math.round(im.naturalWidth * z), Math.round(im.naturalHeight * z));
+    if (z >= .8) {
+      const f = Math.max(9, 6.5 * z), [lx, ly] = toScreen(PAV.x, PAV.y + 8); ctx.font = `800 ${f}px Nunito, system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const t = 'PAVILIUN SAHABAT', tw_ = ctx.measureText(t).width + 10;
+      ctx.fillStyle = '#2b1b17'; ctx.fillRect(lx - tw_ / 2 - 1, ly - f * .7 - 1, tw_ + 2, f * 1.4 + 2); ctx.fillStyle = '#e9dcff'; ctx.fillRect(lx - tw_ / 2, ly - f * .7, tw_, f * 1.4);
+      ctx.fillStyle = '#5a2f9a'; ctx.fillText(t, lx, ly); ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
+    }
+  }
   function drawBangunan() {
     try { drawFasilitas(); } catch { /* ignore */ }
     try { drawHiasan(performance.now()); } catch { /* ignore */ }
     try { drawDekor(performance.now()); } catch { /* ignore */ }
+    try { drawPaviliun(); } catch { /* ignore */ }
     if (!DATA || !DATA.evoBatu) return;
     for (const b of BANGUNAN) {
       if (!b.im.complete || !b.im.naturalWidth) continue;
@@ -1264,6 +1283,7 @@
     tereuma: { tombol: [['💬 Ikut Ngobrol', () => keBagian('obrolan')]] },
     klinik: { tombol: [['⚔️ Ke Arena', () => bukaToko('arena')]] },
     pasar: { tombol: [['🧺 Buka Pasar', () => bukaToko('pasar')]] },
+    paviliun: { nama: 'Paviliun Sahabat', ket: '', tombol: [['♛ Lihat Sahabat', () => { const w = sahabatW(); closeCard(); if (w) select(w, true); }], ['🔄 Evolusi 360°', () => { const w = sahabatW(); if (w && window.Profil3D) window.Profil3D.open(w, { tiers: TIERS, benefits: BENEFITS, batuSyarat: DATA.batuSyarat }); }]] },
   };
   function bukaToko(t) { closeCard(); if (window.TokoPokomen) window.TokoPokomen.buka(t); else keBagian('toko'); }
   function keBagian(id, cadangan) { closeCard(); let el = $(id); if ((!el || el.hidden) && cadangan) el = $(cadangan); if (el && !el.hidden) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
@@ -1278,6 +1298,7 @@
     if (DATA.evoBatu) {
       for (const [id, x, y, r] of [['toko', 935, 700, 24], ['arena', 822, 770, 30], ['latihan', 950, 752, 24]]) if (Math.abs(wx - x) < r && Math.abs(wy - y) < r * .8) return { id };
     }
+    if (Math.abs(wx - PAV.x) < 26 && wy > PAV.y - 88 && wy < PAV.y + 6) return { id: 'paviliun' };
     const B = (WORLD && WORLD.balai) || [882, 724];
     if (Math.abs(wx - B[0]) < 26 && Math.abs(wy - B[1] + 4) < 22) return { id: 'balai' };
     return null;
@@ -1285,7 +1306,8 @@
   function selectBangunan(b) {
     selected = null;
     const P = PINTAS[b.id] || {}, f = b.f || {};
-    const nama = f.nama || P.nama || b.id, ket = f.ket || P.ket || '';
+    const sw = b.id === 'paviliun' ? sahabatW() : null;
+    const nama = f.nama || P.nama || b.id, ket = f.ket || P.ket || (sw ? `Rumah Sohabat Admin, tangan kanan Admin, tepat di samping Balai Warga. Ditempati ${sw.nama} (@${sw.u}). Lenteranya menyala saat malam, saat Sahabat pulang beristirahat.` : 'Rumah Sohabat Admin. Kirim Kopi Admin terbanyak untuk menempatinya!');
     const usul = (f.pengusul || []).length ? `<p class="muted">Usulan ${f.pengusul.map((u) => '@' + esc(u)).join(', ')}</p>` : '';
     let extra = '';
     if (b.id === 'klinik' && DATA.fasilitas && (DATA.fasilitas.pasien || []).length) {
