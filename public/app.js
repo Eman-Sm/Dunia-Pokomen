@@ -488,6 +488,14 @@
       ctx.drawImage(sp, -dw / 2, -footY, dw, dh);
       ctx.restore();
       ctx.imageSmoothingEnabled = false;
+      // 16 Nov: Liga Wilayah — syal warna wilayah
+      const LWd = window.LigaWilayah && window.LigaWilayah.data;
+      if (LWd && !custom && w.wil && alpha > .5 && cam.z >= .7 && ['pemanasan', 'liga', 'semifinal', 'final'].includes(LWd.tahap.kode)) {
+        const col = window.LigaWilayah.warna[w.wil] || '#fff', ny = y - bob - lift - (footY - (sp.hd ? 17 : 19) * u * s) * sq, sw = 11 * u * s;
+        ctx.fillStyle = '#2b1b17'; ctx.fillRect(Math.round(x - sw / 2 - 1), Math.round(ny - 1.6 * u * s - 1), Math.round(sw + 2), Math.round(3.2 * u * s + 2));
+        ctx.fillStyle = col; ctx.fillRect(Math.round(x - sw / 2), Math.round(ny - 1.6 * u * s), Math.round(sw), Math.round(3.2 * u * s));
+        ctx.fillRect(Math.round(x + A.face * sw * .25), Math.round(ny), Math.round(2.4 * u * s), Math.round(5 * u * s));
+      }
       const top = y - footY * sq - bob - lift;
       if (SK) { ctx.imageSmoothingEnabled = false; drawSkill(SK, w, x, y, top, A.face, cam.z); }
       if (dewa) drawPartikelDewa(w, x, y - bob - lift, dh, now, A.seed);
@@ -860,11 +868,28 @@
       ctx.fillStyle = '#5a2f9a'; ctx.fillText(t, lx, ly); ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
     }
   }
+  // 16 Nov: papan skor Liga Wilayah di Pusat Koloni
+  function drawPapanSkor() {
+    const L = window.LigaWilayah && window.LigaWilayah.data; if (!L || !['pemanasan', 'liga', 'semifinal', 'final', 'selesai'].includes(L.tahap.kode) || cam.z < .55) return;
+    const z = cam.z, [cx, cy] = toScreen(905, 652), W_ = 120 * z, rows = L.hariIni ? L.hariIni.laga : [], H_ = (22 + Math.max(1, rows.length) * 13) * z;
+    const x0 = cx - W_ / 2, y0 = cy - H_;
+    ctx.fillStyle = '#3b2416'; ctx.fillRect(cx - 34 * z, cy - 2 * z, 4 * z, 16 * z); ctx.fillRect(cx + 30 * z, cy - 2 * z, 4 * z, 16 * z);
+    ctx.fillStyle = '#2b1b17'; ctx.fillRect(x0 - 2 * z, y0 - 2 * z, W_ + 4 * z, H_ + 4 * z); ctx.fillStyle = '#20324a'; ctx.fillRect(x0, y0, W_, H_);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffd23f'; ctx.font = `900 ${8 * z}px Nunito, system-ui, sans-serif`;
+    ctx.fillText(L.tahap.kode === 'pemanasan' ? 'LIGA WILAYAH · MULAI SENIN' : L.tahap.kode === 'selesai' ? 'LIGA WILAYAH · SELESAI' : 'LIGA WILAYAH · ' + String(L.tahap.label || '').toUpperCase(), cx, y0 + 9 * z);
+    ctx.font = `800 ${8.5 * z}px Nunito, system-ui, sans-serif`;
+    if (!rows.length) { ctx.fillStyle = '#fff'; ctx.fillText(L.tahap.kode === 'pemanasan' ? 'Tekan HADIR di website!' : 'Terima kasih semua wilayah!', cx, y0 + 22 * z); }
+    rows.forEach((l, i) => { const yy = y0 + (22 + i * 13) * z; const C = window.LigaWilayah.warna;
+      ctx.fillStyle = C[l.a.wil]; ctx.fillText('W' + l.a.wil, cx - 44 * z, yy); ctx.fillStyle = '#fff'; ctx.fillText(`${l.a.skor}  –  ${l.b.skor}`, cx, yy); ctx.fillStyle = C[l.b.wil]; ctx.fillText('W' + l.b.wil, cx + 44 * z, yy); });
+    ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
+  }
   function drawBangunan() {
     try { drawFasilitas(); } catch { /* ignore */ }
     try { drawHiasan(performance.now()); } catch { /* ignore */ }
     try { drawDekor(performance.now()); } catch { /* ignore */ }
     try { drawPaviliun(); } catch { /* ignore */ }
+    try { drawPapanSkor(); } catch { /* ignore */ }
     if (!DATA || !DATA.evoBatu) return;
     for (const b of BANGUNAN) {
       if (!b.im.complete || !b.im.naturalWidth) continue;

@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap">
-<link rel="stylesheet" href="style.css?v=p3d2">
+<link rel="stylesheet" href="style.css?v=liga1">
 </head>
 <body>
 <header class="topbar">
@@ -23,7 +23,7 @@
       <span><span class="name">DUNIA POKOMEN</span><span class="sub">Populasi Komentar</span></span>
     </a>
     <nav class="tabs" aria-label="Bagian halaman">
-      <a href="#peta">🗺️ Peta</a><a href="#obrolan">💬 Ngobrol</a><a href="#toko" hidden>🏪 Toko &amp; Arena</a><a href="#warga">📖 Warga</a><a href="#ikut">🐣 Cara Ikut</a><a href="#saran" class="nav-saran">💌 Saran</a>
+      <a href="#peta">🗺️ Peta</a><a href="#ligaW">🏆 Liga</a><a href="#obrolan">💬 Ngobrol</a><a href="#toko" hidden>🏪 Toko &amp; Arena</a><a href="#warga">📖 Warga</a><a href="#ikut">🐣 Cara Ikut</a><a href="#saran" class="nav-saran">💌 Saran</a>
     </nav>
     <div class="chips">
       <span class="chip" id="chipHari">HARI KE-1</span>
@@ -73,6 +73,13 @@
     </div>
   </section>
 
+  <section class="wrap" id="ligaW" hidden aria-labelledby="lwTitle" style="padding-top:26px">
+    <div class="parchment">
+      <h2 id="lwTitle">🏆 Liga Wilayah <small class="muted">Musim 1</small></h2>
+      <p class="muted">6 wilayah bertanding sebagai tim. Setiap warga ikut menyumbang poin: hadir, berlatih, berduel, bersorak, dan Kopi Admin.</p>
+      <div id="lwIsi"></div>
+    </div>
+  </section>
   <section class="wrap" id="saran" aria-labelledby="srTitle" style="padding-top:26px">
     <div class="parchment sr-box">
       <h2 id="srTitle">💌 Saran &amp; Masukan Warga</h2>
@@ -259,7 +266,8 @@
 <script src="card.js?v=font1"></script>
 <script src="pokoboll.js?v=1"></script>
 <script src="profil3d.js?v=3"></script>
-<script src="app.js?v=pav1"></script>
+<script src="app.js?v=liga1"></script>
+<script src="liga.js?v=1"></script>
 <script src="obrolan.js?v=dekor1"></script>
 <script type="module" src="arena-game.js?v=2"></script>
 <script src="toko.js?v=pasar2"></script>

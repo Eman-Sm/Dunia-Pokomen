@@ -60,6 +60,7 @@ export async function POST(request) {
       const u = cocokkan(item, byU); w = u ? byU[u] : null;
     } catch { w = null; }
     const biji = item.jumlah * BIJI_PER_KOPI;
+    if (w) { try { const LW = await import('../lib/ligawil.js'); const { wilayahOf } = await import('../lib/wilayah.js'); await LW.catatKopi(w.username || w.u, item.jumlah, Date.now(), wilayahOf(w)); } catch { /* ignore */ } }
     const teks = w
       ? `☕ ${item.nama} mengirim ${item.jumlah} ${item.unit} untuk ${w.nama}! +${biji} Biji Kopi masuk ke dompet ${w.nama} dan aura kopi menyala 24 jam. Admin melek +${item.jumlah} jam!`
       : `☕ ${item.nama} mengirim ${item.jumlah} ${item.unit}. Admin melek +${item.jumlah} jam jaga ronda! (Tulis nama hewanmu di pesan Trakteer supaya hadiahnya masuk.)`;

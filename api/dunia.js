@@ -89,6 +89,9 @@ export async function GET(request) {
       // 4 Nov: aturan W.O. diganti duel otomatis → kembalikan semua -1 W.O. & umumkan (sekali)
       try { const AR = await import('../lib/arena.js'); const h = await AR.kembalikanPoinWO(); if (h) { const { log } = await import('../lib/rules.js'); const ob = await import('../lib/obrolan.js');
         for (const t of ['⚔️ ATURAN ARENA BARU: tantangan yang tidak dijawab kini jadi DUEL OTOMATIS, bukan kalah. Boleh "Lewati" 2x per hari tanpa akibat. Tiap hewan maks. 3 tantangan masuk per hari.', `⏰ Batas 12 jam kini hanya dihitung saat Arena buka (07.00–21.00). Semua poin yang hilang karena W.O. sudah DIKEMBALIKAN (${h.length} warga). Klasemen sudah dihitung ulang!`]) { await log('arena', t); await ob.sistem(t); } } } catch { /* ignore */ }
+      // 16 Nov: Liga Wilayah — pengumuman hasil harian & hadiah akhir musim
+      try { const LW = await import('../lib/ligawil.js'); const { log } = await import('../lib/rules.js'); const ob = await import('../lib/obrolan.js'); const E = await import('../lib/ekonomi.js');
+        await LW.sapu({ umumkan: async (t) => { await log('liga', t); await ob.sistem(t); }, bonus: (u, n) => E.bonusBiji(u, n) }); } catch { /* ignore */ }
       // 3 Nov: fasilitas baru dibuka → umumkan + hadiah tebakan benar
       try { const F = await import('../lib/fasilitas.js'); const { log } = await import('../lib/rules.js'); const ob = await import('../lib/obrolan.js'); const E = await import('../lib/ekonomi.js');
         await F.umumkanYangBaru({ umumkan: async (t) => { await log('bangun', t); await ob.sistem(t); }, bonus: (u, n, ket) => E.bonusBiji(u, n, ket) }); } catch { /* ignore */ }
