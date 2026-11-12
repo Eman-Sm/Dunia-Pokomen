@@ -1283,6 +1283,7 @@
       ${DATA.evoBatu && !w.mati ? `<p class="skill batu">💎 Batu Evolusi: <b>${fmt(w.batu || 0)}</b>${w.tier >= 3 && w.tier < 5 && DATA.batuSyarat ? ` <span class="muted">(naik ke ${esc(TIERS[w.tier + 1])}: butuh ${DATA.batuSyarat[w.tier]} Batu Evolusi + 1 cerita baru)</span>` : ''}</p>` : ''}
       ${w.skill ? `<p class="skill">✦ Skill: <b>${esc(w.skill)}</b></p>` : w.tier >= 3 ? '<p class="muted">Skill belum diisi. Pemiliknya bisa menulis <b>Skill: ...</b> di komentar.</p>' : ''}
       ${(w.cerita || []).length ? `<ul class="stories">${w.cerita.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>` : '<p class="muted">Belum ada cerita. Ceritakan kebiasaan uniknya di postingan berikutnya untuk berevolusi.</p>'}
+      ${!w.art && !w.mati ? '<p class="skill antre-art">🎨 Gambar anime untuk kartu hewan ini sedang dikerjakan admin satu per satu. Mohon bersabar ya!</p>' : ''}
       <p class="muted">Lahir ${esc(lahir)} · kavling #${w.spot + 1}</p>
       <button class="btn" type="button" id="open3d" style="margin-top:10px">🔄 Evolusi 360°</button>
       <button class="btn ghost" type="button" id="openKartu" style="margin-top:10px">Lihat Kartu Warga</button>`;
