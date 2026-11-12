@@ -81,6 +81,15 @@ export async function GET(request) {
             const sk = m[1].replace(/[\p{Extended_Pictographic}\uFE0F]/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, 60); if (sk.length < 3) continue;
             w.skill = sk; await setJSON('warga', w.username, w); hasil.push(w.username + ': ' + sk); if (w.tier >= 3) await log('evolusi', `${w.nama} milik @${w.username} kini punya skill: ${sk}!`, { u: w.username }); break; } }
         await redis('SET', 'skill_dari_cerita_hasil', JSON.stringify(hasil)); } } catch { /* ignore */ }
+      // 12 Nov: jawaban "Skill apa yang dia punya?" yang ditulis tanpa format "Skill: ..." → cari di komentar & pasang (sekali)
+      try { if ((await redis('SET', 'skill_balasan_v1', '1', 'NX')) === 'OK') { const { hgetallJSON, setJSON } = await import('../lib/db.js'); const R = await import('../lib/rules.js'); const { parseComment } = await import('../lib/parse.js'); const IG = await import('../lib/ig.js'); const hasil = [];
+        const tunggu = new Map((await hgetallJSON('warga')).filter((w) => !w.mati && ((w.asked?.skill && !w.skill) || (w.asked?.elemen && !w.elemen))).map((w) => [w.username, w]));
+        if (tunggu.size) { const cs = []; for (const m of await IG.listMedia(10)) for (const c of await IG.listComments(m.id, 3000)) if (tunggu.has(String(c.username || '').toLowerCase())) cs.push(c);
+          cs.sort((x, y) => String(x.timestamp).localeCompare(String(y.timestamp)));
+          for (const c of cs) { const w = tunggu.get(String(c.username).toLowerCase()); const j = R.jawabTanya(w, c, parseComment(c.text)); if (!j) continue;
+            w[j.f] = j.v; await setJSON('warga', w.username, w); hasil.push(`${w.username}: ${j.f}=${j.v}`);
+            await R.log('evolusi', j.f === 'skill' ? `${w.nama} milik @${w.username} kini punya skill: ${j.v}!` : `${w.nama} milik @${w.username} kini ber-elemen ${j.v}!`, { u: w.username }); } }
+        await redis('SET', 'skill_balasan_hasil', JSON.stringify({ t: new Date().toISOString(), tunggu: [...tunggu.keys()], hasil })); } } catch (e) { await redis('SET', 'skill_balasan_hasil', 'ERR ' + String(e.message || e)).catch(() => {}); }
       // 4 Nov 16.00: pemilihan Ketua Wilayah 5 (belum ada calon) diperpanjang sampai Jumat 6 Nov 12.00 WIB + calon luar gratis
       try { if ((await redis('SET', 'pw_w5_perpanjang_v1', '1', 'NX')) === 'OK') { const WL = await import('../lib/wilayah.js'); const cfg = await WL.getCfg(); const J = { ...(cfg.jadwal || {}) };
         if (J[5] && !(await (await import('../lib/db.js')).hgetallJSON('warga')).some((w) => w.ketuaWilayah === 5)) { J[5] = { ...J[5], tutup: '2026-11-06T05:00:00.000Z', ditetapkan: false }; await WL.setCfg({ jadwal: J, ditetapkan: false });
