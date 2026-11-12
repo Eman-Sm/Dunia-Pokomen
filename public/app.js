@@ -150,7 +150,7 @@
   }
   const sleeping = () => { const h = jamWIB(); return h >= 22 || h < 5; };
   const EMO = ['♥', '♪', '!', '?', '✦'];
-  let KUMPUL = null, OASE = null, KLINIK = null, PASIEN = null, LAPANGAN = null;
+  let KUMPUL = null, OASE = null, KLINIK = null, PASIEN = null, LAPANGAN = null, BERMAIN = null;
   // 7 Nov: hewan God Mode yang sedang dikendalikan pemiliknya (dibagikan ke semua penonton)
   let KENDALI = {}, KONTROL = false, kendaliKirim = 0, kendaliTujuan = null;
   const tokenKu = () => { try { return new URLSearchParams(location.search).get('k') || localStorage.getItem('pokomen_k') || ''; } catch { return ''; } };
@@ -239,7 +239,7 @@
   function stepActors(now, dt) {
     const slp = sleeping();
     KUMPUL = berkumpul(); OASE = fasilitas().find((f) => f.id === 'oase') || null;
-    KLINIK = fasilitas().find((f) => f.id === 'klinik') || null; LAPANGAN = fasilitas().find((f) => f.id === 'lapangan') || null; PASIEN = KLINIK && DATA.fasilitas.pasien ? new Set(DATA.fasilitas.pasien) : null;
+    KLINIK = fasilitas().find((f) => f.id === 'klinik') || null; LAPANGAN = fasilitas().find((f) => f.id === 'lapangan') || null; BERMAIN = fasilitas().find((f) => f.id === 'bermain') || null; PASIEN = KLINIK && DATA.fasilitas.pasien ? new Set(DATA.fasilitas.pasien) : null;
     for (const w of allWarga()) {
       if (w.mati) continue;
       const a = actor(w);
@@ -284,6 +284,11 @@
         // 7 Nov: main bola di Lapangan Pokomen
         a.tx = LAPANGAN.x + rand(-56, 56); a.ty = LAPANGAN.y + rand(-22, 22); a.mode = 'walk'; a.cepat = true;
         a.emote = '⚽'; a.emoteT = now;
+      } else if (now > a.until && BERMAIN && !slp && Math.random() < .02 && w.tier < 5) {
+        // 12 Nov: main ayunan, perosotan & jungkat-jungkit di Taman Bermain
+        const spot = [[-46, -4], [-34, 18], [26, 10], [30, 22], [0, 16]][Math.floor(rand(0, 5))];
+        a.tx = BERMAIN.x + spot[0] + rand(-6, 6); a.ty = BERMAIN.y + spot[1] + rand(-3, 3); a.mode = 'walk'; a.cepat = true;
+        a.emote = ['😆', '🎠', '😄'][Math.floor(rand(0, 3))]; a.emoteT = now;
       } else if (now > a.until && OASE && !slp && Math.random() < .035 && w.tier < 5) {
         // haus & lapar: mampir ke Oase Pokomen, lalu pulang lagi
         const ang = rand(0, Math.PI * 2); a.tx = OASE.x - 6 + Math.cos(ang) * rand(44, 54); a.ty = OASE.y + 2 + Math.sin(ang) * rand(22, 28);

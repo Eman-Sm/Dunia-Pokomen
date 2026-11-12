@@ -251,6 +251,39 @@ def pasar():
     return im
 
 
+def bermain():
+    W, H = 160, 112; cx, cy = 80, 62
+    im, d = clearing(W, H, cx, cy, 76, 46, seed=53)
+    # bak pasir
+    ell(d, cx + 30, cy + 22, 22, 9, (226, 200, 140, 255), OL); ell(d, cx + 30, cy + 21, 19, 7, (238, 214, 156, 255))
+    d.rectangle((cx + 24, cy + 16, cx + 30, cy + 20), fill=(232, 80, 70, 255), outline=OL)  # ember
+    # ayunan (kiri)
+    ax0, ax1, ay = cx - 66, cx - 26, cy - 30
+    for x in (ax0, ax1):
+        d.line((x, ay, x - 5, cy + 6), fill=OL, width=3); d.line((x, ay, x + 5, cy + 6), fill=OL, width=3)
+        d.line((x, ay, x - 4, cy + 5), fill=(220, 70, 70, 255), width=1); d.line((x, ay, x + 4, cy + 5), fill=(220, 70, 70, 255), width=1)
+    d.rectangle((ax0 - 2, ay - 3, ax1 + 2, ay + 1), fill=(220, 70, 70, 255), outline=OL)
+    for k, x in enumerate((ax0 + 11, ax1 - 11)):
+        sy = cy - 2 + k * 3
+        d.line((x - 4, ay + 1, x - 4, sy), fill=(90, 80, 80, 255)); d.line((x + 4, ay + 1, x + 4, sy), fill=(90, 80, 80, 255))
+        d.rectangle((x - 6, sy, x + 6, sy + 3), fill=(255, 210, 63, 255), outline=OL)
+    # perosotan (tengah belakang)
+    px, py = cx + 4, cy - 16
+    d.rectangle((px - 4, py - 22, px + 6, py + 12), fill=(70, 150, 220, 255), outline=OL)
+    for k in range(5): d.line((px - 4, py - 18 + k * 7, px + 6, py - 18 + k * 7), fill=OL)
+    d.rectangle((px - 7, py - 27, px + 9, py - 22), fill=(255, 210, 63, 255), outline=OL)
+    d.polygon([(px + 6, py - 22), (px + 13, py - 22), (px + 36, py + 16), (px + 29, py + 16)], fill=(232, 80, 70, 255), outline=OL)
+    # jungkat-jungkit (depan kiri)
+    jx, jy = cx - 34, cy + 22
+    d.polygon([(jx - 3, jy + 4), (jx + 3, jy + 4), (jx, jy - 2)], fill=(120, 80, 50, 255), outline=OL)
+    d.line((jx - 22, jy + 4, jx + 22, jy - 6), fill=OL, width=5); d.line((jx - 22, jy + 3, jx + 22, jy - 7), fill=(95, 190, 92, 255), width=2)
+    for x, y in ((jx - 20, jy + 2), (jx + 20, jy - 8)): d.rectangle((x - 2, y - 5, x + 2, y), fill=(255, 210, 63, 255), outline=OL)
+    # bunga & bendera kecil
+    for x, y, c in ((cx - 70, cy + 14, (236, 92, 150, 255)), (cx + 62, cy - 10, (255, 210, 63, 255)), (cx + 56, cy + 30, (180, 140, 255, 255))):
+        ell(d, x, y, 2.5, 2.5, c, OL)
+    im.save(OUT + 'bermain.png')
+    return im
+
 if __name__ == '__main__':
     pasar()
     lapangan()
