@@ -879,7 +879,7 @@
     ctx.fillStyle = '#ffd23f'; ctx.font = `900 ${8 * z}px Nunito, system-ui, sans-serif`;
     ctx.fillText(L.tahap.kode === 'pemanasan' ? 'LIGA WILAYAH · MULAI SENIN' : L.tahap.kode === 'selesai' ? 'LIGA WILAYAH · SELESAI' : 'LIGA WILAYAH · ' + String(L.tahap.label || '').toUpperCase(), cx, y0 + 9 * z);
     ctx.font = `800 ${8.5 * z}px Nunito, system-ui, sans-serif`;
-    if (!rows.length) { ctx.fillStyle = '#fff'; ctx.fillText(L.tahap.kode === 'pemanasan' ? 'Tekan HADIR di website!' : 'Terima kasih semua wilayah!', cx, y0 + 22 * z); }
+    if (!rows.length) { ctx.fillStyle = '#fff'; ctx.fillText(L.tahap.kode === 'pemanasan' ? 'Mulai Senin 16 Nov · 00.00' : 'Terima kasih semua wilayah!', cx, y0 + 22 * z); }
     rows.forEach((l, i) => { const yy = y0 + (22 + i * 13) * z; const C = window.LigaWilayah.warna;
       ctx.fillStyle = C[l.a.wil]; ctx.fillText('W' + l.a.wil, cx - 44 * z, yy); ctx.fillStyle = '#fff'; ctx.fillText(`${l.a.skor}  –  ${l.b.skor}`, cx, yy); ctx.fillStyle = C[l.b.wil]; ctx.fillText('W' + l.b.wil, cx + 44 * z, yy); });
     ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';

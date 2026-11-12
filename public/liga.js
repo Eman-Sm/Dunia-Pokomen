@@ -22,7 +22,7 @@
   }
   function status() {
     const t = L.tahap;
-    if (t.kode === 'pemanasan') return '🔥 <b>PEMANASAN</b> · Liga dimulai <b>Senin 16 Nov</b>. Tekan Hadir setiap hari untuk membangun hari beruntun!';
+    if (t.kode === 'pemanasan') return '🔥 <b>SEGERA DIMULAI</b> · Liga Wilayah resmi mulai <b>Senin 16 Nov pukul 00.00 WIB</b>. Semua poin, Hadir dan hari beruntun baru dihitung mulai Senin. Ketua sudah bisa memilih jagoan & taktik untuk laga pertama.';
     if (t.kode === 'liga') return `⚔️ <b>${esc(t.label)} dari 5</b> · Babak liga (menang 3, seri 1). Skor dihitung sampai 23.59 WIB, Duel Jagoan pukul ${L.jamJagoan}.00.`;
     if (t.kode === 'semifinal') return '🔥 <b>SEMIFINAL</b> · Peringkat 1 vs 4, 2 vs 3. Pemenang lanjut ke final besok!';
     if (t.kode === 'final') return '🏆 <b>FINAL</b> · Hari penentuan juara Liga Wilayah Musim 1!';
@@ -48,12 +48,12 @@
     }
     return `<div class="lw-saya"><div><b>${esc(s.nama)}</b> · <span style="color:${WCOL[s.wil]}">Wilayah ${s.wil}</span><br>
       <small>Beruntun: <b>${s.streak} hari</b>${L.hariIni ? ` · poinmu hari ini: <b>${s.poinHariIni}</b>/${L.cap.orang}${s.kopiHariIni ? ` + ☕${s.kopiHariIni}` : ''}` : ''}</small></div>
-      <button class="btn" type="button" id="lwHadir" ${s.hadirHariIni ? 'disabled' : ''}>${s.hadirHariIni ? '✅ Sudah hadir' : '🙋 Hadir untuk Wilayah'}</button></div>${gap}`;
+      <button class="btn" type="button" id="lwHadir" ${s.hadirHariIni || !s.bisaHadir ? 'disabled' : ''}>${!s.bisaHadir ? '🙋 Hadir dibuka Senin' : s.hadirHariIni ? '✅ Sudah hadir' : '🙋 Hadir untuk Wilayah'}</button></div>${gap}`;
   }
   function ketua() {
     if (!L.saya || !L.saya.ketua) return '';
     return `<details class="lw-ketua"><summary>👑 Panel Ketua: Jagoan & Taktik</summary>
-      <p class="muted">Berlaku untuk hari ini sampai ${L.jamJagoan}.00 WIB (setelah itu untuk besok). Jagoan bertarung otomatis di Duel Jagoan pukul ${L.jamJagoan}.00 (menang +15). Kalau tidak dipilih, hewan terkuat wilayahmu yang maju.</p>
+      <p class="muted">${L.tahap.kode === 'pemanasan' ? 'Berlaku untuk laga pertama, Senin 16 Nov.' : `Berlaku untuk hari ini sampai ${L.jamJagoan}.00 WIB (setelah itu untuk besok).`} Jagoan bertarung otomatis di Duel Jagoan pukul ${L.jamJagoan}.00 (menang +15). Kalau tidak dipilih, hewan terkuat wilayahmu yang maju.</p>
       <form id="lwKetuaF" class="tk-tantang" autocomplete="off"><input id="lwJagoan" placeholder="Nama jagoan (warga wilayahmu)">
       <select id="lwTaktik"><option value="">Taktik…</option>${Object.entries(L.taktik).map(([k, v]) => `<option value="${k}">${esc(v.label)} (${esc(v.ket)})</option>`).join('')}</select>
       <button class="btn" type="submit">Simpan</button></form></details>`;

@@ -18,11 +18,16 @@ test('tahap & jadwal', () => {
   const all = LW.JADWAL.flat().map((p) => p.slice().sort().join('-')); assert.equal(new Set(all).size, 15);
 });
 
-test('hadir: pemanasan membangun beruntun, poin naik di hari laga', async () => {
-  let r = await LW.hadir('w10', T('2026-11-14T09:00:00')); assert.equal(r.poin, 0); assert.equal(r.streak, 1);
-  r = await LW.hadir('w10', T('2026-11-15T09:00:00')); assert.equal(r.streak, 2);
-  r = await LW.hadir('w10', T('2026-11-16T09:00:00')); assert.equal(r.streak, 3); assert.equal(r.poin, 2);
+test('hadir: baru dibuka Senin, beruntun dihitung mulai Senin', async () => {
+  await assert.rejects(() => LW.hadir('w10', T('2026-11-14T09:00:00')), /Senin/);
+  let r = await LW.hadir('w10', T('2026-11-16T09:00:00')); assert.equal(r.streak, 1); assert.equal(r.poin, 1);
   r = await LW.hadir('w10', T('2026-11-16T15:00:00')); assert.equal(r.sudah, true);
+  r = await LW.hadir('w10', T('2026-11-17T08:00:00')); assert.equal(r.streak, 2); assert.equal(r.poin, 1);
+  r = await LW.hadir('w10', T('2026-11-18T08:00:00')); assert.equal(r.streak, 3); assert.equal(r.poin, 2);
+});
+test('kopi sebelum Senin tidak menyalakan Semangat Kopi', async () => {
+  await LW.catatKopi('w20', 1, T('2026-11-15T22:00:00'), 2);
+  const { S } = await LW.skorHari('2026-11-16', T('2026-11-16T10:00:00')); assert.equal(S[2].buff, false);
 });
 
 test('latihan & sorak dibatasi, duel hanya vs lawan hari itu', async () => {
@@ -34,15 +39,16 @@ test('latihan & sorak dibatasi, duel hanya vs lawan hari itu', async () => {
   await LW.catatKopi('w60', 2, t, 6);
   const { S } = await LW.skorHari('2026-11-16', t);
   assert.equal(S[1].orang.find((o) => o.u === 'w11').poin, 9); // latihan 6 + sorak 3
-  assert.equal(S[1].orang.find((o) => o.u === 'w10').poin, 7); // hadir 2 + menang 5
+  assert.equal(S[1].orang.find((o) => o.u === 'w10').poin, 6); // hadir 1 + menang 5
   assert.equal(S[6].kopi, 20); assert.equal(S[6].buff, true);
-  assert.equal(S[1].skor, 16); assert.equal(S[6].skor, Math.round((1 + 20) * 1.05));
+  assert.equal(S[1].skor, 15); assert.equal(S[6].skor, Math.round((1 + 20) * 1.05));
 });
 
 test('ketua: jagoan wilayah sendiri & duel jagoan 20.00', async () => {
   await assert.rejects(() => LW.aturKetua({ u: 'w10', wil: 1, jagoan: 'w20' }, T('2026-11-17T09:00:00')), /wilayahmu/);
   const r = await LW.aturKetua({ u: 'w10', wil: 1, jagoan: 'w11', taktik: 'serbu' }, T('2026-11-17T09:00:00'));
   assert.equal(r.hari, '2026-11-17');
+  assert.equal((await LW.aturKetua({ u: 'w10', wil: 1, taktik: 'bertahan' }, T('2026-11-13T09:00:00'))).hari, '2026-11-16');
   const { S } = await LW.skorHari('2026-11-17', T('2026-11-17T20:30:00'));
   assert.ok(S[1].jagoan); assert.equal(S[1].jagoan.a === 'w11' || S[1].jagoan.b === 'w11', true);
 });
