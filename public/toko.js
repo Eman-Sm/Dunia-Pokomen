@@ -139,7 +139,7 @@
       <div class="tk-item"><div class="ik">${IKON[x.id] || '🎁'}</div><b>${esc(x.label)}</b><span>${esc(x.ket)}</span>
         <div class="harga">${x.biji} Biji</div>
         ${['nama', 'rupa', 'elemen', 'kekuatan'].includes(x.id) ? `<input class="tk-nilai" data-for="${x.id}" maxlength="60" placeholder="${{ nama: 'Nama baru', rupa: 'mis. Kucing + Naga', elemen: 'mis. Petir', kekuatan: 'Skill baru' }[x.id]}">` : ''}
-        <button class="btn tk-beli" type="button" data-item="${x.id}" ${T.saya ? '' : 'disabled'}>${konfirm === x.id ? 'Yakin? Tekan lagi' : 'Beli'}</button></div>`).join('')}
+        <button class="btn tk-beli" type="button" data-item="${x.id}">${!T.saya ? '🔑 Butuh link pribadi' : konfirm === x.id ? 'Yakin? Tekan lagi' : 'Beli'}</button></div>`).join('')}
 </div>` + outfitHTML();
   }
   // 6 Nov: Outfit Toko — beli sekali, pakai & lepas gratis, terlihat di peta untuk semua tingkat
@@ -149,17 +149,22 @@
     return `<div class="tk-outfit"><h4>👕 Lemari Outfit</h4><p class="muted">Beli sekali, lalu pakai & lepas <b>gratis</b> kapan saja. Satu barang untuk tiap bagian (kepala, mata, leher). Terlihat di peta untuk <b>semua tingkat</b>.</p>
       <div class="tk-grid">${O.katalog.map((x) => {
         const dipakai = pakai[x.bagian] === x.id, ada = punya.has(x.id);
-        const lab = dipakai ? 'Lepas' : ada ? 'Pakai' : konfirm === 'of-' + x.id ? 'Yakin? Tekan lagi' : 'Beli & pakai';
+        const lab = !s ? '🔑 Butuh link pribadi' : dipakai ? 'Lepas' : ada ? 'Pakai' : konfirm === 'of-' + x.id ? 'Yakin? Tekan lagi' : 'Beli & pakai';
         return `<div class="tk-item${dipakai ? ' tk-dipakai' : ''}"><canvas class="tk-of-cv" width="80" height="80" data-id="${esc(x.id)}" data-bagian="${esc(x.bagian)}" aria-hidden="true"></canvas><b>${esc(x.label)}</b><span>${esc(O.bagian[x.bagian] || x.bagian)}${dipakai ? ' · sedang dipakai' : ''}</span>
           <div class="harga">${ada ? 'Sudah punya' : x.biji + ' Biji'}</div>
-          <button class="btn tk-of" type="button" data-id="${esc(x.id)}" data-bagian="${esc(x.bagian)}" data-aksi="${dipakai ? 'lepas' : 'pakai'}" data-punya="${ada ? 1 : 0}" ${s ? '' : 'disabled'}>${lab}</button></div>`;
+          <button class="btn tk-of" type="button" data-id="${esc(x.id)}" data-bagian="${esc(x.bagian)}" data-aksi="${dipakai ? 'lepas' : 'pakai'}" data-punya="${ada ? 1 : 0}">${lab}</button></div>`;
       }).join('')}</div></div>`;
   }
+  const PERLU_LINK = '🔑 Belanja butuh link pribadimu. Kirim DM "TOKO" ke @duniapokomen, lalu buka link yang dikirim (jangan lewat link bio).';
+  const harga = (id, ofit) => { const L = ofit ? (T.outfit.katalog || []) : (T.katalog || []); const x = L.find((y) => y.id === id); return x ? x.biji : '?'; };
+  function cekSaldo(n) { const sd = T.saya && T.saya.saldo; const b = sd && typeof sd === 'object' ? sd.biji : sd; if (typeof b === 'number' && typeof n === 'number' && b < n) { toast(`Biji Kopi-mu ${b}, butuh ${n}.`); return false; } return true; }
   async function outfit(b) {
+    if (!T.saya) { toast(PERLU_LINK); return; }
     const id = b.dataset.id, beliBaru = b.dataset.aksi === 'pakai' && b.dataset.punya !== '1';
-    if (beliBaru && konfirm !== 'of-' + id) { konfirm = 'of-' + id; render(); setTimeout(() => { if (konfirm === 'of-' + id) { konfirm = null; render(); } }, 4000); return; }
+    if (beliBaru && !cekSaldo(harga(id, true))) return;
+    if (beliBaru && konfirm !== 'of-' + id) { konfirm = 'of-' + id; render(); toast(`Tekan sekali lagi untuk membeli (${harga(id, true)} Biji).`); setTimeout(() => { if (konfirm === 'of-' + id) { konfirm = null; render(); } }, 7000); return; }
     konfirm = null; b.disabled = true;
-    const r = await post('api/toko', b.dataset.aksi === 'lepas' ? { aksi: 'outfit_lepas', bagian: b.dataset.bagian } : { aksi: 'outfit_pakai', id });
+    let r; try { r = await post('api/toko', b.dataset.aksi === 'lepas' ? { aksi: 'outfit_lepas', bagian: b.dataset.bagian } : { aksi: 'outfit_pakai', id }); } catch { toast('Koneksi terputus, coba lagi.'); render(); return; }
     if (r.error) { toast(r.error); render(); return; }
     toast(r.pesan); T.saya = r.saya; render();
     if (window.Pokomen && window.Pokomen.reload) window.Pokomen.reload();
@@ -259,10 +264,12 @@
   }
 
   async function beli(item) {
-    if (konfirm !== item) { konfirm = item; render(); setTimeout(() => { if (konfirm === item) { konfirm = null; render(); } }, 4000); return; }
+    if (!T.saya) { toast(PERLU_LINK); return; }
+    if (!cekSaldo(harga(item, false))) return;
+    if (konfirm !== item) { konfirm = item; render(); toast(`Tekan sekali lagi untuk membeli (${harga(item, false)} Biji).`); setTimeout(() => { if (konfirm === item) { konfirm = null; render(); } }, 7000); return; }
     konfirm = null;
     const inp = sec.querySelector(`.tk-nilai[data-for="${item}"]`);
-    const r = await post('api/toko', { item, nilai: inp ? inp.value : undefined });
+    let r; try { r = await post('api/toko', { item, nilai: inp ? inp.value : undefined }); } catch { toast('Koneksi terputus, coba lagi.'); render(); return; }
     if (r.error) { toast(r.error); render(); return; }
     toast(r.pesan || 'Berhasil!'); T.saya = r.saya; render();
     if (window.Pokomen && window.Pokomen.reload) window.Pokomen.reload();
