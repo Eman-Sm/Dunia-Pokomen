@@ -12,7 +12,7 @@ import * as PS from '../lib/pasar.js';
 async function dompet(u) {
   const w = await getJSON('warga', u);
   if (!w || w.mati) return null;
-  return { u, nama: w.nama, tier: w.tier, batu: w.batu || 0, saldo: await saldo(u), stat: publik(w), batas: Object.fromEntries(STAT.map((s) => [s, batasLatih(w, s)])), syaratBatu: CONFIG.batuEvolusi[w.tier] || null, tierBerikut: CONFIG.batuEvolusi[w.tier] ? CONFIG.tiers[w.tier + 1] : null, ...PK.lemariDari(w) };
+  return { u, nama: w.nama, tier: w.tier, wil: Math.floor((w.spot ?? 0) / 50) + 1, batu: w.batu || 0, saldo: await saldo(u), stat: publik(w), batas: Object.fromEntries(STAT.map((s) => [s, batasLatih(w, s)])), syaratBatu: CONFIG.batuEvolusi[w.tier] || null, tierBerikut: CONFIG.batuEvolusi[w.tier] ? CONFIG.tiers[w.tier + 1] : null, ...PK.lemariDari(w) };
 }
 
 export async function GET(request) {

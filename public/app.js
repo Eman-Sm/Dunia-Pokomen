@@ -473,6 +473,13 @@
       if (w.gelar) drawAuraGelar(x, y - bob, dh, now, A.seed);
       ctx.fillStyle = 'rgba(20,30,10,.28)';
       ctx.beginPath(); ctx.ellipse(x, y, 7 * cam.z * besar, 2.2 * cam.z * besar, 0, 0, Math.PI * 2); ctx.fill();
+      // 15 Nov: Liga Wilayah — lingkaran warna wilayah di tanah (tidak menutupi gambar hewan)
+      { const LWd = window.LigaWilayah && window.LigaWilayah.data;
+        if (LWd && w.wil && cam.z >= .45 && ['pemanasan', 'liga', 'semifinal', 'final'].includes(LWd.tahap.kode)) {
+          const col = window.LigaWilayah.warna[w.wil] || '#fff', rx = 9.5 * cam.z * besar, ry = 3.1 * cam.z * besar;
+          ctx.save(); ctx.globalAlpha = .28; ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.globalAlpha = .95; ctx.strokeStyle = col; ctx.lineWidth = Math.max(1.2, 1.3 * cam.z); ctx.stroke(); ctx.restore();
+        } }
       if (w.tier >= 4) { ctx.fillStyle = 'rgba(255,210,63,.35)'; ctx.beginPath(); ctx.ellipse(x, y - 10 * cam.z, 15 * cam.z, 14 * cam.z, 0, 0, Math.PI * 2); ctx.fill(); }
       const footY = custom ? dh - 1 * cam.z : 31 * u * s; // feet sit at row 31 of the 36-unit sprite
       if ((sp.hd || custom) && !RINGAN) { ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; }
@@ -488,14 +495,6 @@
       ctx.drawImage(sp, -dw / 2, -footY, dw, dh);
       ctx.restore();
       ctx.imageSmoothingEnabled = false;
-      // 16 Nov: Liga Wilayah — syal warna wilayah
-      const LWd = window.LigaWilayah && window.LigaWilayah.data;
-      if (LWd && !custom && w.wil && alpha > .5 && cam.z >= .7 && ['pemanasan', 'liga', 'semifinal', 'final'].includes(LWd.tahap.kode)) {
-        const col = window.LigaWilayah.warna[w.wil] || '#fff', ny = y - bob - lift - (footY - (sp.hd ? 17 : 19) * u * s) * sq, sw = 11 * u * s;
-        ctx.fillStyle = '#2b1b17'; ctx.fillRect(Math.round(x - sw / 2 - 1), Math.round(ny - 1.6 * u * s - 1), Math.round(sw + 2), Math.round(3.2 * u * s + 2));
-        ctx.fillStyle = col; ctx.fillRect(Math.round(x - sw / 2), Math.round(ny - 1.6 * u * s), Math.round(sw), Math.round(3.2 * u * s));
-        ctx.fillRect(Math.round(x + A.face * sw * .25), Math.round(ny), Math.round(2.4 * u * s), Math.round(5 * u * s));
-      }
       const top = y - footY * sq - bob - lift;
       if (SK) { ctx.imageSmoothingEnabled = false; drawSkill(SK, w, x, y, top, A.face, cam.z); }
       if (dewa) drawPartikelDewa(w, x, y - bob - lift, dh, now, A.seed);
@@ -1276,7 +1275,7 @@
       <div class="card-head"><span id="cardSprite"></span>
         <div><h3${w.tier >= 4 ? ' class="emas"' : ''}>${esc(namaTampil(w))}</h3>
           <a class="handle" href="https://www.instagram.com/${encodeURIComponent(w.u)}/" target="_blank" rel="noopener">@${esc(w.u)}</a><br>
-          <span class="tier t${w.tier}">${esc(w.tierNama || TIERS[w.tier])}</span>${w.gelar ? `<span class="gelar">${esc(w.gelar)}</span>` : ''}${w.sahabat ? '<span class="gelar sahabat">♛ Sohabat Admin</span>' : ''}${w.wil ? `<span class="gelar wil">${esc(wilLabel(w.wil))}</span>` : ''}</div></div>
+          <span class="tier t${w.tier}">${esc(w.tierNama || TIERS[w.tier])}</span>${w.gelar ? `<span class="gelar">${esc(w.gelar)}</span>` : ''}${w.sahabat ? '<span class="gelar sahabat">♛ Sohabat Admin</span>' : ''}${w.wil ? `<span class="gelar wil"><i class="wil-dot" style="background:${(window.LigaWilayah && window.LigaWilayah.warna[w.wil]) || '#999'}"></i>${esc(wilLabel(w.wil))}</span>` : ''}</div></div>
       <ul class="hewan">${(w.hewan || []).map((h) => `<li>${esc(h)}</li>`).join('')}</ul>
       ${w.stat ? `<div class="stat-mini">${[['❤️', 'nyawa'], ['⚔️', 'serang'], ['🛡️', 'tahan'], ['💨', 'cepat']].map(([ic, k]) => `<span title="${k}">${ic} <b>${w.stat[k]}</b></span>`).join('')}<span title="kekuatan">💪 <b>${w.stat.kuat}</b></span></div>` : ''}
       ${w.kopi ? `<p class="skill kopi-${esc(w.lencana)}">☕ <b>${{ emas: 'Pendukung Emas', perak: 'Pendukung Perak', perunggu: 'Pendukung Perunggu' }[w.lencana] || 'Pendukung'}</b> · ${fmt(w.kopi)} ${esc((DATA.dukunganUnit) || 'Kopi Admin')}${w.sahabat ? ' · terbanyak!' : ''}<br><span class="muted">Dompet: <b>${fmt(w.biji)} Biji Kopi</b> (dipakai saat Toko Pokomen buka)</span></p>` : ''}

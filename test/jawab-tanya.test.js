@@ -27,3 +27,9 @@ test('format DM "Kekuatan: ..." terbaca sebagai skill', () => {
   const p = parseComment('Kekuatan:navegi bisa mengendalikan badai salju dan letusan gunung berapi');
   assert.ok(p.skill && p.skill.includes('badai salju'));
 });
+
+test('syal Liga Wilayah ada untuk 6 wilayah', async () => {
+  const PK = await import('../lib/pakaian.js');
+  assert.equal(PK.KATALOG.filter((x) => x.wil).length, 6);
+  assert.equal(PK.barang('syal_w3').bagian, 'leher');
+});

@@ -147,7 +147,9 @@
     const O = T.outfit; if (!O || !(O.katalog || []).length) return '';
     const s = T.saya, punya = new Set((s && s.lemari) || []), pakai = (s && s.pakaian) || {};
     return `<div class="tk-outfit"><h4>👕 Lemari Outfit</h4><p class="muted">Beli sekali, lalu pakai & lepas <b>gratis</b> kapan saja. Satu barang untuk tiap bagian (kepala, mata, leher). Terlihat di peta untuk <b>semua tingkat</b>.</p>
-      <div class="tk-grid">${O.katalog.map((x) => {
+      <div class="tk-grid">${O.katalog.filter((x) => !x.wil || !s || !s.wil || x.wil === s.wil).map((x) => {
+        const nmW = x.wil && window.LigaWilayah && window.LigaWilayah.data && window.LigaWilayah.data.nama ? window.LigaWilayah.data.nama[x.wil] : null;
+        if (nmW) x = { ...x, label: 'Syal Liga ' + nmW };
         const dipakai = pakai[x.bagian] === x.id, ada = punya.has(x.id);
         const lab = !s ? '🔑 Butuh link pribadi' : dipakai ? 'Lepas' : ada ? 'Pakai' : konfirm === 'of-' + x.id ? 'Yakin? Tekan lagi' : 'Beli & pakai';
         return `<div class="tk-item${dipakai ? ' tk-dipakai' : ''}"><canvas class="tk-of-cv" width="80" height="80" data-id="${esc(x.id)}" data-bagian="${esc(x.bagian)}" aria-hidden="true"></canvas><b>${esc(x.label)}</b><span>${esc(O.bagian[x.bagian] || x.bagian)}${dipakai ? ' · sedang dipakai' : ''}</span>

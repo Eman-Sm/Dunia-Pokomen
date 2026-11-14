@@ -44,7 +44,17 @@
       L(g, [[X - dx + 1.5, ey - .2], [X + dx - 1.5, ey - .2]], '#6a4a2a', .45);
     },
   };
+  const WSYAL = { 1: ['#e5533d', '#b83a28'], 2: ['#3d8fd8', '#2a6aa8'], 3: ['#3fae5a', '#2b8442'], 4: ['#e8b923', '#b88e12'], 5: ['#8f5ad8', '#6a3cad'], 6: ['#f08a2c', '#c0661a'] };
+  const syalW = (n) => (g, X, ny, rx) => {
+    const [c, c2] = WSYAL[n];
+    E(g, X, ny, rx * .9, 1.25, c);
+    L(g, [[X - rx * .8, ny], [X + rx * .8, ny]], 'rgba(255,255,255,.75)', .45);
+    P(g, [[X + 1.4, ny + .4], [X + 3.2, ny + .4], [X + 3, ny + 4.4], [X + 1.6, ny + 4.4]], c2);
+    L(g, [[X + 1.7, ny + 2.4], [X + 3, ny + 2.4]], 'rgba(255,255,255,.75)', .4);
+    E(g, X + 2.3, ny + 4.6, .55, .55, '#fff6c8');
+  };
   const LEHER = {
+    syal_w1: syalW(1), syal_w2: syalW(2), syal_w3: syalW(3), syal_w4: syalW(4), syal_w5: syalW(5), syal_w6: syalW(6),
     syal(g, X, ny, rx) {
       E(g, X, ny, rx * .9, 1.2, '#d9483b');
       for (let k = -2; k <= 2; k++) L(g, [[X + k * 1.6, ny - .8], [X + k * 1.6, ny + .8]], 'rgba(255,255,255,.55)', .3);
