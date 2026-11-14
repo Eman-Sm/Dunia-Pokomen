@@ -22,3 +22,8 @@ test('obrolan biasa / pertanyaan tidak dianggap skill', () => {
 test('jawabanBebas membersihkan teks', () => {
   assert.equal(jawabanBebas('Min, skillnya adalah: pukulan petir!'), 'pukulan petir');
 });
+
+test('format DM "Kekuatan: ..." terbaca sebagai skill', () => {
+  const p = parseComment('Kekuatan:navegi bisa mengendalikan badai salju dan letusan gunung berapi');
+  assert.ok(p.skill && p.skill.includes('badai salju'));
+});
