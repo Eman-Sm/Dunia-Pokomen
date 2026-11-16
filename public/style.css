@@ -825,3 +825,14 @@ nav.tabs a.nav-saran { background: #f4a8c8; color: #2b1b17; border-color: var(--
 .lw-toast { background: #2e9d4f; color: #fff; padding: 8px 12px; border-radius: 8px; font-weight: 700; }
 
 .wil-dot { display: inline-block; width: .7em; height: .7em; border-radius: 50%; margin-right: .3em; vertical-align: -.05em; box-shadow: 0 0 0 1px rgba(0,0,0,.35); }
+
+/* 16 Nov: Bangunan 3D 360° */
+.b3d-parts { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+.b3d-part { flex: 0 0 auto; padding: 5px 10px; border: 3px solid #3b2416; border-radius: 99px; background: #fff8e6; font: inherit; font-size: .8rem; font-weight: 700; color: inherit; cursor: pointer; white-space: nowrap; }
+.b3d-part.on { background: #ffd23f; box-shadow: 0 3px 0 #3b2416; }
+.b3d-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 8px 0; }
+.b3d-stats div { background: #fff; border: 2px solid #3b2416; border-radius: 8px; padding: 5px 8px; display: grid; }
+.b3d-stats small { font-size: .7rem; color: #7a5a40; font-weight: 700; }
+.b3d-stats b { font-size: .92rem; }
+.b3d-aksi { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.b3d-aksi:empty { display: none; }

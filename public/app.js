@@ -1329,6 +1329,16 @@
   }
   function selectBangunan(b) {
     selected = null;
+    // 16 Nov: Balai Admin & Paviliun Sahabat langsung tampil 3D 360° dengan detail
+    if ((b.id === 'balai' || b.id === 'paviliun') && window.Bangunan3D) {
+      const P = PINTAS[b.id] || {}, hidup = (DATA.warga || []).filter((w) => !w.mati), sw = sahabatW();
+      const LW = window.LigaWilayah && window.LigaWilayah.data;
+      const data = b.id === 'balai'
+        ? { warga: hidup.length, wilayah: 6, hari: DATA.hari ? 'Hari ke-' + DATA.hari : null, liga: LW ? (LW.tahap.kode === 'liga' ? 'Musim 1 · ' + (LW.tahap.label || '') : LW.tahap.kode === 'selesai' ? 'Selesai' : LW.tahap.kode === 'belum' ? null : String(LW.tahap.label || LW.tahap.kode)) : null }
+        : { penghuni: sw ? `${sw.nama} (@${sw.u})` : 'Belum ada', tingkat: sw ? TIERS[sw.tier] || '' : null, status: sleeping() ? 'Di rumah, lentera menyala' : 'Sedang jalan-jalan' };
+      closeCard(); window.Bangunan3D.open(b.id, { data, malam: b.id === 'paviliun' && sleeping(), aksi: P.tombol || [] });
+      return;
+    }
     const P = PINTAS[b.id] || {}, f = b.f || {};
     const sw = b.id === 'paviliun' ? sahabatW() : null;
     const nama = f.nama || P.nama || b.id, ket = f.ket || P.ket || (sw ? `Rumah Sohabat Admin, tangan kanan Admin, tepat di samping Balai Warga. Ditempati ${sw.nama} (@${sw.u}). Lenteranya menyala saat malam, saat Sahabat pulang beristirahat.` : 'Rumah Sohabat Admin. Kirim Kopi Admin terbanyak untuk menempatinya!');
