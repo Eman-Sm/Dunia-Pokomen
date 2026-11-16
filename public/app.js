@@ -253,7 +253,7 @@
         if (now - (a.emoteT || 0) > 3500) { a.emote = '🎮'; a.emoteT = now; }
         a.until = now + 1500; continue;
       }
-      if (slp && w.sahabat && w !== selected) { a.x = PAV.x + 10; a.y = PAV.y + 12; a.mode = 'idle'; a.until = now + 800; continue; }
+      if (slp && w.sahabat && w !== selected) { a.x = PAV.x + 14; a.y = PAV.y + 16; a.mode = 'idle'; a.until = now + 800; continue; }
       if (w === selected || slp) { a.mode = 'idle'; a.until = now + 800; continue; }
       if (w.tier >= 3 && w.skill) {
         if (!a.skillNext) a.skillNext = now + rand(1500, 8000);
@@ -851,17 +851,16 @@
   function tereuma() { return fasilitas().find((f) => f.id === 'tereuma') || null; }
   function berkumpul() { try { return tereuma() && window.PokoChat && window.PokoChat.aktif ? window.PokoChat.aktif(20 * 60e3) : null; } catch { return null; } }
   // 12 Nov: PAVILIUN SAHABAT — rumah Sohabat Admin di samping Balai Warga
-  const PAV = { x: 838, y: 703 };
-  const PAV_IM = ['paviliun', 'paviliun_malam', 'jembatan_sahabat'].reduce((o, k) => { const im = new Image(); im.onload = () => draw(); im.src = `assets/${k}.png?v=1`; o[k] = im; return o; }, {});
+  const PAV = { x: 960, y: 764 }; // v8: Paviliun megah di sisi timur Balai Admin
+  const PAV_IM = ['paviliun', 'paviliun_malam', 'jembatan_sahabat'].reduce((o, k) => { const im = new Image(); im.onload = () => draw(); im.src = `assets/${k}.png?v=megah1`; o[k] = im; return o; }, {});
   const sahabatW = () => (DATA && DATA.warga ? DATA.warga.find((w) => w.sahabat && !w.mati) : null);
   function drawPaviliun() {
     const im = PAV_IM[sleeping() ? 'paviliun_malam' : 'paviliun'], jb = PAV_IM.jembatan_sahabat;
     if (!im.complete || !im.naturalWidth) return;
     const z = cam.z; ctx.imageSmoothingEnabled = false;
-    if (jb.complete && jb.naturalWidth) { const [bx, by] = toScreen(PAV.x + 14, PAV.y - 26); ctx.drawImage(jb, Math.round(bx), Math.round(by), Math.round(jb.naturalWidth * z), Math.round(jb.naturalHeight * z)); }
-    const [x, y] = toScreen(PAV.x - 32, PAV.y - 90); ctx.drawImage(im, Math.round(x), Math.round(y), Math.round(im.naturalWidth * z), Math.round(im.naturalHeight * z));
+    const [x, y] = toScreen(PAV.x - 48, PAV.y - 143); ctx.drawImage(im, Math.round(x), Math.round(y), Math.round(im.naturalWidth * z), Math.round(im.naturalHeight * z));
     if (z >= .8) {
-      const f = Math.max(9, 6.5 * z), [lx, ly] = toScreen(PAV.x, PAV.y + 8); ctx.font = `800 ${f}px Nunito, system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const f = Math.max(9, 6.5 * z), [lx, ly] = toScreen(PAV.x, PAV.y + 14); ctx.font = `800 ${f}px Nunito, system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       const t = 'PAVILIUN SAHABAT', tw_ = ctx.measureText(t).width + 10;
       ctx.fillStyle = '#2b1b17'; ctx.fillRect(lx - tw_ / 2 - 1, ly - f * .7 - 1, tw_ + 2, f * 1.4 + 2); ctx.fillStyle = '#e9dcff'; ctx.fillRect(lx - tw_ / 2, ly - f * .7, tw_, f * 1.4);
       ctx.fillStyle = '#5a2f9a'; ctx.fillText(t, lx, ly); ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
@@ -1304,7 +1303,7 @@
     toko: { nama: 'Toko Pokomen', ket: 'Di Distrik Fasilitas, dekat Arena. Belanja Batu Evolusi, outfit, Pokoboll dan item pengganti pakai Biji Kopi.', tombol: [['🏪 Buka Toko', () => bukaToko('toko')]] },
     arena: { nama: 'Arena', ket: 'Di Distrik Fasilitas. Tantang hewan lain, main langsung, dan kejar puncak Liga Arena. Buka 07.00–21.00 WIB.', tombol: [['⚔️ Buka Arena', () => bukaToko('arena')]] },
     latihan: { nama: 'Tempat Latihan', ket: 'Di Distrik Fasilitas, dekat Lapangan & papan skor Liga. Naikkan Nyawa, Serang, Tahan dan Cepat hewanmu. Setiap sesi ke-5 jadi Latihan Super.', tombol: [['🏋️ Mulai Latihan', () => bukaToko('latihan')]] },
-    balai: { nama: 'Pusat Koloni', ket: 'Balai Warga, tempat pemilihan Ketua Koloni tiap wilayah.', tombol: [['🗳️ Pemilihan Ketua', () => keBagian('pemiluW', 'warga')], ['📖 Daftar Warga', () => keBagian('warga')]] },
+    balai: { nama: 'Balai Admin', ket: 'Balai megah di Pusat Koloni: kantor admin, tempat pengumuman, tempat pemilihan Ketua Koloni tiap wilayah.', tombol: [['🗳️ Pemilihan Ketua', () => keBagian('pemiluW', 'warga')], ['📖 Daftar Warga', () => keBagian('warga')]] },
     tereuma: { tombol: [['💬 Ikut Ngobrol', () => keBagian('obrolan')]] },
     klinik: { tombol: [['⚔️ Ke Arena', () => bukaToko('arena')]] },
     pasar: { tombol: [['🧺 Buka Pasar', () => bukaToko('pasar')]] },
@@ -1323,9 +1322,9 @@
     if (DATA.evoBatu) {
       for (const [id, x, y, r] of [['toko', 1410, 1423, 26], ['arena', 1521, 1340, 34], ['latihan', 1202, 1325, 30]]) if (Math.abs(wx - x) < r && Math.abs(wy - y) < r * .8) return { id };
     }
-    if (Math.abs(wx - PAV.x) < 26 && wy > PAV.y - 88 && wy < PAV.y + 6) return { id: 'paviliun' };
-    const B = (WORLD && WORLD.balai) || [882, 724];
-    if (Math.abs(wx - B[0]) < 26 && Math.abs(wy - B[1] + 4) < 22) return { id: 'balai' };
+    if (Math.abs(wx - PAV.x) < 40 && wy > PAV.y - 140 && wy < PAV.y + 8) return { id: 'paviliun' };
+    const B = [858, 736]; // v8: Balai Admin megah (pusat alas)
+    if (Math.abs(wx - B[0]) < 66 && wy > B[1] - 150 && wy < B[1] + 34) return { id: 'balai' };
     return null;
   }
   function selectBangunan(b) {
@@ -1612,7 +1611,7 @@
   };
 
   // bump when the map changes so browsers do not keep the old cached image
-  const WORLD_VER = '2026-11-16-distrik';
+  const WORLD_VER = '2026-11-16-megah';
   // ---------------------------------------------------------------- boot
   window.addEventListener('resize', resize);
   // ~30 fps animation loop (tick keeps the old 420 ms rhythm for lights and fireflies)

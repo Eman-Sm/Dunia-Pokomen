@@ -239,7 +239,7 @@ def dummy():
     im = Image.new('RGBA', (14, 24), (0, 0, 0, 0)); g = ImageDraw.Draw(im)
     g.rectangle((6, 9, 7, 23), fill=(120, 80, 44)); g.rectangle((1, 11, 12, 12), fill=(120, 80, 44))
     g.ellipse((2, 1, 11, 9), fill=(220, 190, 130)); g.rectangle((3, 11, 10, 19), fill=(200, 160, 100)); g.point([(5, 5), (8, 5)], fill=(43, 27, 23)); return A.outline(im)
-x, y = Wd.iso(PKC[0] - 2.6, PKC[1] + 2.2); items.append((x, y + 8, board('PUSAT KOLONI')))
+x, y = Wd.iso(PKC[0] - 4.2, PKC[1] + 3.6); items.append((x, y + 8, board('PUSAT KOLONI')))
 # v8: Tempat Latihan (orang-orangan + papan) di kavling barunya
 _lt = PADS['latihan']
 for di, dj in ((0.6, -1.2), (1.6, -0.2), (-0.4, 0.4), (0.6, 1.0)):
@@ -280,13 +280,16 @@ for q, (ci, cj) in enumerate(ROUTE):
         if Wd.kind(math.floor(ti), math.floor(tj)) != 'grass' or (math.floor(ti), math.floor(tj)) in STONE or in_pad(math.floor(ti), math.floor(tj)): continue
         x, y = Wd.iso(ti, tj); items.append((x, y + 2, lampu()))
 gx_, gy_ = GAPURA_D; items.append((gx_, gy_ + 14, gapura_distrik()))
-x, y = Wd.iso(PKC[0] + 5.6, PKC[1] + 1.7); items.append((x, y + 8, board('DISTRIK FASILITAS >')))
+x, y = Wd.iso(PKC[0] + 6.6, PKC[1] + 2.8); items.append((x, y + 8, board('DISTRIK FASILITAS >')))
 
 hs, ha = Wd.house_sprite()
 hx, hy = Wd.iso(*HT)
-items.append((hx, hy + 16, None))
+# v8: Balai Admin megah (tools/megah_asset.py) menggantikan rumah kecil
+BALAI_IM = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'public', 'assets', 'balai_admin.png')).convert('RGBA')
+BALAI_C = (858, 736)  # pusat alas
+items.append((BALAI_C[0], BALAI_C[1] + 40, None))
 for x, y, im in sorted(items, key=lambda t: t[1]):
-    if im is None: cv.alpha_composite(hs, (int(hx - ha[0]), int(hy - ha[1]))); continue
+    if im is None: cv.alpha_composite(BALAI_IM, (BALAI_C[0] - 75, BALAI_C[1] - 153)); continue
     cv.alpha_composite(im, (int(x - im.width // 2), int(y - im.height + 2)))
 cv.convert('RGB').save(f'{OUT}/world-{N_BUKA}.png', optimize=True)
 
