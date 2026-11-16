@@ -870,7 +870,7 @@
   // 16 Nov: papan skor Liga Wilayah (v8: pindah ke Distrik Fasilitas, dekat Tempat Latihan & Lapangan)
   function drawPapanSkor() {
     const L = window.LigaWilayah && window.LigaWilayah.data; if (!L || !['pemanasan', 'liga', 'semifinal', 'final', 'selesai'].includes(L.tahap.kode) || cam.z < .55) return;
-    const z = cam.z, [cx, cy] = toScreen(1100, 1300), W_ = 120 * z, rows = L.hariIni ? L.hariIni.laga : [], H_ = (22 + Math.max(1, rows.length) * 13) * z;
+    const z = cam.z, [cx, cy] = toScreen(1105, 1268), W_ = 120 * z, rows = L.hariIni ? L.hariIni.laga : [], H_ = (22 + Math.max(1, rows.length) * 13) * z;
     const x0 = cx - W_ / 2, y0 = cy - H_;
     ctx.fillStyle = '#3b2416'; ctx.fillRect(cx - 34 * z, cy - 2 * z, 4 * z, 16 * z); ctx.fillRect(cx + 30 * z, cy - 2 * z, 4 * z, 16 * z);
     ctx.fillStyle = '#2b1b17'; ctx.fillRect(x0 - 2 * z, y0 - 2 * z, W_ + 4 * z, H_ + 4 * z); ctx.fillStyle = '#20324a'; ctx.fillRect(x0, y0, W_, H_);
