@@ -721,8 +721,8 @@
   // ---- Obrolan Warga: what a citizen wrote pops up above its head for a few seconds
   const HEADS = new Map();
   // supporters: warm coffee steam over the creature for 24 h after sending a coffee
-  // ---- Toko Pokomen & Arena di Pusat Koloni (muncul setelah dibuka)
-  const BANGUNAN = [['toko', 935, 705, 'TOKO'], ['arena', 822, 776, 'ARENA']].map(([k, x, y, lab]) => { const im = new Image(); im.onload = () => draw(); im.src = `assets/${k}.png?v=1`; return { im, x, y, lab }; });
+  // ---- Toko Pokomen & Arena (v8: di Distrik Fasilitas)
+  const BANGUNAN = [['toko', 1410, 1428, 'TOKO'], ['arena', 1521, 1346, 'ARENA']].map(([k, x, y, lab]) => { const im = new Image(); im.onload = () => draw(); im.src = `assets/${k}.png?v=1`; return { im, x, y, lab }; });
   // 3 Nov: fasilitas usulan warga (satu per episode), daftar dari server: DATA.fasilitas.dibangun
   const FAS_IMG = new Map();
   function fasilitas() { return (DATA && DATA.fasilitas && DATA.fasilitas.dibangun) || []; }
@@ -867,10 +867,10 @@
       ctx.fillStyle = '#5a2f9a'; ctx.fillText(t, lx, ly); ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic';
     }
   }
-  // 16 Nov: papan skor Liga Wilayah di Pusat Koloni
+  // 16 Nov: papan skor Liga Wilayah (v8: pindah ke Distrik Fasilitas, dekat Tempat Latihan & Lapangan)
   function drawPapanSkor() {
     const L = window.LigaWilayah && window.LigaWilayah.data; if (!L || !['pemanasan', 'liga', 'semifinal', 'final', 'selesai'].includes(L.tahap.kode) || cam.z < .55) return;
-    const z = cam.z, [cx, cy] = toScreen(905, 652), W_ = 120 * z, rows = L.hariIni ? L.hariIni.laga : [], H_ = (22 + Math.max(1, rows.length) * 13) * z;
+    const z = cam.z, [cx, cy] = toScreen(1100, 1300), W_ = 120 * z, rows = L.hariIni ? L.hariIni.laga : [], H_ = (22 + Math.max(1, rows.length) * 13) * z;
     const x0 = cx - W_ / 2, y0 = cy - H_;
     ctx.fillStyle = '#3b2416'; ctx.fillRect(cx - 34 * z, cy - 2 * z, 4 * z, 16 * z); ctx.fillRect(cx + 30 * z, cy - 2 * z, 4 * z, 16 * z);
     ctx.fillStyle = '#2b1b17'; ctx.fillRect(x0 - 2 * z, y0 - 2 * z, W_ + 4 * z, H_ + 4 * z); ctx.fillStyle = '#20324a'; ctx.fillRect(x0, y0, W_, H_);
@@ -1301,9 +1301,9 @@
 
   // 10 Nov: setiap bangunan bisa diklik → kartu singkat + pintasan ke fiturnya
   const PINTAS = {
-    toko: { nama: 'Toko Pokomen', ket: 'Belanja Batu Evolusi, outfit, Pokoboll dan item pengganti pakai Biji Kopi.', tombol: [['🏪 Buka Toko', () => bukaToko('toko')]] },
-    arena: { nama: 'Arena', ket: 'Tantang hewan lain, main langsung, dan kejar puncak Liga Arena. Buka 07.00–21.00 WIB.', tombol: [['⚔️ Buka Arena', () => bukaToko('arena')]] },
-    latihan: { nama: 'Tempat Latihan', ket: 'Naikkan Nyawa, Serang, Tahan dan Cepat hewanmu. Setiap sesi ke-5 jadi Latihan Super.', tombol: [['🏋️ Mulai Latihan', () => bukaToko('latihan')]] },
+    toko: { nama: 'Toko Pokomen', ket: 'Di Distrik Fasilitas, dekat Arena. Belanja Batu Evolusi, outfit, Pokoboll dan item pengganti pakai Biji Kopi.', tombol: [['🏪 Buka Toko', () => bukaToko('toko')]] },
+    arena: { nama: 'Arena', ket: 'Di Distrik Fasilitas. Tantang hewan lain, main langsung, dan kejar puncak Liga Arena. Buka 07.00–21.00 WIB.', tombol: [['⚔️ Buka Arena', () => bukaToko('arena')]] },
+    latihan: { nama: 'Tempat Latihan', ket: 'Di Distrik Fasilitas, dekat Lapangan & papan skor Liga. Naikkan Nyawa, Serang, Tahan dan Cepat hewanmu. Setiap sesi ke-5 jadi Latihan Super.', tombol: [['🏋️ Mulai Latihan', () => bukaToko('latihan')]] },
     balai: { nama: 'Pusat Koloni', ket: 'Balai Warga, tempat pemilihan Ketua Koloni tiap wilayah.', tombol: [['🗳️ Pemilihan Ketua', () => keBagian('pemiluW', 'warga')], ['📖 Daftar Warga', () => keBagian('warga')]] },
     tereuma: { tombol: [['💬 Ikut Ngobrol', () => keBagian('obrolan')]] },
     klinik: { tombol: [['⚔️ Ke Arena', () => bukaToko('arena')]] },
@@ -1321,7 +1321,7 @@
       if (wx > x0 + ix && wx < x0 + w - ix && wy > y0 + iy && wy < y0 + h - iy) return { id: f.id, f };
     }
     if (DATA.evoBatu) {
-      for (const [id, x, y, r] of [['toko', 935, 700, 24], ['arena', 822, 770, 30], ['latihan', 950, 752, 24]]) if (Math.abs(wx - x) < r && Math.abs(wy - y) < r * .8) return { id };
+      for (const [id, x, y, r] of [['toko', 1410, 1423, 26], ['arena', 1521, 1340, 34], ['latihan', 1202, 1325, 30]]) if (Math.abs(wx - x) < r && Math.abs(wy - y) < r * .8) return { id };
     }
     if (Math.abs(wx - PAV.x) < 26 && wy > PAV.y - 88 && wy < PAV.y + 6) return { id: 'paviliun' };
     const B = (WORLD && WORLD.balai) || [882, 724];
@@ -1612,7 +1612,7 @@
   };
 
   // bump when the map changes so browsers do not keep the old cached image
-  const WORLD_VER = '2026-11-11-jalan';
+  const WORLD_VER = '2026-11-16-distrik';
   // ---------------------------------------------------------------- boot
   window.addEventListener('resize', resize);
   // ~30 fps animation loop (tick keeps the old 420 ms rhythm for lights and fireflies)
